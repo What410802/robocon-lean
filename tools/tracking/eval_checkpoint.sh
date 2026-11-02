@@ -49,6 +49,10 @@ echo "=== position harness ==="
 $PY_EVAL "$ROOT/tools/tracking/position_harness.py" --policies "$NAME" \
     --out "$OUT/position_harness.json" || true
 
+echo "=== wheel follow / contact plane ==="
+$PY_EVAL "$ROOT/tools/tracking/probe_wheel_follow.py" --policies "$NAME" \
+    --out "$OUT/wheel_follow.json" || true
+
 echo "=== robustness (RecoveryLoco-style) ==="
 $PY_EVAL "$ROOT/tools/tracking/robustness_probe.py" --policies "$NAME" \
     --out "$OUT/robustness.json" || true

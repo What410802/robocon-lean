@@ -39,6 +39,18 @@ class TestVTCommand(unittest.TestCase):
         self.assertEqual(w["upright"], -assembly.UPRIGHT_W)
         self.assertIn("pose_dofpos", w)
         self.assertIn("pose_rotdrift", w)
+        self.assertIn("wheel_plane_level", w)
+        self.assertIn("wheel_rotation_follow", w)
+        self.assertAlmostEqual(w["wheel_plane_level"], assembly.WHEEL_PLANE_W)
+        self.assertAlmostEqual(w["wheel_rotation_follow"], assembly.WHEEL_FOLLOW_W)
+        # RecoveryLoco contact/plane terms must actually be wired: an earlier
+        # version passed no asset_cfg and silently indexed all 53 geoms, so both
+        # terms evaluated to 0 for the whole run.
+        from mjlab.managers.scene_entity_config import SceneEntityCfg
+        plane = cfg.rewards["wheel_plane_level"]
+        self.assertIsInstance(plane.params.get("asset_cfg"), SceneEntityCfg)
+        self.assertEqual(list(plane.params["asset_cfg"].geom_names),
+                         list(assembly.WHEEL_COLLISION_GEOMS))
         self.assertNotIn("base_height", w)
 
     def test_events_and_terminations(self) -> None:

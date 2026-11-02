@@ -363,6 +363,7 @@ class RouteNode(Node):
         combos = {
             "vt_pose_v1": ([BTN_LB], (-1, 0)),
             "vt_track_v1": ([BTN_LB], (1, 0)),
+            "vt_track_v2": ([BTN_LB], (0, 1)),
             "vt_edge_v1": ([BTN_BACK], (0, 1)),
             "row2p_p40w40_v1": ([BTN_START], (0, -1)),
             "st30_ppo_st30_s100_600": ([BTN_RB], (0, -1)),
@@ -446,8 +447,10 @@ class RouteNode(Node):
         floor and a bang-bang-ish gain for this model.  vt_pose_v1 keeps the
         historical gains that the route was tuned with.
         """
-        if TRANSFER_POLICY == "vt_track_v1":
-            return (0.22, 0.55, 2.0)
+        if TRANSFER_POLICY.startswith("vt_track"):
+            # Both vt_track models have a low-wz dead zone (v2's translation is
+            # also conservative); use the higher floor/gain that the route needs.
+            return (0.25, 0.65, 2.5)
         return (0.12, 0.45, 1.2)
 
     def rotate_by(self, delta: float, tol: float = 0.10, timeout_s: float = 10.0) -> bool:
@@ -574,7 +577,7 @@ class RouteNode(Node):
                 self.command(0.0, 0.0, wz)
             else:
                 v = min(speed, max(0.08, 0.7 * dist))
-                if TRANSFER_POLICY == "vt_track_v1":
+                if TRANSFER_POLICY.startswith("vt_track"):
                     # The low-wz dead zone also hurts small heading corrections
                     # while driving (goto veered off the T-stairs approach).
                     wz = max(-0.40, min(0.40, 1.6 * err))
@@ -1185,7 +1188,10 @@ class RouteNode(Node):
                 # the earlier taper (0.55x before x=4.6) killed the momentum
                 # needed to roll the 0.15 m block4->platform gap (edge28:
                 # stalled at x=5.0 for 65 s, then walked off north).
-                if p.x > 5.7 and abs(p.y) < 0.35:
+                # Hand over ~0.45 m before the target.  Switching at full
+                # crossing speed overshot to x=7.1 (1.7 m handover drift, off the
+                # platform); slow the old expert to a crawl before switching.
+                if p.x > 5.25 and abs(p.y) < 0.35:
                     ok = True
                     break
                 if abs(p.y) > 0.85:
@@ -1206,12 +1212,28 @@ class RouteNode(Node):
                 prev = p
                 self._tick()
             if ok:
-                # Active brake: hold -0.2 for ~0.4 s so the landing momentum
-                # does not carry the robot toward the 6.2 edge.
-                self.command(-0.2, 0.0, 0.0)
+                # Handover to the transfer model while the forward command is
+                # still active; it brakes and holds at the centre (no old-model
+                # negative/zero command, no backward coast).
+                p_pre = self.pose()
+                # Slow the old expert first (still forward, never zero/negative:
+                # row2p zero-command coasting is what rolled the robot back).
+                self.command(0.12, 0.0, 0.0)
+                self._hold(0.25)
+                self.ensure_transfer()
+                self.command(0.0, 0.0, 0.0)
                 self._hold(0.4)
+                if not self.goto((5.70, -0.45), tol=0.12, timeout_s=15.0, speed=0.20):
+                    log.warning("bridge A east handover recentre failed")
+                self.command(0.0, 0.0, 0.0)
+                self._hold(0.5)
+                p_post = self.pose()
+                log.info("bridge A east handover: pre=(%.2f,%.2f) post=(%.2f,%.2f) "
+                         "drift=%.3f m" % (p_pre.x, p_pre.y, p_post.x, p_post.y,
+                                           math.hypot(p_post.x - p_pre.x,
+                                                      p_post.y - p_pre.y)))
+            else:
                 self.stop(0.5)
-            self.stop(0.5)
             if ok:
                 break
             log.warning(f"bridge A retry vx={vx} at "
@@ -1247,7 +1269,7 @@ class RouteNode(Node):
         # block edge stalls (observed 30-40 deg in 40 s).  Re-centre with the
         # transfer primitive first; failure is non-fatal (spin/stop_on_fail will
         # report it).
-        if not self.goto((5.70, -0.45), tol=0.12, timeout_s=10.0, speed=0.12):
+        if not self.goto((5.70, -0.45), tol=0.12, timeout_s=15.0, speed=0.20):
             log.warning("bridge A east centre recentre failed; spin will report")
         self._cli = "center correction"
         self._emit_plan()

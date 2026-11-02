@@ -11,6 +11,7 @@
 | `probe_pose_control.py` | 低速 `vx/vy/wz` 响应曲线与死区检查（位置环标定用） |
 | `position_harness.py` | 闭环位置环：到点（forward / 原地 ±90° / L 形 / 停走），统计收敛时间、最终误差、原地转漂移 |
 | `robustness_probe.py` | RecoveryLoco 式鲁棒性：随机 yaw/roll/pitch 初态、速度/角速度冲量、关节偏置、行进中推扰（11 例） |
+| `probe_wheel_follow.py` | 纯 yaw 时四轮接触点跟随：轮心速度 vs 刚体旋转场（相对误差/RMSE）、机身坐标下四轮平面 z 展布、实际 yaw 速率 |
 
 ## 常用命令
 

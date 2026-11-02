@@ -28,7 +28,7 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
 
 ## 2. 路线流程（节点自动执行）
 
-起点 (3.7,-9.0) → 每段先由衔接模型（默认 `vt_pose_v1`；`transfer_policy:=vt_track_v1` 可换新模型）低速闭环对线/落位，再切专家过障：
+起点 (3.7,-9.0) → 每段先由衔接模型（默认 `vt_pose_v1`；`transfer_policy:=vt_track_v2` 可换新模型（v1 仍可选））低速闭环对线/落位，再切专家过障：
 
 | # | 段 | 用的模型/动作 |
 |---|---|---|
@@ -78,7 +78,7 @@ python demo/tests/record_eval_trace.py --part 1 --robot blackW \
     --out artifacts/route/vt_track_judge_trace.jsonl
 # 终端 B
 PART1_ROUTE_STOP_ON_FAIL=1 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
-    route:=part1 transfer_policy:=vt_track_v1 viewer:=false realtime:=true eval_state_every:=10
+    route:=part1 transfer_policy:=vt_track_v2 viewer:=false realtime:=true eval_state_every:=10
 # 结束后
 pixi run -e eval robocon-eval replay-part1 --trace artifacts/route/vt_track_judge_trace.jsonl
 ```

@@ -108,6 +108,7 @@ enum class Intent : std::uint8_t
     PolicyPose,         // LB+D-pad left           (vt_pose_v1: low-speed closed-loop pose/alignment)
     PolicyEdge,         // Back+D-pad up           (vt_edge_v1: wheel-off-edge recovery specialist)
     PolicyTrack,        // LB+D-pad right          (vt_track_v1: velocity-tracking Part1 handover primitive)
+    PolicyTrackV2,      // LB+D-pad up             (vt_track_v2: contact-plane v2 recipe)
     LowBarDrive,        // Back+D-pad down / 5
     BridgeDrive,        // Back+D-pad right / 6
     CarDrive,           // Back+D-pad left / 7
@@ -164,6 +165,7 @@ inline constexpr Binding kBindings[] =
     { Bit(PadKey::RB) | Bit(PadKey::DPadRight), 0,          Intent::PolicyTrench30 },
     { Bit(PadKey::LB) | Bit(PadKey::DPadLeft), 0,           Intent::PolicyPose },
     { Bit(PadKey::LB) | Bit(PadKey::DPadRight), 0,          Intent::PolicyTrack },
+    { Bit(PadKey::LB) | Bit(PadKey::DPadUp), 0,             Intent::PolicyTrackV2 },
     { Bit(PadKey::Back) | Bit(PadKey::DPadUp), 0,           Intent::PolicyEdge },
     { 0,                             Bit(KbKey::Num2),          Intent::PolicyFlat },
     { 0,                             Bit(KbKey::Num3),          Intent::PolicyStair },

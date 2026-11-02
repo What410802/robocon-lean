@@ -157,3 +157,37 @@
 - **已知路线问题（非衔接模型）**：bridge A 东台的固定动作差速原地转在此环境只转
   ~30–180°/40 s 且漂移大（`spin_fixed`），换新模型 `rotate_hold` 也失败；路线在
   `stop_on_fail` 下会停在该段并给视频/日志，不阻塞其它段验收。
+
+## 9. v2 奖励与路线交接改进（2026-11-02）
+
+- **路线交接缺陷**（用户观察）：bridge A 东台到达后旧顺序是“旧专家发负/零速度刹车 → stop →
+  切 vt_track”，旧专家在零指令下回溜 ~0.2 m 造成平台点位偏移。已改为距离目标 ~0.25 m 处
+  **边前进边切换**到速度模型，由新模型主动刹车并闭环回 `(5.70, -0.45)`；不再让旧模型发零指令。
+- **点式足相关奖励删得过多**：轮足没有摆动相，但“四落足点跟随/共面/不扭”的约束必须保留。
+  v2 新增 `wheel_plane_level`（机身坐标四轮心 z 展布）与 `wheel_rotation_follow`（纯 yaw 时
+  四轮心速度对齐刚体旋转场），并把 `body_ang_vel` 从 −0.05 加到 −0.10、`track_angular` 权重
+  2.5→3.0。实现坑：reward 函数默认 `SceneEntityCfg` 不会被 manager 解析（`geom_ids=slice`），
+  会静默索引全部 geom 使两项奖励为 0；已在 params 显式传 asset_cfg 并加单测。
+- **基线测量**（`tools/tracking/probe_wheel_follow.py`）：旧 `vt_track_v1` 纯 yaw ±0.3 的
+  `follow_rel_err=0.63/0.69`、四轮 z 展布 0.031/0.022 m；目标 ≤0.35 / ≤0.015 m。
+- **v2 训练中发现的额外缺陷**：
+  1. reward 函数默认 `SceneEntityCfg` 不会被 manager 解析（`geom_ids=slice(None)`），
+     `wheel_plane_level`/`wheel_rotation_follow` 静默变 0（vt_v6 首次启动）；已显式传 params
+     并加单测。
+  2. 平面奖励若全程生效，会抑制平移速度（vt_v7_600 平移比 0.63，v1 为 0.78）；已 mask 到
+     纯 yaw / 站立（用户要求针对旋转跟随，不是直线速度）。
+  3. `wheel_rotation_follow` 若以“指令 wz”为目标，会把负向低 wz 的 under-turn 双重惩罚并
+     鼓励更慢的转；改为以**实际机身 yaw 速率**为目标，只罚轮子相对机身的滞后/打滑，
+     指令跟踪仍由 `track_angular_velocity` 负责。
+  4. `probe_wheel_follow.py` 同时报告 `follow_rel_err_cmd`（对指令）与
+     `follow_rel_err_actual`（对实际机身旋转），后者才是“四轮跟随机身”的直接指标。
+- **v2 结果与路线验证**：最终交付 `vt_track_v2 = vt_v7 model_600`（从零 900 it 中选 600 it）：
+  四轮平面 z 展布 0.031/0.022 → **0.0036/0.0023 m**，90° 足迹 0.572 → **0.520 m**，
+  四轮 follow(cmd) 0.633/0.689 → 0.615/0.636；代价是支撑矩形平移比 0.781 → 0.631（偏保守）。
+  vt_v7_final（900 it）足迹 0.556、位置漂移 0.063 m 但 follow 更差；vt_v8（follow 用实际 yaw）
+  学会“不转”退化；vt_v9（mask 平面 + 指令 follow）平移 0.688、follow 0.84，均不如 vt_v7_600。
+- 路线 handover 日志新增 `bridge A east handover: pre=... post=... drift=...`：旧顺序回溜/偏移 →
+  第一版修复全速切换冲过头 drift 1.70 m → 当前“提前 0.25 m + 先慢行 0.12 m/s + 切换 + v2 回位”
+  drift 0.23–0.28 m；v2 平移保守导致最后回位仍差 ~0.25 m，下一轮给 v2 速度补偿。
+- 路线高墙 precheck 存在 run-to-run 方差（一次 supports_crossed=3/4 side_bypass），
+  `stop_on_fail` 会安全停止；这条与衔接模型无关，是 support 几何/朝向的路线问题。

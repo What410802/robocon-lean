@@ -29,8 +29,11 @@ from alldog_mjlab.tasks.velocity.profiles.pose.command import (
 from alldog_mjlab.tasks.velocity.profiles.vt.command import make_vt_command_cfg
 from alldog_mjlab.tasks.velocity.profiles.pose.rewards import joint_pos_deviation_l2
 from alldog_mjlab.tasks.velocity.profiles.vt.rewards import (
+	WHEEL_COLLISION_GEOMS,
 	rotation_drift_rate_masked,
 	turn_in_place_hold,
+	wheel_plane_level,
+	wheel_rotation_follow,
 )
 
 # ---------------------------------------------------------------------------
@@ -50,7 +53,7 @@ LOW_WZ = 0.20         # covers in-place yaw dead zone
 # Reward contract (tracking-dominant + stance + turn-drift).
 # ---------------------------------------------------------------------------
 TRACK_LIN_W = 2.0
-TRACK_ANG_W = 2.5
+TRACK_ANG_W = 3.0
 TRACK_LIN_SIGMA = 0.25
 TRACK_ANG_SIGMA = 0.08
 TRACK_ERR_L2_W = 0.30
@@ -62,6 +65,14 @@ ROTDRIFT_SPEED_FLOOR = 0.10
 TURN_HOLD_W = 0.0  # disabled: vt_v3 negative result (under-turn / wander)
 TURN_HOLD_YAW_SIGMA = 0.02
 TURN_HOLD_SPEED_SIGMA = 0.01
+# RecoveryLoco point-foot contact/plane terms adapted to wheel-leg (v2 recipe):
+# four wheel centres must stay coplanar with the trunk and follow the commanded
+# yaw rigidly (no lag/twist), replacing the deleted feet_air_time/collision pair.
+WHEEL_PLANE_W = 1.0
+WHEEL_PLANE_SIGMA = 0.0004
+WHEEL_FOLLOW_W = 0.6
+WHEEL_FOLLOW_SIGMA = 1.0
+BODY_ANG_W = 0.10
 
 # ---------------------------------------------------------------------------
 # Robustness (RecoveryLoco-style random states / pushes / friction DR).
@@ -145,6 +156,26 @@ def _configure_rewards(cfg) -> None:
 		weight=-DOFPOS_W,
 		params={"asset_cfg": SceneEntityCfg("robot", joint_names=LEG_JOINT_NAMES)},
 	)
+	# RecoveryLoco contact-plane / foot-follow adaptation (see rewards.py).
+	# Explicit asset_cfg: the reward manager resolves SceneEntityCfg ids only
+	# for cfg params it knows about (a function default stays slice(None), which
+	# silently indexed all 53 geoms and collapsed both terms to zero in vt_v6).
+	_wheel_cfg = SceneEntityCfg("robot", geom_names=WHEEL_COLLISION_GEOMS)
+	cfg.rewards["wheel_plane_level"] = RewardTermCfg(
+		func=wheel_plane_level,
+		weight=WHEEL_PLANE_W,
+		params={"command_name": BLACK_COMMAND_NAME, "sigma": WHEEL_PLANE_SIGMA,
+		        "asset_cfg": _wheel_cfg},
+	)
+	cfg.rewards["wheel_rotation_follow"] = RewardTermCfg(
+		func=wheel_rotation_follow,
+		weight=WHEEL_FOLLOW_W,
+		params={"command_name": BLACK_COMMAND_NAME, "sigma": WHEEL_FOLLOW_SIGMA,
+		        "asset_cfg": _wheel_cfg},
+	)
+	# Penalise trunk roll/pitch rates more strongly: twisting the trunk relative
+	# to the four contact points is what makes the wheels lag the yaw command.
+	cfg.rewards["body_ang_vel"] = replace(cfg.rewards["body_ang_vel"], weight=-BODY_ANG_W)
 	# "Turn without translating": penalise |v_xy| / |wz_cmd| for pure-yaw
 	# commands, gated on yaw-tracking accuracy (otherwise "don't turn" is free).
 	cfg.rewards["pose_rotdrift"] = RewardTermCfg(

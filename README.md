@@ -59,7 +59,7 @@ source demo/install/setup.bash
 PART1_RECORD_PATH=$PWD/artifacts/route/states.jsonl \
 PART1_RECORD_PLAN_PATH=$PWD/artifacts/route/plan.jsonl \
 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route:=part1 \
-    policy_name:=vt_pose_v1 transfer_policy:=vt_track_v1 \
+    policy_name:=vt_pose_v1 transfer_policy:=vt_track_v2 \
     viewer:=false realtime:=true eval_state_every:=10 stop_on_fail:=true
 pixi run -e eval python tools/video/replay_route_video.py \
     artifacts/route/states.jsonl artifacts/route/route.mp4 artifacts/route/plan.jsonl
