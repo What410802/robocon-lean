@@ -109,8 +109,8 @@ BLACKW_ARTICULATION = EntityArticulationInfoCfg(
 # Locked-wheel prototype (point-foot gait on the 12 leg DoF): the wheel joints
 # are held at q=0 by a PD spring, turning the wheel-legs into cylindrical feet.
 # No XML/physics changes; only actuator stiffness and the action term differ.
-BLACKW_LOCKED_WHEEL_STIFFNESS = 20.0
-BLACKW_LOCKED_WHEEL_DAMPING = 1.0
+BLACKW_LOCKED_WHEEL_STIFFNESS = 80.0
+BLACKW_LOCKED_WHEEL_DAMPING = 3.0
 
 
 def _locked_wheel_actuator(joint_name: str) -> IdealPdActuatorCfg:
@@ -139,6 +139,16 @@ INIT_STATE = EntityCfg.InitialStateCfg(
     joint_vel={".*": 0.0},
 )
 
+# Locked-wheel training resets at (near) its PD equilibrium height instead of
+# the rolling-wheel deploy spawn.  The rolling task's 0.17 m drop from z=0.69
+# is incompatible with a policy that was trained (or BC-initialised) starting
+# from the settled stance: every S1 episode ended before the first stride.
+BLACKW_LOCKED_INIT_STATE = EntityCfg.InitialStateCfg(
+    pos=(0.0, 0.0, 0.545),
+    joint_pos=dict(BLACKW_DEFAULT_JOINT_POS),
+    joint_vel={".*": 0.0},
+)
+
 
 def get_blackw_robot_cfg() -> EntityCfg:
     return EntityCfg(
@@ -162,7 +172,7 @@ def get_blackw_locked_robot_cfg() -> EntityCfg:
     """blackW with wheel joints PD-locked (locomotion on the 12 leg DoF)."""
     return EntityCfg(
         spec_fn=get_spec,
-        init_state=INIT_STATE,
+        init_state=BLACKW_LOCKED_INIT_STATE,
         articulation=BLACKW_LOCKED_ARTICULATION,
         sort_actuators=True,
     )

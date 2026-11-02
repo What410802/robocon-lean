@@ -72,9 +72,9 @@ STAGES: tuple[LockedStage, ...] = (
         wheel_axis=-1.0, push=False, reset_scale=0.25,
     ),
     LockedStage(
-        name="straight", vx=(0.02, 0.25), vy=(-0.05, 0.05), wz=(-0.05, 0.05),
+        name="straight", vx=(0.20, 0.50), vy=(-0.05, 0.05), wz=(-0.05, 0.05),
         pure_yaw_frac=0.0, pure_yaw_vy_frac=0.0, pure_vx_frac=0.70, pure_yaw_wz=(0.0, 0.0),
-        standing_frac=0.05, low_frac=0.30,
+        standing_frac=0.05, low_frac=0.10,
         tracking_lin=2.0, tracking_ang=1.0,
         # Placement/support shaping is present from S1 but the values below are
         # *magnitudes*; apply_locked_stage installs them with a negative sign
