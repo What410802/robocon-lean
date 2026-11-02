@@ -62,11 +62,23 @@ register_mjlab_task(
 
 register_mjlab_task(
     task_id="blackw-vt-locked",
-    env_cfg=blackw_vt_locked_env_cfg(),
-    play_env_cfg=blackw_vt_locked_env_cfg(play=True),
+    env_cfg=blackw_vt_locked_env_cfg(stage=4),
+    play_env_cfg=blackw_vt_locked_env_cfg(play=True, stage=4),
     rl_cfg=black_ppo_runner_cfg(stage="flat"),
     runner_cls=BlackVelocityOnPolicyRunner,
 )
+
+# Staged locked-wheel curriculum (stand -> straight -> pure yaw -> combined ->
+# full).  The final task above is S4; each stage is trainable independently and
+# resumes from the previous one.
+for _stage in range(5):
+    register_mjlab_task(
+        task_id=f"blackw-vt-locked-s{_stage}",
+        env_cfg=blackw_vt_locked_env_cfg(stage=_stage),
+        play_env_cfg=blackw_vt_locked_env_cfg(play=True, stage=_stage),
+        rl_cfg=black_ppo_runner_cfg(stage="flat"),
+        runner_cls=BlackVelocityOnPolicyRunner,
+    )
 
 register_mjlab_task(
     task_id="blackw-vt-edge",

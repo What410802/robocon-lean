@@ -357,6 +357,7 @@ void RL_Sim::RobotControl()
         if (in.has(input_map::Intent::PolicyEdge)) this->SwitchPolicy("vt_edge_v1");
         if (in.has(input_map::Intent::PolicyTrack)) this->SwitchPolicy("vt_track_v1");
         if (in.has(input_map::Intent::PolicyTrackV2)) this->SwitchPolicy("vt_track_v2");
+        if (in.has(input_map::Intent::PolicyNwwolf)) this->SwitchPolicy("nwwolf_locked16");
         if (in.has(input_map::Intent::ToggleNavigation))
         {
             this->control.navigation_mode = !this->control.navigation_mode;

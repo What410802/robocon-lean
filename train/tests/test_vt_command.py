@@ -72,9 +72,44 @@ class TestVTCommand(unittest.TestCase):
         self.assertIn("feet_air_time", cfg.rewards)
         self.assertIn("gait_phase", cfg.rewards)
         self.assertIn("foot_lift", cfg.rewards)
+        self.assertIn("support_extent", cfg.rewards)
+        self.assertIn("handover_ready", cfg.rewards)
+        self.assertIn("foot_stance_time", cfg.rewards)
         self.assertNotIn("wheel_rotation_follow", cfg.rewards)
         self.assertNotIn("wheel_plane_level", cfg.rewards)
         self.assertEqual(cfg.rewards["track_linear_velocity"].weight, 3.0)
+        # Penalty-shaped placement/support terms must be negative; a positive
+        # weight here was the bug that rewarded splaying the feet.
+        for name in ("foot_landing_error", "foot_swing_target", "support_extent",
+                     "support_area", "support_center", "handover_ready",
+                     "foot_stance_time", "foot_air_time_penalty"):
+            self.assertLessEqual(cfg.rewards[name].weight, 0.0, name)
+
+    def test_locked_support_box_grows_with_command(self) -> None:
+        import torch
+        from alldog_mjlab.tasks.velocity.profiles.vt.locked import (
+            LOCKED_HALF_X,
+            LOCKED_HALF_Y,
+            support_box_half_extents,
+        )
+
+        zero = torch.zeros(1, 3)
+        hx0, hy0 = support_box_half_extents(zero)
+        self.assertAlmostEqual(float(hx0), LOCKED_HALF_X + 0.015, places=5)
+        self.assertAlmostEqual(float(hy0), LOCKED_HALF_Y + 0.015, places=5)
+        cmd = torch.tensor([[0.5, 0.2, 0.0]])
+        hx, hy = support_box_half_extents(cmd)
+        self.assertGreater(float(hx), float(hx0))
+        self.assertGreater(float(hy), float(hy0))
+        yaw = torch.tensor([[0.0, 0.0, 0.3]])
+        hx_yaw, hy_yaw = support_box_half_extents(yaw)
+        self.assertGreater(float(hx_yaw), float(hx0))
+        self.assertGreater(float(hy_yaw), float(hy0))
+        # Caps keep the box inside the 1 m platform budget.
+        big = torch.tensor([[2.0, 2.0, 2.0]])
+        hx_big, hy_big = support_box_half_extents(big)
+        self.assertLessEqual(float(hx_big), 0.30 + 1e-6)
+        self.assertLessEqual(float(hy_big), 0.30 + 1e-6)
 
     def test_edge_variant(self) -> None:
         cfg = blackw_vt_edge_env_cfg()

@@ -39,6 +39,8 @@ class VTPrimitiveVelocityCommandCfg(PoseEnvelopeVelocityCommandCfg):
 	"""Minimum |wz| for a pure turn [rad/s] (above the low-speed dead zone)."""
 	pure_yaw_wz_max: float = 0.60
 	"""Maximum |wz| for a pure turn [rad/s]."""
+	pure_yaw_vy_frac: float = 0.0
+	"""Fraction of pure-yaw samples that also command lateral vy (platform trim)."""
 
 	def __post_init__(self) -> None:
 		super().__post_init__()
@@ -52,6 +54,8 @@ class VTPrimitiveVelocityCommandCfg(PoseEnvelopeVelocityCommandCfg):
 			raise ValueError("pure_yaw_frac + pure_vx_frac must be <= 1")
 		if not 0.0 <= self.pure_yaw_wz_min <= self.pure_yaw_wz_max:
 			raise ValueError("pure_yaw_wz_min/max must satisfy 0 <= min <= max")
+		if not 0.0 <= self.pure_yaw_vy_frac <= 1.0:
+			raise ValueError(f"pure_yaw_vy_frac={self.pure_yaw_vy_frac!r} must be in [0, 1]")
 
 	def build(self, env):
 		return VTPrimitiveVelocityCommand(self, env)
@@ -83,6 +87,17 @@ class VTPrimitiveVelocityCommand(PoseEnvelopeVelocityCommand):
 			self.vel_command_b[ids, 2] = sign * torch.empty(
 				len(ids), device=self.device
 			).uniform_(self.cfg.pure_yaw_wz_min, self.cfg.pure_yaw_wz_max)
+			# A subset of "turn in place" requests also needs a small lateral
+			# trim (small platform / position-loop coupling).  This mode is off
+			# by default and enabled only by the locked tasks.
+			if self.cfg.pure_yaw_vy_frac > 0.0 and self.cfg.ranges.lin_vel_y is not None:
+				vy_mask = torch.rand(len(ids), device=self.device) < float(self.cfg.pure_yaw_vy_frac)
+				if bool(vy_mask.any()):
+					vy_ids = ids[vy_mask]
+					self.vel_command_b[vy_ids, 1] = torch.empty(
+						len(vy_ids), device=self.device
+					).uniform_(float(self.cfg.ranges.lin_vel_y[0]),
+					           float(self.cfg.ranges.lin_vel_y[1]))
 
 		ids = env_ids[vx_mask]
 		if len(ids):
@@ -91,6 +106,20 @@ class VTPrimitiveVelocityCommand(PoseEnvelopeVelocityCommand):
 			).uniform_(float(self.cfg.ranges.lin_vel_x[0]), float(self.cfg.ranges.lin_vel_x[1]))
 			self.vel_command_b[ids, 1] = 0.0
 			self.vel_command_b[ids, 2] = 0.0
+
+		# The pose low-speed mixture runs before these mode overrides and samples
+		# a fixed [|low_vx|, |low_wz|] box, so it can inject commands outside the
+		# stage envelope (e.g. negative vx in the positive-only straight stage,
+		# or |wz| above the stage's yaw range).  Clip to the declared envelope.
+		non_standing_ids = env_ids[non_standing]
+		if len(non_standing_ids):
+			rng = self.cfg.ranges
+			self.vel_command_b[non_standing_ids, 0].clamp_(
+				float(rng.lin_vel_x[0]), float(rng.lin_vel_x[1]))
+			self.vel_command_b[non_standing_ids, 1].clamp_(
+				float(rng.lin_vel_y[0]), float(rng.lin_vel_y[1]))
+			self.vel_command_b[non_standing_ids, 2].clamp_(
+				float(rng.ang_vel_z[0]), float(rng.ang_vel_z[1]))
 
 
 def make_vt_command_cfg(base: PoseEnvelopeVelocityCommandCfg) -> VTPrimitiveVelocityCommandCfg:
@@ -114,6 +143,7 @@ def make_vt_command_cfg(base: PoseEnvelopeVelocityCommandCfg) -> VTPrimitiveVelo
 		pure_vx_frac=0.10,
 		pure_yaw_wz_min=0.10,
 		pure_yaw_wz_max=0.60,
+		pure_yaw_vy_frac=0.0,
 	)
 
 

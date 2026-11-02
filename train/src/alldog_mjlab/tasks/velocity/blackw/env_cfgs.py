@@ -54,17 +54,41 @@ from alldog_mjlab.tasks.velocity.profiles.pose import (
     apply_pose_edge_terrain,
     apply_pose_low_speed_mixture,
 )
+from alldog_mjlab.tasks.velocity.black.rewards import base_height_l2_flat
 from alldog_mjlab.tasks.velocity.profiles.vt import apply_vt_contract
 from alldog_mjlab.tasks.velocity.profiles.vt.locked import (
     all_feet_contact,
-    feet_air_time,
+    all_joint_pos,
+    feet_air_time_cmd,
+    foot_air_time_penalty,
+    foot_clearance_phase,
+    foot_impact_vel,
+    foot_landing_error,
     foot_lift,
+    foot_slip_point,
+    foot_stance_time,
+    foot_swing_target,
     gait_phase,
-    foot_clearance as locked_foot_clearance,
-    foot_slip,
-    stance_joint,
+    handover_ready,
+    hip_pos,
+    progress,
+    raibert,
+    stand_still,
+    support_area,
+    support_center,
+    support_extent,
+    termination_penalty,
+    track_linear_velocity_rel,
+    track_yaw_velocity_rel,
+    trot,
     wheel_axis_level,
     wheel_lock,
+)
+from alldog_mjlab.tasks.velocity.profiles.vt.locked_curriculum import (
+    apply_locked_stage,
+)
+from alldog_mjlab.tasks.velocity.profiles.vt.locked_terminations import (
+    make_locked_gait_failure,
 )
 from alldog_mjlab.tasks.velocity.profiles.part2.predicates import (
     PART2_BASE_REF_Z,
@@ -585,7 +609,9 @@ def blackw_vt_edge_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     return cfg
 
 
-def blackw_vt_locked_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+def blackw_vt_locked_env_cfg(
+    play: bool = False, stage: int | str = 4
+) -> ManagerBasedRlEnvCfg:
     """Velocity-tracking primitive on the 12-DoF locked-wheel (point-foot) robot.
 
     Wheel hinges are PD-held at 0 (``get_blackw_locked_robot_cfg``); the policy
@@ -609,56 +635,109 @@ def blackw_vt_locked_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         for leg in BLACKW_FOOT_NAMES
     }
     apply_vt_contract(cfg, play=play, edges=False)
-    # Tracking is the primary task; gait shaping above is deliberately weak.
-    cfg.rewards["track_linear_velocity"] = replace(
-        cfg.rewards["track_linear_velocity"], weight=3.0)
-    cfg.rewards["track_linear_velocity_l2"] = replace(
-        cfg.rewards["track_linear_velocity_l2"], weight=-0.5)
-    # Rolling-wheel oriented terms do not apply; the locked variant uses the
-    # foot-contact/gait terms from profiles/vt/locked.py instead.
+    # The rolling-wheel contact-plane terms do not apply to the locked-wheel
+    # point-foot gait: ``wheel_plane_level`` sharply rewards a flat four-wheel
+    # contact plane (i.e. it actively fights lifting a wheel to step), and
+    # ``wheel_rotation_follow`` assumes the wheels roll with the body rotation.
+    # They are inherited from the rolling VT contract, so remove them here.
     cfg.rewards.pop("wheel_plane_level", None)
     cfg.rewards.pop("wheel_rotation_follow", None)
-    locked_terms = {
-        # vt_locked_v3 learned to step in place (foot_lift 1.4, tracking poor):
-        # gait shaping must stay subordinate to command tracking.  Tracking is
-        # raised for this task and the lift/contact-shaping weights reduced.
-        "wheel_lock": (wheel_lock, -10.0, {}),
-        "feet_air_time": (feet_air_time, 0.5, {}),
-        "gait_phase": (gait_phase, 1.0, {}),
-        "foot_lift": (foot_lift, 0.2, {}),
-        "all_feet_contact": (all_feet_contact, -0.5, {}),
-        "foot_clearance": (locked_foot_clearance, -0.05, {}),
-        "foot_slip": (foot_slip, -8.0, {}),
-        "stance_joint": (stance_joint, -0.5, {}),
-        "wheel_axis_level": (wheel_axis_level, -1.0, {}),
+    # The rolling VT stance anchor (-0.8) assumes a rolling wheel stance; for a
+    # stepping gait it opposes the leg motion needed to step.  Keep only a weak
+    # default-pose regulariser (``hip_pos``/``all_joint_pos`` carry the rest).
+    cfg.rewards["pose_dofpos"] = replace(cfg.rewards["pose_dofpos"], weight=-0.1)
+    # Tracking / stability shaping.  Weights are stage-scheduled below.
+    cfg.rewards["termination"] = RewardTermCfg(func=termination_penalty, weight=-100.0)
+    cfg.rewards["lin_vel_z"] = replace(cfg.rewards["lin_vel_z"], weight=-1.5)
+    cfg.rewards["body_ang_vel"] = replace(cfg.rewards["body_ang_vel"], weight=-0.05)
+    cfg.rewards["upright"] = replace(cfg.rewards["upright"], weight=-3.0)
+    _expert_base_z = 0.51  # measured expert zero-command base height 0.519-0.534
+    cfg.rewards["base_height"] = RewardTermCfg(
+        func=base_height_l2_flat, weight=-3.0, params={"target_height": _expert_base_z})
+    cfg.rewards["action_rate_l2"] = replace(cfg.rewards["action_rate_l2"], weight=-0.3)
+    cfg.rewards["smoothness"] = replace(cfg.rewards["smoothness"], weight=-0.01)
+    cfg.rewards["track_linear_velocity_l2"] = replace(
+        cfg.rewards["track_linear_velocity_l2"], weight=-0.5)
+    # Low-speed dead-zone fix: normalised tracking penalties.  Dense exp rewards
+    # alone let a standing policy collect >90% at 0.1 m/s.
+    cfg.rewards["track_linear_velocity_rel"] = RewardTermCfg(
+        func=track_linear_velocity_rel, weight=0.0)
+    cfg.rewards["track_yaw_velocity_rel"] = RewardTermCfg(
+        func=track_yaw_velocity_rel, weight=0.0)
+
+    # Stepping / gait shaping.  ``feet_air_time`` is the command-gated landing
+    # event (replaces the old continuous ungated foot_lift cheat).
+    cfg.rewards["feet_air_time"] = RewardTermCfg(
+        func=feet_air_time_cmd, weight=0.0,
+        params={"target_air_s": 0.16, "max_air_s": 0.30})
+    cfg.rewards["trot"] = RewardTermCfg(func=trot, weight=0.0)
+    # Use the same 0.8 s cycle as ``trot``/``foot_clearance``; a different
+    # period here would ask for two contradictory contact timings.
+    cfg.rewards["gait_phase"] = RewardTermCfg(
+        func=gait_phase, weight=0.0, params={"period_s": 0.8, "stance_frac": 0.55})
+    cfg.rewards["foot_stance_time"] = RewardTermCfg(
+        func=foot_stance_time, weight=0.0,
+        params={"max_stance_s": 0.60, "sigma": 0.15})
+    cfg.rewards["foot_air_time_penalty"] = RewardTermCfg(
+        func=foot_air_time_penalty, weight=0.0,
+        params={"max_air_s": 0.40, "sigma": 0.10})
+    cfg.rewards["foot_clearance"] = RewardTermCfg(
+        func=foot_clearance_phase, weight=0.0)
+    cfg.rewards["foot_impact_vel"] = RewardTermCfg(func=foot_impact_vel, weight=0.0)
+    cfg.rewards["foot_slip"] = RewardTermCfg(func=foot_slip_point, weight=-0.5)
+    cfg.rewards["foot_lift"] = RewardTermCfg(func=foot_lift, weight=0.0)
+    cfg.rewards["all_feet_contact"] = RewardTermCfg(func=all_feet_contact, weight=0.0)
+    cfg.rewards["hip_pos"] = RewardTermCfg(func=hip_pos, weight=-0.5)
+    cfg.rewards["all_joint_pos"] = RewardTermCfg(func=all_joint_pos, weight=-0.001)
+    cfg.rewards["stand_still"] = RewardTermCfg(func=stand_still, weight=-1.0)
+    cfg.rewards["progress"] = RewardTermCfg(func=progress, weight=0.0)
+    cfg.rewards["raibert"] = RewardTermCfg(func=raibert, weight=0.0)
+    # Foot-placement / support-box terms.  The support box is command-dependent
+    # and trunk-centred (see ``locked.support_box_half_extents``); at a stop it
+    # tightens to the nominal expert stance, which is the handover requirement.
+    placement_terms = {
+        "foot_landing_error": (foot_landing_error, -0.3, {}),
+        "foot_swing_target": (foot_swing_target, -0.2, {}),
+        "support_extent": (support_extent, -1.0, {}),
+        "support_area": (support_area, -0.2, {}),
+        "support_center": (support_center, -0.5, {}),
+        "handover_ready": (handover_ready, -0.5, {}),
     }
-    for name, (func, weight, params) in locked_terms.items():
+    for name, (func, weight, params) in placement_terms.items():
         cfg.rewards[name] = RewardTermCfg(func=func, weight=weight, params=params)
+    cfg.rewards["wheel_lock"] = RewardTermCfg(
+        func=wheel_lock, weight=-5.0,
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=BLACKW_WHEEL_JOINTS)})
+    cfg.rewards["wheel_axis_level"] = RewardTermCfg(
+        func=wheel_axis_level, weight=-1.0,
+        params={"asset_cfg": SceneEntityCfg(
+            "robot", body_names=tuple(f"{leg}_foot" for leg in BLACKW_FOOT_NAMES))})
     # Explicit asset_cfgs are resolved by the reward manager; a function default
     # stays slice(None) and silently selects every geom/joint.
+    _wheel_geoms = tuple(f"{leg}_wheel_collision" for leg in BLACKW_FOOT_NAMES)
+    for _name in ("foot_landing_error", "foot_swing_target", "support_extent",
+                  "support_area", "support_center", "handover_ready",
+                  "foot_clearance", "raibert", "foot_impact_vel", "foot_slip"):
+        cfg.rewards[_name].params["asset_cfg"] = SceneEntityCfg(
+            "robot", geom_names=_wheel_geoms, preserve_order=True)
     cfg.rewards["foot_lift"].params["asset_cfg"] = SceneEntityCfg(
-        "robot", geom_names=tuple(f"{leg}_wheel_collision" for leg in BLACKW_FOOT_NAMES)
-    )
-    cfg.rewards["foot_clearance"].params["asset_cfg"] = SceneEntityCfg(
-        "robot", geom_names=tuple(f"{leg}_wheel_collision" for leg in BLACKW_FOOT_NAMES)
-    )
-    cfg.rewards["foot_slip"].params["asset_cfg"] = SceneEntityCfg(
-        "robot", geom_names=tuple(f"{leg}_wheel_collision" for leg in BLACKW_FOOT_NAMES)
-    )
-    cfg.rewards["wheel_axis_level"].params["asset_cfg"] = SceneEntityCfg(
-        "robot", body_names=tuple(f"{leg}_foot" for leg in BLACKW_FOOT_NAMES)
-    )
-    cfg.rewards["wheel_lock"].params["asset_cfg"] = SceneEntityCfg(
-        "robot", joint_names=BLACKW_WHEEL_JOINTS
-    )
-    cfg.rewards["stance_joint"].params["asset_cfg"] = SceneEntityCfg(
-        "robot", joint_names=(".*hip_joint", ".*thigh_joint", ".*calf_joint")
-    )
-    # Walking envelope: lower top speed than the rolling primitive.
-    cmd = cfg.commands[BLACK_COMMAND_NAME]
-    cmd = replace(cmd, ranges=replace(cmd.ranges, lin_vel_x=(-0.30, 0.60),
-                                      ang_vel_z=(-0.60, 0.60)))
-    cfg.commands[BLACK_COMMAND_NAME] = cmd
+        "robot", geom_names=_wheel_geoms, preserve_order=True)
+    for _name in ("hip_pos", "all_joint_pos", "stand_still"):
+        cfg.rewards[_name].params["asset_cfg"] = SceneEntityCfg(
+            "robot", joint_names=(".*hip_joint", ".*thigh_joint", ".*calf_joint"))
+    # Task-priority failure terminations (speed tracking / support feet), not
+    # just falls.  S0/S1 drop this term in the curriculum; S2-S4 tighten it.
+    if not play:
+        _wheel_geoms_term = tuple(f"{leg}_wheel_collision" for leg in BLACKW_FOOT_NAMES)
+        cfg.terminations["locked_gait_fail"] = make_locked_gait_failure(
+            wheel_geoms=_wheel_geoms_term,
+            lin_abs=0.10, lin_frac=0.50, ang_abs=0.10, ang_frac=0.50,
+            grace=0.30, track_timeout=0.80,
+            static_timeout=0.80, air_timeout=0.80, stance_timeout=1.20,
+            rect_timeout=0.50, rect_x_margin=0.045, rect_y_margin=0.045,
+        )
+    # Staged command envelope + reward schedule (S4 = full handover envelope).
+    apply_locked_stage(cfg, stage)
     return cfg
 
 

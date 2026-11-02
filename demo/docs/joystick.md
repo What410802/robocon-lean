@@ -62,6 +62,7 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 joy:=true device:=
 | **RB + 十字右** | **`T`** | **PolicyTrench30** | **`s1d_trench_reward_v75_m100`** | **Part2 沟壑 10/20/30cm 专用（LY≈0.8–1.0 m/s）** |
 | LB + 十字左 | — | PolicyPose | `vt_pose_v1` | 低速闭环对线 / 落位（自动路线用；手动排障） |
 | LB + 十字右 | — | PolicyTrack | `vt_track_v1` | 速度跟随衔接 v1（Part1 位置环；自动路线用；训练/验收见 `docs/VT-RECIPE.md`） |
+| LB + 十字下 | — | PolicyNwwolf | `nwwolf_locked16` | N-W-wolf 锁轮教师模型（12 动作/6 帧历史适配版）；Part 1 手柄试玩用，不是最终精度模型 |
 | LB + 十字上 | — | PolicyTrackV2 | `vt_track_v2` | 速度跟随衔接 v2（四轮共面/跟随奖励；推荐；`docs/VT-RECIPE.md` §4.2） |
 | Back + 十字上 | — | PolicyEdge | `vt_edge_v1` | 轮子掉边恢复（自动路线用；手动排障） |
 

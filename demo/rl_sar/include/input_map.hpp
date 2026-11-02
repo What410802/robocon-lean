@@ -109,6 +109,7 @@ enum class Intent : std::uint8_t
     PolicyEdge,         // Back+D-pad up           (vt_edge_v1: wheel-off-edge recovery specialist)
     PolicyTrack,        // LB+D-pad right          (vt_track_v1: velocity-tracking Part1 handover primitive)
     PolicyTrackV2,      // LB+D-pad up             (vt_track_v2: contact-plane v2 recipe)
+    PolicyNwwolf,       // LB+D-pad down           (nwwolf_locked16: N-W-wolf locked-wheel teacher)
     LowBarDrive,        // Back+D-pad down / 5
     BridgeDrive,        // Back+D-pad right / 6
     CarDrive,           // Back+D-pad left / 7
@@ -166,6 +167,7 @@ inline constexpr Binding kBindings[] =
     { Bit(PadKey::LB) | Bit(PadKey::DPadLeft), 0,           Intent::PolicyPose },
     { Bit(PadKey::LB) | Bit(PadKey::DPadRight), 0,          Intent::PolicyTrack },
     { Bit(PadKey::LB) | Bit(PadKey::DPadUp), 0,             Intent::PolicyTrackV2 },
+    { Bit(PadKey::LB) | Bit(PadKey::DPadDown), 0,           Intent::PolicyNwwolf },
     { Bit(PadKey::Back) | Bit(PadKey::DPadUp), 0,           Intent::PolicyEdge },
     { 0,                             Bit(KbKey::Num2),          Intent::PolicyFlat },
     { 0,                             Bit(KbKey::Num3),          Intent::PolicyStair },
@@ -312,6 +314,7 @@ inline const char *Name(Intent i)
     case Intent::PolicyTStairs: return "PolicyTStairs";
     case Intent::PolicyTrench30: return "PolicyTrench30";
     case Intent::PolicyPose: return "PolicyPose";
+    case Intent::PolicyNwwolf: return "PolicyNwwolf";
     case Intent::LowBarDrive: return "LowBarDrive";
     case Intent::BridgeDrive: return "BridgeDrive";
     case Intent::CarDrive: return "CarDrive";
