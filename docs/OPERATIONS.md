@@ -52,6 +52,9 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
   **`realtime:=true` 必须显式传**（否则仿真全速跑，路线控制器会被甩开）。
 - 路线依赖策略：`vt_pose_v1`、`vt_edge_v1`、`row2p_p40w40_v1`、`st30_ppo_st30_s100_600`、
   `obstacle` + `behaviors/{low_bar_drive,bridge_drive}.yaml`。
+- 速度衔接模型可换成 `vt_track_v1`（训练/验收见 `docs/VT-RECIPE.md`）：
+  `PART1_TRANSFER_POLICY=vt_track_v1 ros2 launch ...`；它的响应曲线与 vt_pose_v1 不同，
+  首次使用先跑 `tools/tracking/position_harness.py` 验证并按需调 controller 增益。
 - 已知弱项：桥 A 西台 1.0×1.0 m 原地 90° 转向需要约 1.1×1.1 m 净空（几何限制，不是策略问题），
   S 弯/返程精度不足。MPC 接入方案见 `tools/mpc/README.md`。
 

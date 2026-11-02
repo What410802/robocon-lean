@@ -50,6 +50,7 @@ from alldog_mjlab.tasks.velocity.profiles.pose import (
     apply_pose_edge_terrain,
     apply_pose_low_speed_mixture,
 )
+from alldog_mjlab.tasks.velocity.profiles.vt import apply_vt_contract
 from alldog_mjlab.tasks.velocity.profiles.part2.predicates import (
     PART2_BASE_REF_Z,
     PART2_HOLD_STEPS,
@@ -541,6 +542,31 @@ def blackw_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         # Platform-edge terrain + spawn randomization + climb-safe
         # terminations (pose-edge robustness recipe).
         apply_pose_edge_terrain(cfg, play=play)
+    return cfg
+
+
+def blackw_vt_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+    """Velocity-tracking primitive (Part 1 handover) on flat terrain.
+
+    Explicit recipe in ``profiles/vt/assembly.py``: pose command envelope
+    (vx/reverse/stop/low-speed/in-place yaw), tracking-dominant rewards, joint
+    stance anchor, turn-drift penalty, RecoveryLoco-style random states/pushes
+    and wheel-friction DR.  No env-var knobs: reproducible by task id.
+    """
+    cfg = _apply_blackw_overrides(build_velocity_env_cfg(play=play, rough=False))
+    apply_vt_contract(cfg, play=play, edges=False)
+    return cfg
+
+
+def blackw_vt_edge_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+    """Velocity-tracking primitive + platform-edge terrain (Part 1 edge handover).
+
+    Same command/reward contract as ``blackw-vt``; the terrain adds 0.05-0.20 m
+    platform edges with on-top / beside spawns so the primitive can recover a
+    dropped wheel under command (bridge platforms, stair lips).
+    """
+    cfg = _apply_blackw_overrides(build_velocity_env_cfg(play=play, rough=False))
+    apply_vt_contract(cfg, play=play, edges=True)
     return cfg
 
 

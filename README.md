@@ -71,6 +71,7 @@ pixi run -e eval robocon-eval replay-part2 --trace <trace.jsonl>
 - `docs/RULES-BASIS.md` — 规则原文要点、官方 vs 队内更严约束、资产哈希、版本结论
 - `docs/ARCHITECTURE.md` — 数据流、坐标系/契约、判分链路
 - `docs/OPERATIONS.md` — 手柄/自动路线/录制/判分操作手册
+- `docs/VT-RECIPE.md` — 速度跟随衔接模型（Part 1 位置环）的配方、训练记录与验收
 - `eval/SPEC.md` — 判分规范（人读版单一标准）
 - `docs/TRAINING.md` — 训练与导出流程（`train/README.md` 的上层说明）
 - `MIGRATION_NOTES.md` — 迁移取舍、已废弃内容、未决事项

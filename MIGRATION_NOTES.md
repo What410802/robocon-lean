@@ -103,3 +103,19 @@
 - 未完成（后续）：`pixi` 环境首次安装 + colcon build + ROS 冒烟（需联网，未在本轮执行）、
   真实 rollout 判分复跑、Part1 MPC 落地、Part2 连续全场 demo、mjdata 裁判接口、
   Part2 稳定性指标。
+
+## 7. 新增：速度跟随衔接模型（VT，2026-11-02）
+
+迁移后新增一个独立的训练任务与验收工具链（旧仓的 `vt_flat/vt_pose` 是迁移前产物，未直接复用权重）：
+
+- **训练任务**：`blackw-vt`（平地）与 `blackw-vt-edge`（0.05–0.20 m 平台边缘）；
+  recipe 在 `train/src/alldog_mjlab/tasks/velocity/profiles/vt/`，命令/奖励/事件全部显式写在代码里，
+  不受 env knob 影响，可复现。RecoveryLoco（点式足）鲁棒性配方的轮足适配见 `docs/VT-RECIPE.md`。
+- **验收工具**：`tools/tracking/` — F1–F7 命令门禁、支撑矩形、转弯足迹、闭环位置环 Harness、
+  RecoveryLoco 式鲁棒性探针、checkpoint 一键评估脚本。
+- **功能完整性证据**：新仓代码直接跑通 `train → checkpoint → export（写 manifest）→
+  PolicyRunner → 全部探针`；`train/scripts/checks/check_vt_env.py` 配置/构建冒烟；
+  `train/tests/test_vt_command.py` 4 项契约测试；训练 XML 只给轮碰撞 geom 补 name（无物理改动）。
+- **结果与已知限制**：见 `docs/VT-RECIPE.md` §4.1/§7。结论：F1/F2/F3/F5/F6/F7 全过（F4 vy 按方向
+  仅诊断）；原地转漂移压到 0.05–0.09 m（目标 0.15）；90° 扫掠半径 ~0.57 m（静止 ~0.34 m）；
+  负向低速转向仍有死区，彻底“零额外占地”需要 stepping-turn 步态（已列为后续项）。

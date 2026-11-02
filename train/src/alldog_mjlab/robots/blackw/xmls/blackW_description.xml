@@ -106,7 +106,7 @@
               <joint name="FL_wheel_joint" type="hinge" axis="1 0 0" limited="false"/>
               <inertial pos="0.0291381 0.0000012 -0.0000002" mass="1.4862602" diaginertia="0.0069491 0.0036386 0.0036388"/>
               <geom pos="0 0 0" group="1" contype="0" conaffinity="0" material="FL_foot_mat" type="mesh" mesh="FL_foot" />
-              <geom pos="0.028 0 0" quat="0.7071068 0 0.7071068 0" rgba="0.9373 0.2667 0.2667 1" group="3" contype="1" conaffinity="1" type="cylinder" size="0.103 0.0245" />
+              <geom name="FL_wheel_collision" pos="0.028 0 0" quat="0.7071068 0 0.7071068 0" rgba="0.9373 0.2667 0.2667 1" group="3" contype="1" conaffinity="1" type="cylinder" size="0.103 0.0245" />
             </body>
           </body>
         </body>
@@ -133,7 +133,7 @@
               <joint name="FR_wheel_joint" type="hinge" axis="1 0 0" limited="false"/>
               <inertial pos="0.0291381 -0.0000001 -0.0000012" mass="1.4862603" diaginertia="0.0069491 0.0036388 0.0036386"/>
               <geom pos="0 0 0" group="1" contype="0" conaffinity="0" material="FR_foot_mat" type="mesh" mesh="FR_foot" />
-              <geom pos="0.028 0 0" quat="0.7071068 0 0.7071068 0" rgba="0.9373 0.2667 0.2667 1" group="3" contype="1" conaffinity="1" type="cylinder" size="0.103 0.0245" />
+              <geom name="FR_wheel_collision" pos="0.028 0 0" quat="0.7071068 0 0.7071068 0" rgba="0.9373 0.2667 0.2667 1" group="3" contype="1" conaffinity="1" type="cylinder" size="0.103 0.0245" />
             </body>
           </body>
         </body>
@@ -160,7 +160,7 @@
               <joint name="RR_wheel_joint" type="hinge" axis="1 0 0" limited="false"/>
               <inertial pos="0.0291381 0.0000011 0.0000005" mass="1.4862602" fullinertia="0.0069491 0.0036387 0.0036387 0 0 -0.0000001"/>
               <geom pos="0 0 0" group="1" contype="0" conaffinity="0" material="RR_foot_mat" type="mesh" mesh="RR_foot" />
-              <geom pos="0.028 0 0" quat="0.7071068 0 0.7071068 0" rgba="0.9373 0.2667 0.2667 1" group="3" contype="1" conaffinity="1" type="cylinder" size="0.103 0.0245" />
+              <geom name="RR_wheel_collision" pos="0.028 0 0" quat="0.7071068 0 0.7071068 0" rgba="0.9373 0.2667 0.2667 1" group="3" contype="1" conaffinity="1" type="cylinder" size="0.103 0.0245" />
             </body>
           </body>
         </body>
@@ -187,7 +187,7 @@
               <joint name="RL_wheel_joint" type="hinge" axis="1 0 0" limited="false"/>
               <inertial pos="0.0291381 0.0000012 -0.0000002" mass="1.4862602" diaginertia="0.0069491 0.0036386 0.0036388"/>
               <geom pos="0 0 0" group="1" contype="0" conaffinity="0" material="RL_foot_mat" type="mesh" mesh="RL_foot" />
-              <geom pos="0.028 0 0" quat="0.7071068 0 0.7071068 0" rgba="0.9373 0.2667 0.2667 1" group="3" contype="1" conaffinity="1" type="cylinder" size="0.103 0.0245" />
+              <geom name="RL_wheel_collision" pos="0.028 0 0" quat="0.7071068 0 0.7071068 0" rgba="0.9373 0.2667 0.2667 1" group="3" contype="1" conaffinity="1" type="cylinder" size="0.103 0.0245" />
             </body>
           </body>
         </body>

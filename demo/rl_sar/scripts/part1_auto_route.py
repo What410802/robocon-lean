@@ -854,7 +854,7 @@ class RouteNode(Node):
             # then switch to the bridge fixed action on top of it.
             ok = self.drive_expert("row2p_p40w40_v1", 0.4, math.pi, lambda p: p.x < 5.80, 10.0)
             log.info(f"bridge-east platform climb: {'ok' if ok else 'fail'} at ({self.pose().x:.2f},{self.pose().y:.2f})")
-            self.switch("vt_pose_v1")
+            self.switch(TRANSFER_POLICY)
             self.face(math.pi / 2.0)
             self.enter_fixed("bridge")
             ok = self.drive_fixed(0.32, math.pi / 2.0, lambda p: p.y > -0.5, 20.0)

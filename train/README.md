@@ -66,6 +66,8 @@ tests/                       # Part 2 wall predicate 单测（CPU）
 | Task ID | 内容 |
 |---|---|
 | `blackw-flat` | 平地速度跟踪 |
+| `blackw-vt` | **速度跟随衔接（Part 1 位置环）**：pose 包络 + 纯 yaw/纯平移模式 + stance/转弯漂移奖励 + 推扰/随机初态/轮摩擦 DR（配方与验收见 `docs/VT-RECIPE.md`） |
+| `blackw-vt-edge` | `blackw-vt` + 0.05–0.20 m 平台边缘地形（桥台/台阶唇交接边缘鲁棒） |
 | `blackw-official` | Part 1/2 官方难度混合地形（主力任务） |
 | `blackw-plum` | Part 2 plum（owner 确认的 no-ramp 3-pile 布局） |
 | `blackw-{stairs,platform,slope,trench,wall}-exact` | 单障碍官方地形专项 |

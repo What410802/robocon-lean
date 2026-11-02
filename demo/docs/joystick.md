@@ -95,11 +95,14 @@ signed（FR、RR 为 `-10`），与 `robots/blackW/robot.yaml` 一致；运行�
 | `flat` | Part1 slalom（绕杆，配合速度指令）+ 平地（主办方策略） |
 | `stair` | 主办方楼梯通用策略（历史保留） |
 | `vt_pose_v1` | 低速三轴命令跟随/对线（自动路线衔接，无键盘键，手柄 LB+←） |
+| `vt_track_v1` | 新速度跟随衔接模型（Part1 位置环专用；无热切换键，launch/自动路线用；训练/验收见 `docs/VT-RECIPE.md`） |
 | `vt_edge_v1` | 轮子掉边恢复专家（自动路线排障，手柄 Back+↑） |
 
 Part2 覆盖（2026-10-31 评审）：`row2p_p40w40_v1` 单独 16/20，加上 `s1d_trench_reward_v75_m100`
 后为 **17/20**；仍无前沿模型覆盖的关卡：`stairs_30cm`、`slope_45deg`、`plum_1`。
-`vt_pose_v1` / `vt_edge_v1` 是操作辅助模型（**不是障碍策略**），只在 launch 或自动路线里使用。
+`vt_pose_v1` / `vt_edge_v1` / `vt_track_v1` 是操作辅助模型（**不是障碍策略**），只在 launch 或自动路线里使用。
+`vt_track_v1` 用 `PART1_TRANSFER_POLICY=vt_track_v1` 让自动路线使用；首次使用先用
+`tools/tracking/position_harness.py` 复核落位增益。
 
 ## 4. 切换语义与限制
 
@@ -137,6 +140,7 @@ Part2 覆盖（2026-10-31 评审）：`row2p_p40w40_v1` 单独 16/20，加上 `s
 
 ```bash
 source demo/install/setup.bash
+# 可选：PART1_TRANSFER_POLICY=vt_track_v1 使用新的速度跟随衔接模型（默认 vt_pose_v1）
 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
     policy_name:=vt_pose_v1 route:=part1 viewer:=false realtime:=true
 ```

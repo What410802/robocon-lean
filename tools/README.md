@@ -8,6 +8,7 @@
 | `record_video.py` | 由 trace 重放同一策略并渲染带判分标注的复盘视频（需要 eval env + 场景） |
 | `check_env.py` | 打印当前 pixi 环境解析到的关键版本 |
 | `mpc/` | Part1 固定路线 MPC 的设计与代码（规划中，见 `mpc/README.md`） |
+| `tracking/` | 速度跟随 / 转弯足迹 / 位置环 / 鲁棒性探针（见 `tracking/README.md`） |
 
 第三方二进制资产清单在 `assets/`（`python assets/verify.py` 校验哈希）。
 
