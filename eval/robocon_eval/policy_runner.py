@@ -626,6 +626,11 @@ class PolicyRunner:
         )
         self.wheel_radius = float(self.cfg.get("wheel_radius") or
                                   (0.103 if self.manifest.get("support_kind") == "wheel" else 0.0))
+        # Locked-wheel (12-DoF point-foot) policies hold the wheel joints at
+        # q=0 with position PD; the policy's 4 wheel outputs are ignored.  The
+        # deploy config carries ``lock_wheels: true`` plus non-zero wheel
+        # rl_kp/rl_kd (the ordinary wheel mode uses rl_kp=0 / velocity targets).
+        self.lock_wheels = bool(self.cfg.get("lock_wheels", False))
 
         # -- observation contract -------------------------------------------
         self.obs_terms = list(self.cfg.get("observations") or
@@ -1085,6 +1090,13 @@ class PolicyRunner:
         scaled = action * self.action_scale
         is_wheel = np.zeros(scaled.size, dtype=bool)
         is_wheel[self.wheel_indices] = True
+        if self.lock_wheels:
+            # Legs position; wheel hinges held at the default angle with the
+            # lock PD gains from the policy config.
+            q_des = self.q_default + np.where(is_wheel, 0.0, scaled)
+            q_des[self.wheel_indices] = 0.0
+            dq_des = np.zeros_like(q_des)
+            return q_des, dq_des
         q_des = self.q_default + np.where(is_wheel, 0.0, scaled)
         dq_des = np.where(is_wheel, scaled, 0.0)
         return q_des, dq_des

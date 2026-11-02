@@ -137,6 +137,9 @@ struct ModelParams
     double stiffness;
     torch::Tensor action_scale;
     std::vector<int> wheel_indices;
+    // Locked-wheel (12-DoF point-foot) mode: wheel actions ignored, wheel joints
+    // held at default q with rl_kp/rl_kd; ordinary wheel mode keeps velocity.
+    bool lock_wheels = false;
     int num_of_dofs;
     double lin_vel_scale;
     double ang_vel_scale;

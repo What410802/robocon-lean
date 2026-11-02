@@ -133,6 +133,30 @@ pixi run -e train train blackw-vt \
 会索引全部 53 个 geom，两个新奖励项静默变成 0（vt_v6 第一次启动即此现象）。v2 已改为在
 params 中显式传 asset_cfg，并在 `train/tests/test_vt_command.py` 加断言防回归。
 
+## 4.3 锁轮点足原型（12 leg DoF，2026-11-02 探索）
+
+按“锁死四轮、回到 RecoveryLoco 点足方案”的设想实现了最小原型（任务 `blackw-vt-locked`）：
+
+- **机器人**：`get_blackw_locked_robot_cfg()`，轮关节 `IdealPdActuator` stiffness=20/damping=1，
+  19 个 `LockedWheelLegAction` 输出腿位置、轮目标固定 0；观测/动作仍为 16 维/57×6（部署契约不变，
+  轮输出被忽略）。
+- **RecoveryLoco 奖励**：tracking_lin/ang、lin_vel_z、body_ang_vel、upright、torques、dof_acc、
+  action_rate/smoothness、feet_air_time、foot_clearance、foot_slip（新增）、stand/姿态（`stance_joint`
+  加权 hip/thigh/calf）、`wheel_lock`、`wheel_axis_level`、`gait_phase`（对角 trot 接触相位）、
+  `foot_lift`；turn-drift 保留。
+- **部署**：`PolicyRunner` 和 `rl_sdk` 均增加 `lock_wheels` 模式（轮 action 忽略、轮 q=0 位置 PD），
+  `train/tests/test_vt_command.py` 覆盖锁定配置；`blackw-vt-locked` 已注册。
+
+训练结果（2026-11-02，从零 + 分阶段）：vt_locked_v1（无步态，轮锁滑行）→ v2（加强 gait，仍不移动）→
+v3（foot lift/all-contact，原地踏步，tracking 0.6/0.8）→ v4（tracking 3.0，400 it 后仍不能稳定走）
+→ v5（加 trot phase，500 it 后 vx=0.3 实际 ~0.14 m/s、单轮常抬/三足跳，`error_vel_xy/yaw≈0.57/0.81`）。
+**当前锁轮原型还达不到 F 门禁或位置环/Part1 交接精度**，因此交付策略仍是滚轮 `vt_track_v2`；
+锁轮代码保留为可复现实验任务，后续需要更长训练/更好的步态课程（或步态教师）。
+
+可行性结论：规则与结构可行（blackW 3×4 腿链 = 12 DoF 点足；Part1 固定动作允许；Part2 暂不建议），
+但圆柱轮足的大惯量 + 小接触线使 from-scratch 步态学习远难于滚轮；本轮时间预算内未达到“速度跟随准确”
+的验收线。奖励项与改动清单已按上文整理，后续可在该任务上继续调 `gait_phase/foot_lift` 与学习率/课程。
+
 ## 5. 验收（`tools/tracking/`，部署同契约 CPU MuJoCo）
 
 | 门禁 | 命令 | 通过标准 |

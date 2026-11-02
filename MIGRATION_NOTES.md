@@ -191,3 +191,15 @@
   drift 0.23–0.28 m；v2 平移保守导致最后回位仍差 ~0.25 m，下一轮给 v2 速度补偿。
 - 路线高墙 precheck 存在 run-to-run 方差（一次 supports_crossed=3/4 side_bypass），
   `stop_on_fail` 会安全停止；这条与衔接模型无关，是 support 几何/朝向的路线问题。
+
+
+## 10. 锁轮 12-DoF 点足原型（2026-11-02）
+
+- 新增 `blackw-vt-locked` task + `get_blackw_locked_robot_cfg` + `LockedWheelLegAction`：
+  轮关节 PD 锁 0、12 腿 DoF 步行；观测/动作保持 16 维/57×6，部署端 `PolicyRunner` / `rl_sdk`
+  增加 `lock_wheels` 模式（轮 action 忽略，轮 q=0 位置 PD）。
+- 奖励：RecoveryLoco 核心 + `feet_air_time`/`foot_clearance`/`foot_slip`/`stance_joint`
+  （hip/thigh 加权，抑制落足点向外/前后扩展）+ `wheel_lock`/`wheel_axis_level` + `gait_phase`/`foot_lift`。
+- 实测：v1/v2 不迈步（轮锁滑行），v3 原地踏步，v4/v5 加 trot 相位后仍只有三足跳/单轮常抬，
+  `vx=0.3` 实际 ~0.14 m/s，`error_vel_xy/yaw≈0.57/0.81`；**未达到 F 门禁/交接精度**。
+  因此最终交付仍为滚轮 `vt_track_v2`；锁轮任务作为后续研究入口保留，需更长训练/步态课程。

@@ -7,6 +7,7 @@ import unittest
 from alldog_mjlab.tasks.velocity.blackw.env_cfgs import (
     blackw_vt_edge_env_cfg,
     blackw_vt_env_cfg,
+    blackw_vt_locked_env_cfg,
 )
 from alldog_mjlab.tasks.velocity.profiles.vt import assembly
 from alldog_mjlab.tasks.velocity.profiles.vt.command import (
@@ -62,6 +63,18 @@ class TestVTCommand(unittest.TestCase):
             (-assembly.PUSH_VEL_XY, assembly.PUSH_VEL_XY),
         )
         self.assertIn("illegal_contact", cfg.terminations)
+
+    def test_locked_variant(self) -> None:
+        cfg = blackw_vt_locked_env_cfg()
+        self.assertEqual(cfg.actions["wheel_leg_fl"].__class__.__name__,
+                         "LockedWheelLegActionCfg")
+        self.assertIn("wheel_lock", cfg.rewards)
+        self.assertIn("feet_air_time", cfg.rewards)
+        self.assertIn("gait_phase", cfg.rewards)
+        self.assertIn("foot_lift", cfg.rewards)
+        self.assertNotIn("wheel_rotation_follow", cfg.rewards)
+        self.assertNotIn("wheel_plane_level", cfg.rewards)
+        self.assertEqual(cfg.rewards["track_linear_velocity"].weight, 3.0)
 
     def test_edge_variant(self) -> None:
         cfg = blackw_vt_edge_env_cfg()

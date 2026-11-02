@@ -193,7 +193,17 @@ void RL::ComputeOutput(const torch::Tensor &actions, torch::Tensor &output_dof_p
     for (int i : this->params.wheel_indices)
     {
         pos_actions_scaled[0][i] = 0.0;
-        vel_actions_scaled[0][i] = actions_scaled[0][i];
+        if (this->params.lock_wheels)
+        {
+            // 12-DoF point-foot mode: wheel hinge is held at its default angle
+            // by position PD; policy wheel outputs are ignored.
+            pos_actions_scaled[0][i] = 0.0 - this->params.default_dof_pos[0][i];
+            vel_actions_scaled[0][i] = 0.0;
+        }
+        else
+        {
+            vel_actions_scaled[0][i] = actions_scaled[0][i];
+        }
     }
     torch::Tensor all_actions_scaled = pos_actions_scaled + vel_actions_scaled;
     output_dof_pos = pos_actions_scaled + this->params.default_dof_pos;
@@ -485,6 +495,7 @@ void RL::ReadYamlBase(std::string robot_path)
         }
     }
     this->params.wheel_indices = ReadVectorFromYaml<int>(config["wheel_indices"]);
+    this->params.lock_wheels = config["lock_wheels"] ? config["lock_wheels"].as<bool>() : false;
     this->params.num_of_dofs = config["num_of_dofs"].as<int>();
     this->params.fixed_kp = torch::tensor(ReadVectorFromYaml<double>(config["fixed_kp"])).view({1, -1});
     this->params.fixed_kd = torch::tensor(ReadVectorFromYaml<double>(config["fixed_kd"])).view({1, -1});
@@ -561,6 +572,7 @@ void RL::ReadYamlRL(std::string robot_path)
     }
     this->params.action_scale = torch::tensor(ReadVectorFromYaml<double>(config["action_scale"])).view({1, -1});
     this->params.wheel_indices = ReadVectorFromYaml<int>(config["wheel_indices"]);
+    this->params.lock_wheels = config["lock_wheels"] ? config["lock_wheels"].as<bool>() : false;
     this->params.num_of_dofs = config["num_of_dofs"].as<int>();
     this->params.lin_vel_scale = config["lin_vel_scale"].as<double>();
     this->params.ang_vel_scale = config["ang_vel_scale"].as<double>();

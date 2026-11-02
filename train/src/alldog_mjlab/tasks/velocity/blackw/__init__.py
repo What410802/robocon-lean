@@ -15,6 +15,7 @@ from .env_cfgs import (
     blackw_flat_env_cfg,
     blackw_vt_edge_env_cfg,
     blackw_vt_env_cfg,
+    blackw_vt_locked_env_cfg,
     blackw_official_mixed_env_cfg,
     blackw_platform_easy_env_cfg,
     blackw_platform_exact_env_cfg,
@@ -55,6 +56,14 @@ register_mjlab_task(
     task_id="blackw-vt",
     env_cfg=blackw_vt_env_cfg(),
     play_env_cfg=blackw_vt_env_cfg(play=True),
+    rl_cfg=black_ppo_runner_cfg(stage="flat"),
+    runner_cls=BlackVelocityOnPolicyRunner,
+)
+
+register_mjlab_task(
+    task_id="blackw-vt-locked",
+    env_cfg=blackw_vt_locked_env_cfg(),
+    play_env_cfg=blackw_vt_locked_env_cfg(play=True),
     rl_cfg=black_ppo_runner_cfg(stage="flat"),
     runner_cls=BlackVelocityOnPolicyRunner,
 )

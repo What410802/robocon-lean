@@ -38,6 +38,23 @@ class WheelLegActionCfg(BaseActionCfg):
         return WheelLegAction(self, env)
 
 
+@dataclass(kw_only=True)
+class LockedWheelLegActionCfg(BaseActionCfg):
+    """One leg: 3 position residuals; the wheel joint is held at q=0.
+
+    The policy still has 16 outputs (four per leg) so the deployment contract,
+    observation layout and export path stay unchanged; the fourth output is
+    ignored and the wheel position target is fixed to the default zero angle.
+    Requires the locked robot variant (wheel actuator stiffness > 0).
+    """
+
+    def __post_init__(self) -> None:
+        self.transmission_type = TransmissionType.JOINT
+
+    def build(self, env) -> "LockedWheelLegAction":
+        return LockedWheelLegAction(self, env)
+
+
 class WheelLegAction(BaseAction):
     cfg: WheelLegActionCfg
 
@@ -70,3 +87,18 @@ class WheelLegAction(BaseAction):
             wheel_target = torch.clamp(wheel_target, -clip, clip)
         self._entity.set_joint_position_target(leg_target, joint_ids=self._target_ids[:3])
         self._entity.set_joint_velocity_target(wheel_target, joint_ids=self._target_ids[3:])
+
+
+class LockedWheelLegAction(WheelLegAction):
+    """Legs position-controlled, wheels PD-locked at the default angle."""
+
+    def apply_actions(self) -> None:
+        raw = self._processed_actions
+        nonfinite = ~torch.isfinite(raw)
+        if bool(nonfinite.any()):
+            raw = torch.nan_to_num(raw, nan=0.0, posinf=100.0, neginf=-100.0)
+            self._processed_actions = raw
+        leg_target = raw[:, :3] + self._default_pos
+        self._entity.set_joint_position_target(leg_target, joint_ids=self._target_ids[:3])
+        wheel_target = torch.zeros((raw.shape[0], 1), dtype=raw.dtype, device=raw.device)
+        self._entity.set_joint_position_target(wheel_target, joint_ids=self._target_ids[3:])

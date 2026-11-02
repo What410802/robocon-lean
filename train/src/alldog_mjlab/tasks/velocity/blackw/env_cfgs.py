@@ -23,6 +23,7 @@ from alldog_mjlab.robots.blackw import (
     BLACKW_FOOT_NAMES,
     BLACKW_JOINT_NAMES,
     BLACKW_WHEEL_JOINTS,
+    get_blackw_locked_robot_cfg,
     get_blackw_robot_cfg,
 )
 from alldog_mjlab.tasks.velocity.common.course import (
@@ -37,7 +38,10 @@ from alldog_mjlab.tasks.velocity.common.velocity_env import (
     BLACK_COMMAND_NAME,
     build_velocity_env_cfg,
 )
-from alldog_mjlab.tasks.velocity.blackw.actions import WheelLegActionCfg
+from alldog_mjlab.tasks.velocity.blackw.actions import (
+    LockedWheelLegActionCfg,
+    WheelLegActionCfg,
+)
 from alldog_mjlab.utils import knobs
 from alldog_mjlab.tasks.velocity.profiles.part2.adaptive_command import (
     make_adaptive_command_cfg,
@@ -51,6 +55,17 @@ from alldog_mjlab.tasks.velocity.profiles.pose import (
     apply_pose_low_speed_mixture,
 )
 from alldog_mjlab.tasks.velocity.profiles.vt import apply_vt_contract
+from alldog_mjlab.tasks.velocity.profiles.vt.locked import (
+    all_feet_contact,
+    feet_air_time,
+    foot_lift,
+    gait_phase,
+    foot_clearance as locked_foot_clearance,
+    foot_slip,
+    stance_joint,
+    wheel_axis_level,
+    wheel_lock,
+)
 from alldog_mjlab.tasks.velocity.profiles.part2.predicates import (
     PART2_BASE_REF_Z,
     PART2_HOLD_STEPS,
@@ -567,6 +582,83 @@ def blackw_vt_edge_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     """
     cfg = _apply_blackw_overrides(build_velocity_env_cfg(play=play, rough=False))
     apply_vt_contract(cfg, play=play, edges=True)
+    return cfg
+
+
+def blackw_vt_locked_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+    """Velocity-tracking primitive on the 12-DoF locked-wheel (point-foot) robot.
+
+    Wheel hinges are PD-held at 0 (``get_blackw_locked_robot_cfg``); the policy
+    walks on hip/thigh/calf with a RecoveryLoco-style contact/gait reward set.
+    The 16-action deployment contract is kept: the policy's 4 wheel outputs are
+    ignored, so export/PolicyRunner only need a ``lock_wheels`` mode.
+    """
+    cfg = _apply_blackw_overrides(build_velocity_env_cfg(play=play, rough=False))
+    cfg.scene.entities = {"robot": get_blackw_locked_robot_cfg()}
+    cfg.actions = {
+        f"wheel_leg_{leg.lower()}": LockedWheelLegActionCfg(
+            entity_name="robot",
+            actuator_names=tuple(
+                f"{leg}_{joint}_joint" for joint in ("hip", "thigh", "calf", "wheel")
+            ),
+            # The 4th (wheel) output is ignored by LockedWheelLegAction; a
+            # single float is required here (tuple scales are unsupported).
+            scale=0.25,
+            preserve_order=True,
+        )
+        for leg in BLACKW_FOOT_NAMES
+    }
+    apply_vt_contract(cfg, play=play, edges=False)
+    # Tracking is the primary task; gait shaping above is deliberately weak.
+    cfg.rewards["track_linear_velocity"] = replace(
+        cfg.rewards["track_linear_velocity"], weight=3.0)
+    cfg.rewards["track_linear_velocity_l2"] = replace(
+        cfg.rewards["track_linear_velocity_l2"], weight=-0.5)
+    # Rolling-wheel oriented terms do not apply; the locked variant uses the
+    # foot-contact/gait terms from profiles/vt/locked.py instead.
+    cfg.rewards.pop("wheel_plane_level", None)
+    cfg.rewards.pop("wheel_rotation_follow", None)
+    locked_terms = {
+        # vt_locked_v3 learned to step in place (foot_lift 1.4, tracking poor):
+        # gait shaping must stay subordinate to command tracking.  Tracking is
+        # raised for this task and the lift/contact-shaping weights reduced.
+        "wheel_lock": (wheel_lock, -10.0, {}),
+        "feet_air_time": (feet_air_time, 0.5, {}),
+        "gait_phase": (gait_phase, 1.0, {}),
+        "foot_lift": (foot_lift, 0.2, {}),
+        "all_feet_contact": (all_feet_contact, -0.5, {}),
+        "foot_clearance": (locked_foot_clearance, -0.05, {}),
+        "foot_slip": (foot_slip, -8.0, {}),
+        "stance_joint": (stance_joint, -0.5, {}),
+        "wheel_axis_level": (wheel_axis_level, -1.0, {}),
+    }
+    for name, (func, weight, params) in locked_terms.items():
+        cfg.rewards[name] = RewardTermCfg(func=func, weight=weight, params=params)
+    # Explicit asset_cfgs are resolved by the reward manager; a function default
+    # stays slice(None) and silently selects every geom/joint.
+    cfg.rewards["foot_lift"].params["asset_cfg"] = SceneEntityCfg(
+        "robot", geom_names=tuple(f"{leg}_wheel_collision" for leg in BLACKW_FOOT_NAMES)
+    )
+    cfg.rewards["foot_clearance"].params["asset_cfg"] = SceneEntityCfg(
+        "robot", geom_names=tuple(f"{leg}_wheel_collision" for leg in BLACKW_FOOT_NAMES)
+    )
+    cfg.rewards["foot_slip"].params["asset_cfg"] = SceneEntityCfg(
+        "robot", geom_names=tuple(f"{leg}_wheel_collision" for leg in BLACKW_FOOT_NAMES)
+    )
+    cfg.rewards["wheel_axis_level"].params["asset_cfg"] = SceneEntityCfg(
+        "robot", body_names=tuple(f"{leg}_foot" for leg in BLACKW_FOOT_NAMES)
+    )
+    cfg.rewards["wheel_lock"].params["asset_cfg"] = SceneEntityCfg(
+        "robot", joint_names=BLACKW_WHEEL_JOINTS
+    )
+    cfg.rewards["stance_joint"].params["asset_cfg"] = SceneEntityCfg(
+        "robot", joint_names=(".*hip_joint", ".*thigh_joint", ".*calf_joint")
+    )
+    # Walking envelope: lower top speed than the rolling primitive.
+    cmd = cfg.commands[BLACK_COMMAND_NAME]
+    cmd = replace(cmd, ranges=replace(cmd.ranges, lin_vel_x=(-0.30, 0.60),
+                                      ang_vel_z=(-0.60, 0.60)))
+    cfg.commands[BLACK_COMMAND_NAME] = cmd
     return cfg
 
 

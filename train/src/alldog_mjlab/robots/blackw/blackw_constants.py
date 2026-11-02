@@ -106,6 +106,31 @@ BLACKW_ARTICULATION = EntityArticulationInfoCfg(
     soft_joint_pos_limit_factor=0.9,
 )
 
+# Locked-wheel prototype (point-foot gait on the 12 leg DoF): the wheel joints
+# are held at q=0 by a PD spring, turning the wheel-legs into cylindrical feet.
+# No XML/physics changes; only actuator stiffness and the action term differ.
+BLACKW_LOCKED_WHEEL_STIFFNESS = 20.0
+BLACKW_LOCKED_WHEEL_DAMPING = 1.0
+
+
+def _locked_wheel_actuator(joint_name: str) -> IdealPdActuatorCfg:
+    return IdealPdActuatorCfg(
+        target_names_expr=(joint_name,),
+        stiffness=BLACKW_LOCKED_WHEEL_STIFFNESS,
+        damping=BLACKW_LOCKED_WHEEL_DAMPING,
+        effort_limit=BLACKW_EFFORT["wheel"],
+    )
+
+
+BLACKW_LOCKED_ACTUATOR_CFGS = tuple(
+    _locked_wheel_actuator(name) if name in BLACKW_WHEEL_JOINTS else _leg_actuator(name)
+    for name in BLACKW_JOINT_NAMES
+)
+BLACKW_LOCKED_ARTICULATION = EntityArticulationInfoCfg(
+    actuators=BLACKW_LOCKED_ACTUATOR_CFGS,
+    soft_joint_pos_limit_factor=0.9,
+)
+
 INIT_STATE = EntityCfg.InitialStateCfg(
     # The deployed blackW spawn uses support height + wheel offset (~0.676 m on flat);
     # training starts a little above contact and lets the policy settle.
@@ -131,3 +156,13 @@ if __name__ == "__main__":
     model = robot.spec.compile()
     print("blackW Entity compiled successfully")
     print(f"nq={model.nq} nv={model.nv} nu={model.nu} nbody={model.nbody}")
+
+
+def get_blackw_locked_robot_cfg() -> EntityCfg:
+    """blackW with wheel joints PD-locked (locomotion on the 12 leg DoF)."""
+    return EntityCfg(
+        spec_fn=get_spec,
+        init_state=INIT_STATE,
+        articulation=BLACKW_LOCKED_ARTICULATION,
+        sort_actuators=True,
+    )
