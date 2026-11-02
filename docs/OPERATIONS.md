@@ -53,7 +53,8 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
 - 路线依赖策略：`vt_pose_v1`、`vt_edge_v1`、`row2p_p40w40_v1`、`st30_ppo_st30_s100_600`、
   `obstacle` + `behaviors/{low_bar_drive,bridge_drive}.yaml`。
 - 速度衔接模型可换成 `vt_track_v1`（训练/验收见 `docs/VT-RECIPE.md`）：
-  `PART1_TRANSFER_POLICY=vt_track_v1 ros2 launch ...`；它的响应曲线与 vt_pose_v1 不同，
+  `ros2 launch ... transfer_policy:=vt_track_v1`（直接跑脚本时用环境变量
+  `PART1_TRANSFER_POLICY=vt_track_v1`）；它的响应曲线与 vt_pose_v1 不同，
   首次使用先跑 `tools/tracking/position_harness.py` 验证并按需调 controller 增益。
 - 已知弱项：桥 A 西台 1.0×1.0 m 原地 90° 转向需要约 1.1×1.1 m 净空（几何限制，不是策略问题），
   S 弯/返程精度不足。MPC 接入方案见 `tools/mpc/README.md`。
@@ -109,6 +110,30 @@ pixi run -e eval python tools/record_video.py \
 
 `record_video.py` 用同一策略/同一命令重放并叠加判分状态；默认 640×360 / 50 fps（评审质量），
 需要更高分辨率时按脚本参数调整。
+
+### 4.1 固定路线录像（Part 1 自动路线）
+
+自动路线节点支持把 `/eval_state` 原始帧与计划（leg/target）同时落盘：
+
+```bash
+source demo/install/setup.bash
+PART1_RECORD_PATH=$PWD/artifacts/route/states.jsonl \
+PART1_RECORD_PLAN_PATH=$PWD/artifacts/route/plan.jsonl \
+ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
+    route:=part1 policy_name:=vt_pose_v1 transfer_policy:=vt_track_v1 \
+    viewer:=false realtime:=true eval_state_every:=10 stop_on_fail:=true
+# 结束后（或 timeout 后）用 eval env 离线渲染，叠加路线/目标/四轮矩形：
+pixi run -e eval python tools/video/replay_route_video.py \
+    artifacts/route/states.jsonl artifacts/route/route.mp4 artifacts/route/plan.jsonl
+```
+
+`stop_on_fail:=true`（默认）在第一个路线预检 FAIL 处停止并关掉 launch；`false` 则继续（旧行为）。
+路线 PASS/FAIL 是排序用 precheck，不是判分；判分用独立 `robocon-eval replay-part1`（差异与
+对齐做法见 `demo/docs/part1-auto-route-operator.md` §2.1）。
+
+`replay_route_video.py` 是运动学回放（`mj_forward`，不重新步进物理），忠实显示录制到的机器人
+状态；视频上部标注当前 leg / target / CLI / 轮地接触，右上有路线俯视 inset。要实时看窗口就去掉
+`viewer:=false`。
 
 ## 5. 自检与排错
 

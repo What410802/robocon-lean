@@ -355,6 +355,7 @@ void RL_Sim::RobotControl()
         if (in.has(input_map::Intent::PolicyTrench30)) this->SwitchPolicy("s1d_trench_reward_v75_m100");
         if (in.has(input_map::Intent::PolicyPose)) this->SwitchPolicy("vt_pose_v1");
         if (in.has(input_map::Intent::PolicyEdge)) this->SwitchPolicy("vt_edge_v1");
+        if (in.has(input_map::Intent::PolicyTrack)) this->SwitchPolicy("vt_track_v1");
         if (in.has(input_map::Intent::ToggleNavigation))
         {
             this->control.navigation_mode = !this->control.navigation_mode;

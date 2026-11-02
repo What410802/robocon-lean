@@ -61,6 +61,7 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 joy:=true device:=
 | **RB + 十字下** | **`F`** | **PolicyTStairs** | **`st30_ppo_st30_s100_600`** | **Part1 T 型楼梯专用** |
 | **RB + 十字右** | **`T`** | **PolicyTrench30** | **`s1d_trench_reward_v75_m100`** | **Part2 沟壑 10/20/30cm 专用（LY≈0.8–1.0 m/s）** |
 | LB + 十字左 | — | PolicyPose | `vt_pose_v1` | 低速闭环对线 / 落位（自动路线用；手动排障） |
+| LB + 十字右 | — | PolicyTrack | `vt_track_v1` | 速度跟随衔接（Part1 位置环；自动路线用；训练/验收见 `docs/VT-RECIPE.md`） |
 | Back + 十字上 | — | PolicyEdge | `vt_edge_v1` | 轮子掉边恢复（自动路线用；手动排障） |
 
 ### 2.3 Part1 固定动作（仅 `part:=1`，进入独立 FSM 状态）
@@ -140,9 +141,10 @@ Part2 覆盖（2026-10-31 评审）：`row2p_p40w40_v1` 单独 16/20，加上 `s
 
 ```bash
 source demo/install/setup.bash
-# 可选：PART1_TRANSFER_POLICY=vt_track_v1 使用新的速度跟随衔接模型（默认 vt_pose_v1）
+# 可选：transfer_policy:=vt_track_v1 使用新的速度跟随衔接模型（默认 vt_pose_v1）
 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
-    policy_name:=vt_pose_v1 route:=part1 viewer:=false realtime:=true
+    policy_name:=vt_pose_v1 route:=part1 viewer:=false realtime:=true \
+    transfer_policy:=vt_track_v1   # 可选；默认 vt_pose_v1
 ```
 
 `route:=part1` 会同时启动 `rl_sar/scripts/part1_auto_route.py`（虚拟手柄，发布 `/joy`）并自动完成

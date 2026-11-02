@@ -91,9 +91,8 @@ install(PROGRAMS
     DESTINATION lib/${PROJECT_NAME}
     RENAME joy_node)
 
-# ④ launch（任务第 4 项）
-install(DIRECTORY launch
-    DESTINATION share/${PROJECT_NAME})
+# ④ launch: this package no longer carries launch files (the single entry point
+#    is rl_sar/launch/rl_sim_all.launch.py), so nothing to install here.
 
 ament_export_dependencies(rosidl_default_runtime)
 

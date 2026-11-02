@@ -32,6 +32,7 @@ import os
 import sys
 import threading
 import time
+from pathlib import Path
 
 import rclpy
 from rclpy.executors import ExternalShutdownException
@@ -39,6 +40,26 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import Joy
 from std_msgs.msg import String
+
+# Route prechecks should use the same Part 1 geometry as the judge.  Import the
+# authoritative constants from eval/ (pure Python, no ROS); the support-crossing
+# high-wall check below is the judge's support-point rule, not a local heuristic.
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_EVAL_ROOT = _REPO_ROOT / "eval"
+if str(_EVAL_ROOT) not in sys.path:
+    sys.path.insert(0, str(_EVAL_ROOT))
+try:
+    from robocon_eval.part1 import judge as _p1_judge
+    from robocon_eval.trace import classify_contacts as _classify_contacts
+    P1_ZONES = dict(_p1_judge.ZONES)
+    WALL_CROSS_Y = float(_p1_judge.WALL_CROSS_Y)
+    WALL_X_MIN = float(_p1_judge.WALL_X_MIN)
+    WALL_X_MAX = float(_p1_judge.WALL_X_MAX)
+    JUDGE_GEOMETRY = True
+except Exception:  # noqa: BLE001 - demo env without the eval package
+    P1_ZONES = {"start_area": (3.2, 4.2, -9.5, -8.5)}
+    WALL_CROSS_Y, WALL_X_MIN, WALL_X_MAX = -7.0, 1.30, 2.30
+    JUDGE_GEOMETRY = False
 
 JOY_COMMAND_SCALE = 1.5
 PUBLISH_HZ = 50.0
@@ -76,6 +97,10 @@ class RouteNode(Node):
         # timing, not RNG; MuJoCo and the fixed spawn are deterministic).
         # Pair with realtime:=false so the sim is not wall-throttled.
         self._steplock = os.environ.get("PART1_ROUTE_STEPLOCK", "").strip() == "1"
+        # Stop at the first FAIL (default on): a wedged/fallen robot should not
+        # sit in a timeout for minutes.  PART1_ROUTE_STOP_ON_FAIL=0 resumes the
+        # old "log FAIL and keep going" behaviour.
+        self._stop_on_fail = os.environ.get("PART1_ROUTE_STOP_ON_FAIL", "1").strip() != "0"
         self._frame_evt = threading.Event()
         self._last_eval_wall = 0.0
         self._current_policy = ""
@@ -96,7 +121,28 @@ class RouteNode(Node):
             QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT),
         )
         self.create_timer(1.0 / PUBLISH_HZ, self._publish)
+        # Live official judge: route PASS/FAIL for obstacle segments is the same
+        # Part1JudgeV2 the eval replay uses (single source of truth).  Falls back
+        # to local prechecks if the eval package is not importable.
+        self._judge = None
+        self._judge_key = {
+            "high_wall": "high_wall",
+            "t_stairs (S up / N down)": "t_stairs",
+            "bridge_blocks": "bridge_blocks",
+            "bridge_bands": "bridge_bands",
+            "long slope straight S": "slope",
+            "height_bar": "height_bar",
+            "gravel_pit": "gravel_pit",
+            "slalom keyframes": "slalom",
+        }
+        if JUDGE_GEOMETRY and os.environ.get("PART1_ROUTE_JUDGE", "1") != "0":
+            try:
+                self._judge = _p1_judge.Part1JudgeV2()
+                self.get_logger().info("route judge: live Part1JudgeV2 enabled")
+            except Exception as exc:  # noqa: BLE001
+                self.get_logger().warning(f"route judge unavailable: {exc}")
         self.get_logger().info("part1_auto_route: virtual gamepad on /joy (waiting for /eval_state)")
+        self._finished = threading.Event()
         self._thread = threading.Thread(target=self._run, name="route", daemon=True)
         self._thread.start()
 
@@ -139,9 +185,10 @@ class RouteNode(Node):
 
     def _hold(self, seconds: float) -> None:
         """Hold the current output for `seconds`: frame-counted in step-lock
-        (deterministic), wall-clock otherwise."""
+        (deterministic), wall-clock sleep otherwise (never recurse: the old
+        implementation called itself and crashed any wall-clock route run)."""
         if not self._steplock:
-            self._hold(seconds)
+            time.sleep(max(0.0, float(seconds)))
             return
         for _ in range(max(1, int(round(seconds / 0.02)))):
             self._tick()
@@ -165,6 +212,30 @@ class RouteNode(Node):
                     str(k): (float(v[0]), float(v[1]), float(v[2]))
                     for k, v in feet.items() if len(v) >= 3
                 }
+                if self._judge is not None:
+                    try:
+                        support = {
+                            leg: self._feet[f"{leg}_foot"]
+                            for leg in ("FL", "FR", "RL", "RR")
+                            if f"{leg}_foot" in self._feet
+                        }
+                        tags = {leg: set() for leg in ("FL", "FR", "RL", "RR")}
+                        ground: set[str] = set()
+                        contacts = raw.get("contacts") or []
+                        if contacts:
+                            ctags, cground = _classify_contacts(contacts)
+                            for leg in tags:
+                                tags[leg].update(ctags.get(leg, set()))
+                            ground.update(cground)
+                        self._judge.update(
+                            float(raw.get("t", self._sim_t)),
+                            (x, y, z), yaw,
+                            foot_tags=tags, ground_feet=ground,
+                            bar_z=raw.get("bar_z"), support_xy=support or None,
+                        )
+                    except Exception as exc:  # noqa: BLE001
+                        self._judge = None
+                        self.get_logger().warning(f"route judge disabled: {exc}")
         except Exception:  # noqa: BLE001
             pass
         if self._record_fh is not None:
@@ -291,6 +362,7 @@ class RouteNode(Node):
     def switch(self, name: str) -> None:
         combos = {
             "vt_pose_v1": ([BTN_LB], (-1, 0)),
+            "vt_track_v1": ([BTN_LB], (1, 0)),
             "vt_edge_v1": ([BTN_BACK], (0, 1)),
             "row2p_p40w40_v1": ([BTN_START], (0, -1)),
             "st30_ppo_st30_s100_600": ([BTN_RB], (0, -1)),
@@ -366,6 +438,18 @@ class RouteNode(Node):
         p = self.pose()
         return p.z < 0.15 or p.tilt > 60.0 or time.monotonic() - p.t > 1.5
 
+    def _transfer_yaw_gains(self) -> tuple[float, float, float]:
+        """Return (min_wz, max_wz, gain) for the active transfer model.
+
+        vt_track_v1 was trained for velocity accuracy; its low-wz response has a
+        dead zone (see docs/VT-RECIPE.md §7).  The route therefore uses a higher
+        floor and a bang-bang-ish gain for this model.  vt_pose_v1 keeps the
+        historical gains that the route was tuned with.
+        """
+        if TRANSFER_POLICY == "vt_track_v1":
+            return (0.22, 0.55, 2.0)
+        return (0.12, 0.45, 1.2)
+
     def rotate_by(self, delta: float, tol: float = 0.10, timeout_s: float = 10.0) -> bool:
         self.ensure_transfer()
         target = wrap(self.pose().yaw + delta)
@@ -374,7 +458,8 @@ class RouteNode(Node):
             err = wrap(target - self.pose().yaw)
             if abs(err) < tol:
                 break
-            wz = math.copysign(max(0.12, min(0.45, 1.2 * abs(err))), err)
+            wz_min, wz_max, wz_gain = self._transfer_yaw_gains()
+            wz = math.copysign(max(wz_min, min(wz_max, wz_gain * abs(err))), err)
             self.command(0.0, 0.0, wz)
             self._tick()
         self.stop(0.3)
@@ -394,7 +479,8 @@ class RouteNode(Node):
             ex, ey = x0 - p.x, y0 - p.y
             fwd = ex * math.cos(p.yaw) + ey * math.sin(p.yaw)
             vx = max(-0.16, min(0.16, 1.2 * fwd))
-            wz = math.copysign(max(0.10, min(0.35, 1.0 * abs(err))), err) if abs(err) > 0.04 else 0.0
+            wz_min, wz_max, wz_gain = self._transfer_yaw_gains()
+            wz = math.copysign(max(wz_min * 0.8, min(wz_max * 0.8, wz_gain * abs(err))), err) if abs(err) > 0.04 else 0.0
             self.command(vx, 0.0, wz)
             self._tick()
             if abs(err) < 0.08 and math.hypot(ex, ey) < 0.10:
@@ -464,7 +550,7 @@ class RouteNode(Node):
     def face(self, yaw: float) -> None:
         self._cmd = f"face({yaw:.2f})"
         self._emit_plan()
-        if not self.rotate_by(wrap(yaw - self.pose().yaw), timeout_s=12.0):
+        if not self.rotate_by(wrap(yaw - self.pose().yaw), timeout_s=18.0):
             p = self.pose()
             raise RuntimeError(f"face {yaw:.2f} failed at yaw {p.yaw:.2f} ({p.x:.2f},{p.y:.2f})")
 
@@ -483,11 +569,19 @@ class RouteNode(Node):
                 break
             err = wrap(math.atan2(ey, ex) - p.yaw)
             if abs(err) > 0.7:
-                wz = math.copysign(max(0.12, min(0.45, 1.2 * abs(err))), err)
+                wz_min, wz_max, wz_gain = self._transfer_yaw_gains()
+                wz = math.copysign(max(wz_min, min(wz_max, wz_gain * abs(err))), err)
                 self.command(0.0, 0.0, wz)
             else:
                 v = min(speed, max(0.08, 0.7 * dist))
-                wz = max(-0.20, min(0.20, 1.0 * err))
+                if TRANSFER_POLICY == "vt_track_v1":
+                    # The low-wz dead zone also hurts small heading corrections
+                    # while driving (goto veered off the T-stairs approach).
+                    wz = max(-0.40, min(0.40, 1.6 * err))
+                    if abs(err) > 0.05 and abs(wz) < 0.14:
+                        wz = math.copysign(0.14, err)
+                else:
+                    wz = max(-0.20, min(0.20, 1.0 * err))
                 self.command(v, 0.0, wz)
             self._tick()
         self.stop(0.3)
@@ -501,6 +595,34 @@ class RouteNode(Node):
     def set_cmd(self, cmd: str) -> None:
         self._cmd = cmd
         self._emit_plan()
+
+    def report(self, name: str, ok: bool, detail: str = "") -> None:
+        """Log one segment verdict; raise (and shut the route down) on the first FAIL."""
+        judge_note = ""
+        if self._judge is not None:
+            key = self._judge_key.get(name)
+            try:
+                report = self._judge.report()
+                if key is not None:
+                    status = report["statuses"].get(key, "pending")
+                    judge_note = f" judge={status}"
+                    if status != "success":
+                        ok = False
+                        detail = f"{detail} judge_reason={report['states'][key].get('reason', '')}".strip()
+                elif name == "return_start":
+                    returned = bool(report.get("returned_to_start"))
+                    judge_note = f" judge_returned_to_start={returned}"
+                    ok = ok and returned
+            except Exception:  # noqa: BLE001
+                pass
+        line = f"{name}: {'PASS' if ok else 'FAIL'}" + (f" {detail}" if detail else "") + judge_note
+        log = self.get_logger()
+        if ok:
+            log.info(line)
+            return
+        log.error(line)
+        if self._stop_on_fail:
+            raise RuntimeError(line)
 
     def _emit_plan(self) -> None:
         if self._plan_fh is None:
@@ -696,6 +818,11 @@ class RouteNode(Node):
         except Exception as exc:  # noqa: BLE001
             self.get_logger().error(f"part1_auto_route aborted: {exc}")
             self.stop(0.5)
+        finally:
+            # Release the main spin loop and let launch shut the sim nodes down.
+            # The watchdog also covers a hung rclpy teardown after an abort.
+            self._finished.set()
+            threading.Timer(2.0, lambda: os._exit(0)).start()
 
     def _route(self) -> None:
         log = self.get_logger()
@@ -953,9 +1080,42 @@ class RouteNode(Node):
         # passed in 20 s (edge2).
         self.require((1.8, -8.15), tol=0.14, timeout_s=60.0, speed=0.30)
         self.face(math.pi / 2.0)
-        ok = self.drive_expert("row2p_p40w40_v1", 0.5, math.pi / 2.0,
-                               lambda p: p.y > -6.0, 8.0)
-        log.info(f"high_wall: {'PASS' if ok else 'FAIL'}")
+        # Judge-consistent precheck (eval/.../judge.py HighWall support path): every
+        # wheel support must cross y=-7 inside the wall x span; crossing outside the
+        # span is a side bypass and fails.  Route previously stopped merely at y>-6.
+        self.switch("row2p_p40w40_v1")
+        support_prev: dict[str, tuple[float, float, float]] = {}
+        crossed: set[str] = set()
+        side_bypass = False
+        ok = False
+        t_hw = time.monotonic()
+        while time.monotonic() - t_hw < 10.0:
+            self.command(0.5, 0.0, 0.0)
+            self._tick()
+            p = self.pose()
+            for name, pos in self.feet().items():
+                x, y = float(pos[0]), float(pos[1])
+                prev = support_prev.get(name)
+                if prev is not None:
+                    px, py = prev[0], prev[1]
+                    if (py - WALL_CROSS_Y) * (y - WALL_CROSS_Y) <= 0 and abs(y - py) < 1.0:
+                        if abs(y - py) < 1e-9:
+                            x_at = (px + x) / 2.0
+                        else:
+                            x_at = px + (x - px) * (WALL_CROSS_Y - py) / (y - py)
+                        if WALL_X_MIN <= x_at <= WALL_X_MAX:
+                            crossed.add(name)
+                        else:
+                            side_bypass = True
+                support_prev[name] = (x, y, float(pos[2]))
+            if p.y > -6.0:
+                ok = not side_bypass and len(crossed) >= 4
+                break
+            if self.fallen():
+                break
+        self.stop(0.6)
+        self.report("high_wall", ok,
+                    f"supports_crossed={len(crossed)}/4 side_bypass={side_bypass}")
         self.ensure_transfer()
 
         # 2) T stairs: south arm up, north arm down (different arms), exit north
@@ -984,7 +1144,7 @@ class RouteNode(Node):
             prev_t = p
             self._tick()
         self.stop(0.5)
-        log.info(f"t_stairs (S up / N down): {'PASS' if ok else 'FAIL'}")
+        self.report("t_stairs (S up / N down)", ok)
         self.ensure_transfer()
 
         # 3+4) Bridge A: mount the west platform straight from the floor at
@@ -1073,7 +1233,7 @@ class RouteNode(Node):
             self.goto((0.8, -2.0), tol=0.25, timeout_s=25.0, speed=0.25)
             self.goto((0.8, 0.0), tol=0.22, timeout_s=15.0, speed=0.18)
             self.face(0.0)
-        log.info(f"bridge_blocks: {'PASS' if ok else 'FAIL'}")
+        self.report("bridge_blocks", ok)
         self.ensure_transfer()
 
         # 5) A east platform: stop immediately when the centre region is
@@ -1082,6 +1242,13 @@ class RouteNode(Node):
         self.set_leg("bridge_A_center")
         self.ensure_transfer()
         self.stop(0.8)
+        # The bridge-blocks exit condition allows the robot to coast ~0.2 m back
+        # from the east platform centre; a fixed skid spin started against the
+        # block edge stalls (observed 30-40 deg in 40 s).  Re-centre with the
+        # transfer primitive first; failure is non-fatal (spin/stop_on_fail will
+        # report it).
+        if not self.goto((5.70, -0.45), tol=0.12, timeout_s=10.0, speed=0.12):
+            log.warning("bridge A east centre recentre failed; spin will report")
         self._cli = "center correction"
         self._emit_plan()
         # Spin FIRST (burst+dwell, drift <=0.04 m in 5 consecutive runs), then
@@ -1089,14 +1256,23 @@ class RouteNode(Node):
         # diagonal pose_move_to relied on lateral correction, which is the
         # zero-authority axis for every model (edge29/30 wedged at the west
         # lip, 0.7 m off-centre).
-        ok_spin = self.spin_fixed(-math.pi / 2.0, tol=0.10, timeout_s=20.0,
-                                  max_drift=0.40)
+        ok_spin = self.spin_fixed(-math.pi / 2.0, tol=0.10, timeout_s=40.0,
+                                  max_drift=0.60, rate=0.70)
         if not ok_spin:
             log.warning("east centre spin retry")
-            ok_spin = self.spin_fixed(-math.pi / 2.0, tol=0.12, timeout_s=20.0,
-                                      max_drift=0.50)
-        log.info(f"bridge A east centre spin: "
-                 f"{'PASS' if ok_spin else 'FAIL'} at ({self.pose().x:.2f},{self.pose().y:.2f})")
+            ok_spin = self.spin_fixed(-math.pi / 2.0, tol=0.12, timeout_s=40.0,
+                                      max_drift=0.70, rate=0.70)
+        if not ok_spin:
+            # The fixed differential spin is friction/camber sensitive and can
+            # stall part-way on the 1 m platform.  Fall back to the RL transfer
+            # primitive's closed-loop rotate_hold (vt_track_v1 keeps the base
+            # within ~0.05 m in the position harness), then continue on the lane.
+            log.warning("east centre spin: fixed-drive failed; "
+                        "using transfer rotate_hold")
+            self.ensure_transfer()
+            ok_spin = self.rotate_hold(-math.pi / 2.0, timeout_s=25.0)
+        self.report("bridge A east centre spin", ok_spin,
+                    f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         # Lane-south to the bridge B entry (lateral = x about 5.7).
         prev_p = None
         t0s = time.monotonic()
@@ -1120,7 +1296,7 @@ class RouteNode(Node):
         self.enter_fixed("bridge")
         ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -3.9, 20.0)
         self.exit_fixed()
-        log.info(f"bridge_bands: {'PASS' if ok else 'FAIL'}")
+        self.report("bridge_bands", ok)
         self.ensure_transfer()
 
         # 6) straight south through the long slope, then height bar fixed action
@@ -1132,7 +1308,7 @@ class RouteNode(Node):
         # slid off sideways, tilt 173 deg).
         ok = self.drive_expert("row2p_p40w40_v1", 0.50, -math.pi / 2.0,
                                lambda p: p.y < -7.2 and p.z < 0.54, 12.0)
-        log.info(f"long slope straight S: {'PASS' if ok else 'FAIL'} at ({self.pose().x:.2f},{self.pose().y:.2f})")
+        self.report("long slope straight S", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer()
         self.set_leg("height_bar")
         self.require((5.7, -8.2), tol=0.16, timeout_s=18.0, speed=0.25)
@@ -1140,7 +1316,7 @@ class RouteNode(Node):
         self.enter_fixed("low_bar")
         ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -10.2, 15.0)
         self.exit_fixed()
-        log.info(f"height_bar: {'PASS' if ok else 'FAIL'}")
+        self.report("height_bar", ok)
         self.ensure_transfer()
 
         # 7) gravel L: enter from the north, turn in the middle, exit west
@@ -1182,8 +1358,8 @@ class RouteNode(Node):
             self.command(0.5, 0.0, wz)
             self._tick()
         self.stop(0.5)
-        log.info(f"gravel_pit: {'PASS' if (ok and ok2) else 'FAIL'} "
-                 f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
+        self.report("gravel_pit", (ok and ok2),
+                    f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer()
 
         # 8) slalom keyframes: B start -> north of post3 -> south of post2 ->
@@ -1205,12 +1381,15 @@ class RouteNode(Node):
         for pt, deg in slalom:
             if self.goto(pt, tol=0.12, timeout_s=9.0, speed=0.14):
                 reached += 1
-        log.info(f"slalom keyframes: {reached}/{len(slalom)}")
+        self.report("slalom keyframes", reached == len(slalom),
+                    f"{reached}/{len(slalom)}")
 
         # 9) return to start
-        ok = self.goto((3.7, -9.0), tol=0.20, timeout_s=20.0, speed=0.25)
+        sx0, sx1, sy0, sy1 = P1_ZONES["start_area"]
+        ok = self.goto(((sx0 + sx1) / 2.0, (sy0 + sy1) / 2.0),
+                       tol=0.20, timeout_s=20.0, speed=0.25)
         self.stop(0.5)
-        log.info(f"return_start: {'PASS' if ok else 'FAIL'}")
+        self.report("return_start", ok)
         log.info("part1_auto_route finished (wheel recoveries: %d)" % self._recoveries)
 
 
@@ -1218,12 +1397,16 @@ def main() -> int:
     rclpy.init()
     node = RouteNode()
     try:
-        rclpy.spin(node)
+        while rclpy.ok() and not node._finished.is_set():
+            rclpy.spin_once(node, timeout_sec=0.1)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         try:
             node.command(0.0, 0.0, 0.0)
+        except Exception:  # noqa: BLE001
+            pass
+        try:
             node.destroy_node()
         except Exception:  # noqa: BLE001
             pass

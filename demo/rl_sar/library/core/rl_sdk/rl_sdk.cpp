@@ -387,11 +387,26 @@ std::vector<T> ReadVectorFromYaml(const YAML::Node &node)
 void RL::ValidateRobotManifest(std::string robot_name, bool check_loaded_params)
 {
     namespace fs = std::filesystem;
-    const fs::path repo_root = fs::path(CMAKE_CURRENT_SOURCE_DIR).parent_path().parent_path().parent_path();
-    const fs::path manifest_path = repo_root / "robots" / robot_name / "robot.yaml";
-    if (!fs::is_regular_file(manifest_path))
+    // Locate the robot manifest without hard-coding the old ws/src layout:
+    // walk up from the rl_sar source dir until a "robots/<name>/robot.yaml"
+    // exists (works for demo/rl_sar/..., ws/src/rl_sar/..., and installed trees).
+    fs::path manifest_path;
+    for (fs::path root = fs::path(CMAKE_CURRENT_SOURCE_DIR); !root.empty(); root = root.parent_path())
     {
-        throw std::runtime_error("robot manifest missing: " + manifest_path.string());
+        const fs::path candidate = root / "robots" / robot_name / "robot.yaml";
+        if (fs::is_regular_file(candidate))
+        {
+            manifest_path = candidate;
+            break;
+        }
+        if (root == root.root_path())
+        {
+            break;
+        }
+    }
+    if (manifest_path.empty())
+    {
+        throw std::runtime_error("robot manifest missing: robots/" + robot_name + "/robot.yaml (search root " + std::string(CMAKE_CURRENT_SOURCE_DIR) + ")");
     }
     const YAML::Node man = YAML::LoadFile(manifest_path.string());
     const int num_dofs = man["num_dofs"].as<int>();

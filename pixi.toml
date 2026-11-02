@@ -7,8 +7,9 @@
 #
 # MuJoCo stays pinned to 3.11.0 in every environment: the official blackW MJCF
 # declares timestep 0.002 s and is the shared physics reference for training,
-# judging and demo runs. Everything else is deliberately not double-locked —
-# select an environment explicitly and let pixi resolve per environment.
+# judging and demo runs. The workspace keeps a single committed pixi.lock
+# (resolved once for linux-64) — no per-environment locks and no --frozen. Select
+# an environment explicitly (`pixi install -e demo|eval|train`).
 
 [workspace]
 authors = ["What410802 <what410802@126.com>"]

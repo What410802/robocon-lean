@@ -9,6 +9,8 @@
 | `check_env.py` | 打印当前 pixi 环境解析到的关键版本 |
 | `mpc/` | Part1 固定路线 MPC 的设计与代码（规划中，见 `mpc/README.md`） |
 | `tracking/` | 速度跟随 / 转弯足迹 / 位置环 / 鲁棒性探针（见 `tracking/README.md`） |
+| `video/` | 固定路线 / 回放录制：`replay_route_video.py` 把 `/eval_state` JSONL 渲染成带路线叠加的 MP4 |
+
 
 第三方二进制资产清单在 `assets/`（`python assets/verify.py` 校验哈希）。
 
@@ -18,4 +20,11 @@
 pixi run -e demo demo-build
 pixi run -e eval demo-tests
 pixi run -e eval python tools/record_video.py --help
+```
+
+固定路线录像：
+
+```bash
+pixi run -e eval python tools/video/replay_route_video.py \
+    artifacts/route/states.jsonl artifacts/route/route.mp4 artifacts/route/plan.jsonl
 ```

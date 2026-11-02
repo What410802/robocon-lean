@@ -6,6 +6,8 @@ demo；规则依据、判分细节和训练配方分别在 `docs/` 与各目录 
 
 > 状态：2026-11-02 已从旧比赛工作区迁移重建完成（新仓独立 git 历史，不引用旧仓）。
 > 仓库不带历史权重/旧 artifacts：权重按 `demo/rl_sar/policy/*/` 的配置重新训练/导出。
+> 同日已按本 README 在干净环境验证 `eval` / `demo` / `train` 三个 pixi 环境、colcon 构建、
+> 固定路线（含 `stop_on_fail`、live Part1 judge 门控）与路线录像。
 
 ## 三条流水线
 
@@ -31,7 +33,7 @@ terrain/  ──►  demo/scenes/  ──►  demo/ (MuJoCo + ROS 2)  ──► 
 ## 快速开始
 
 ```bash
-# 0) 只装需要的环境（三选一/按需）
+# 0) 只装需要的环境（三选一/按需；单份 pixi.lock，不用 --frozen）
 pixi install -e eval
 pixi install -e demo
 pixi install -e train
@@ -51,6 +53,22 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=2 \
     level:=high_platform_40cm policy_name:=row2p_p40w40_v1 viewer:=false realtime:=true
 ```
+
+# 5) Part 1 固定路线自检 + 录像（可选；约 4–6 min）
+source demo/install/setup.bash
+PART1_RECORD_PATH=$PWD/artifacts/route/states.jsonl \
+PART1_RECORD_PLAN_PATH=$PWD/artifacts/route/plan.jsonl \
+ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route:=part1 \
+    policy_name:=vt_pose_v1 transfer_policy:=vt_track_v1 \
+    viewer:=false realtime:=true eval_state_every:=10 stop_on_fail:=true
+pixi run -e eval python tools/video/replay_route_video.py \
+    artifacts/route/states.jsonl artifacts/route/route.mp4 artifacts/route/plan.jsonl
+```
+
+`stop_on_fail:=true`（默认）在第一个路线预检 FAIL 处停止并关掉 launch，避免卡在掉落点
+空等；要像操作员一样继续就传 `stop_on_fail:=false`。路线 PASS 只是 precheck，官方分用
+`demo/tests/record_eval_trace.py` 同时录 trace 后 `pixi run -e eval robocon-eval replay-part1`
+判定（两者差异见 `demo/docs/part1-auto-route-operator.md` §2.1）。
 
 判分跑必须记录 2 ms trace（`eval_state_every:=1`），然后：
 

@@ -119,3 +119,41 @@
 - **结果与已知限制**：见 `docs/VT-RECIPE.md` §4.1/§7。结论：F1/F2/F3/F5/F6/F7 全过（F4 vy 按方向
   仅诊断）；原地转漂移压到 0.05–0.09 m（目标 0.15）；90° 扫掠半径 ~0.57 m（静止 ~0.34 m）；
   负向低速转向仍有死区，彻底“零额外占地”需要 stepping-turn 步态（已列为后续项）。
+
+## 8. 复现验证（2026-11-02，pixi + 全场路线）
+
+本轮把迁移后的仓库真正按 README 从零跑通，并修掉迁移过程中遗留的问题：
+
+- **pixi 环境**：`pixi install -e eval`、`pixi install -e demo` 均成功（demo 2.7 GB，含 ROS 2
+  Humble + MuJoCo 3.11 + CPU libtorch）；`pixi run -e eval eval-pytest`（86 passed）、
+  `pixi run -e eval demo-tests`、`pixi run -e demo demo-build`、`robocon-eval --help` 全部验证。
+  生成并提交单份 `pixi.lock`（不 per-env lock、不用 `--frozen`）。
+- **构建修复**：`quadruped_ros2/CMakeLists.txt` 仍安装迁移时删掉的 `launch/` 目录 → 构建失败；
+  已移除该安装项（唯一入口是 `rl_sar/launch/rl_sim_all.launch.py`）。
+- **运行时修复**：`rl_sdk.cpp` 用旧的 `ws/src/rl_sar` 层级硬编码 robot.yaml 根；改为从
+  `CMAKE_CURRENT_SOURCE_DIR` 向上搜索 `robots/<name>/robot.yaml`。`part1_auto_route.py` 的
+  `_hold` 墙钟分支递归调用自己（旧仓同款 latent bug）→ 改为 `time.sleep`。
+- **路线能力**：
+  - 新增 `stop_on_fail`（launch 参数 / `PART1_ROUTE_STOP_ON_FAIL`，默认开）：第一段 FAIL 即
+    停止路线并关闭 launch，不再卡在掉落点等外层 timeout；
+  - 障碍段 PASS/FAIL 改为查询 **live `Part1JudgeV2`**（与 eval replay 同一份代码/常量），
+    路线只保留排序；`PART1_ROUTE_JUDGE=0` 可退回本地 precheck；
+  - high_wall 从“过 y=-6 即 PASS”改为 judge 的 support 跨越规则（四轮各自跨 y=-7 且 x 在墙宽内）；
+  - 新增 `robots/blackW` 之外的 `PolicyTrack` 绑定：`LB + 十字右` 切 `vt_track_v1`，
+    `transfer_policy:=vt_track_v1` 走 launch；
+  - 录像：`PART1_RECORD_PATH`/`PART1_RECORD_PLAN_PATH` + `tools/video/replay_route_video.py`
+    生成 800×620@25fps 的路线回放视频。
+- **实测一致性 / 路线结果**（同一段路线、同一策略）：
+  - run7（旧 reach 判据）：route 日志 high_wall PASS（support 4/4）、t_stairs PASS、
+    bridge_blocks PASS；judge replay 同一份 trace 判 high_wall success、t_stairs success、
+    bridge_blocks **fail wrong_exit_side**，总分 **200**。→ 证明旧 PASS 与 judge 不一致。
+  - 已改为 live `Part1JudgeV2` 门控（run8）：high_wall judge=success、t_stairs judge=success，
+    bridge_blocks 在路线停止时 judge 仍 `running` → 按 non-success 处理并触发 `stop_on_fail`；
+    launch 三个进程 clean exit（sim_node/rl_sim/route 都打印 finished cleanly），不再等 timeout。
+  - 录像：run7 的 `/eval_state` 渲染为 `artifacts/route/vt_track_route.mp4`
+    （800×620@25fps，205 s，含路线/目标/四轮矩形叠加；命令见 `docs/OPERATIONS.md` §4.1）。
+  - 路线自身仍卡在 bridge A 东台固定差速原地转（30–180°/40 s + 大漂移），已在
+    `stop_on_fail` 下安全停止；这是路线/固定动作问题，不是衔接模型问题。
+- **已知路线问题（非衔接模型）**：bridge A 东台的固定动作差速原地转在此环境只转
+  ~30–180°/40 s 且漂移大（`spin_fixed`），换新模型 `rotate_hold` 也失败；路线在
+  `stop_on_fail` 下会停在该段并给视频/日志，不阻塞其它段验收。

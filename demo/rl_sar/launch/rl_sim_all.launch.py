@@ -27,7 +27,15 @@ import sys
 import yaml
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, OpaqueFunction
+from launch.actions import (
+    DeclareLaunchArgument,
+    EmitEvent,
+    ExecuteProcess,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
+from launch.event_handlers import OnProcessExit
+from launch.events import Shutdown
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -160,12 +168,25 @@ def _route_node(context, *args, **kwargs):
     if not ROUTE_SCRIPT.is_file():
         raise RuntimeError(f"route script missing: {ROUTE_SCRIPT}")
     transfer = context.perform_substitution(LaunchConfiguration("transfer_policy")).strip() or "vt_pose_v1"
-    return [ExecuteProcess(
+    stop_on_fail = context.perform_substitution(LaunchConfiguration("stop_on_fail")).strip().lower() \
+        not in ("0", "false", "no", "off")
+    route_proc = ExecuteProcess(
         cmd=[sys.executable, str(ROUTE_SCRIPT)],
         output="screen",
         name="part1_auto_route",
-        env={**os.environ, "PART1_TRANSFER_POLICY": transfer},
-    )]
+        env={**os.environ,
+             "PART1_TRANSFER_POLICY": transfer,
+             "PART1_ROUTE_STOP_ON_FAIL": "1" if stop_on_fail else "0"},
+    )
+    # When the route process exits (all PASS, or the first FAIL with stop_on_fail),
+    # shut the whole launch down instead of leaving the sim running until timeout.
+    return [
+        route_proc,
+        RegisterEventHandler(OnProcessExit(
+            target_action=route_proc,
+            on_exit=[EmitEvent(event=Shutdown())],
+        )),
+    ]
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -199,7 +220,10 @@ def generate_launch_description() -> LaunchDescription:
                                               "(if eval_state_every:=0 is passed it is raised to 10)"),
             DeclareLaunchArgument("transfer_policy", default_value="vt_pose_v1",
                                   description="policy used for route transfers/alignment: "
-                                              "vt_pose_v1|flat|stair|obstacle|row2p_p40w40_v1"),
+                                              "vt_pose_v1|vt_track_v1|flat|stair|obstacle|row2p_p40w40_v1"),
+            DeclareLaunchArgument("stop_on_fail", default_value="true",
+                                  description="stop the auto route (and this launch) at the first "
+                                              "segment FAIL; pass false to keep going like an operator"),
             DeclareLaunchArgument(
                 "viewer", default_value="true",
                 description="open the MuJoCo window (auto-off when DISPLAY/WAYLAND_DISPLAY is missing; "

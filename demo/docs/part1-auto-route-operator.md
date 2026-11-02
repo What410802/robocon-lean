@@ -16,6 +16,8 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
 
 - `route:=part1`：自动启动 `part1_auto_route` 虚拟手柄节点（发布 `/joy`），自动完成
   A 站立 → RB+十字上进 RL → 逐段走路线。**不需要任何手柄操作**。
+- `stop_on_fail:=true`（默认）：第一段路线预检 FAIL 即停止路线并关闭整个 launch（不再卡在
+  掉落点等超时）；排查时传 `false` 保留旧行为。
 - **`realtime:=true` 必须显式传**（launch 默认 `false` 是全速回归模式，会把墙钟节拍的路线控制器
   甩开：启动睡眠的几秒墙钟里仿真已跑百余秒，机器人零指令漂移出场）。
 - 要看 MuJoCo 窗口就去掉 `viewer:=false`（窗口默认开启，`realtime:=true` 保持）。
@@ -26,7 +28,7 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
 
 ## 2. 路线流程（节点自动执行）
 
-起点 (3.7,-9.0) → 每段先由 `vt_pose_v1` 低速闭环对线/落位，再切专家过障：
+起点 (3.7,-9.0) → 每段先由衔接模型（默认 `vt_pose_v1`；`transfer_policy:=vt_track_v1` 可换新模型）低速闭环对线/落位，再切专家过障：
 
 | # | 段 | 用的模型/动作 |
 |---|---|---|
@@ -38,13 +40,52 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
 | 6 | 长坡直行向南 | row2p（**退出条件含 z<0.54**：必须到平地才交还） |
 | 7 | 限高杆 | `low_bar_drive` 固定动作 |
 | 8 | 砂砾坑 L 形 | 主办方 `obstacle`（北进、坑中转西、西出） |
-| 9 | S 弯 7 关键帧 | vt_pose_v1 低速绕杆 |
-| 10 | 返回起点 | vt_pose_v1 |
+| 9 | S 弯 7 关键帧 | 衔接模型低速绕杆 |
+| 10 | 返回起点 | 衔接模型 |
 
 **边缘恢复（自动）**：每段落位前，节点检查四轮着地面。若在平地上四轮分处两个高度面
 （轮面差 >6 cm 且车体倾角 <10°——倾角大说明在坡/梯上，是几何分层不触发），自动切
-`vt_edge_v1`（边缘恢复专家），朝多数平面的轮心质心行驶至四轮回同一平面后切回 `vt_pose_v1`。
+`vt_edge_v1`（边缘恢复专家），朝多数平面的轮心质心行驶至四轮回同一平面后切回衔接模型。
 日志关键字：`wheel-off-edge detected` / `edge recovery done`。结束日志含 `wheel recoveries: N`。
+
+## 2.1 路线 PASS 与 eval 判分的关系（2026-11-02 对齐）
+
+路线日志里的 `xxx: PASS/FAIL` 是**路线排序用的门控**；官方分仍以 `eval/` 的 Part1 judge 对
+2 ms trace 回放为准。**2026-11-02 起障碍段 PASS/FAIL 直接查询 live `Part1JudgeV2`**（与
+`robocon-eval replay-part1` 同一份代码、同一套常量），路线里只剩“怎么走/何时切策略”的
+sequencing；仍属于路线侧的只有：平台原地转、停走、落位这类非计分动作。已知差异：
+
+| 段 | 路线动作/排序 | eval judge（`eval/robocon_eval/part1/judge.py`） |
+| high_wall | row2p 0.5 m/s 沿墙宽直行（support 证据取自四轮世界坐标） | support 全跨、x 在墙宽内；无 support 时退化为 base-z/墙接触证据 |
+| t_stairs | st30 沿 x=1.8 车道到北侧臂外 | 南臂上 + 北臂下（不同臂）、逐级 step 证据、从北侧 exit |
+| bridge_blocks | row2p 沿 y≈0 车道过桥到东台 | 逐块 support/exit 证据；**wrong_exit_side** 等会失败（实测路线“到达东台”但 judge 判 fail，见 MIGRATION_NOTES） |
+| bridge_bands / slope / height_bar / gravel | 固定动作或专家走到下一路点即 PASS | band/坡/杆/坑的支撑与边界事件、部分分/失败条件 |
+| slalom | 7 个关键帧到几个报几个（不强制全过） | 7 根杆 + corner + 起终点圆、顺序和方向 |
+| return_start | goto 回起点即可 | 8 个障碍全成功后的回起点 bonus（100 分） |
+| attempts/fall | 不建模 | 3 次 attempt、fall 暂停/恢复、跳过、计时 |
+
+因此：
+
+- 障碍段路线 PASS 现在与 live judge 一致；但路线仍有“走法”自由（例如绕路/切车），
+  live judge 在无 support 数据或不同采样下可能略有差异，**最终仍以 trace 回放为准**。
+- `PART1_ROUTE_JUDGE=0` 可关闭 live judge（退回纯路线 precheck，仅用于调试）。
+- 回放方法（与路线同时录一份 judge trace）：
+
+```bash
+# 终端 A（录 2 ms/50 Hz trace；路线内部只记原始 /eval_state 供视频用）
+python demo/tests/record_eval_trace.py --part 1 --robot blackW \
+    --scene $PWD/demo/robots/blackW/scene_part1.xml --seconds 900 \
+    --out artifacts/route/vt_track_judge_trace.jsonl
+# 终端 B
+PART1_ROUTE_STOP_ON_FAIL=1 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
+    route:=part1 transfer_policy:=vt_track_v1 viewer:=false realtime:=true eval_state_every:=10
+# 结束后
+pixi run -e eval robocon-eval replay-part1 --trace artifacts/route/vt_track_judge_trace.jsonl
+```
+
+后续若要把路线预检进一步对齐 judge，只需把更多段的 `report(...)` 证据改用
+`eval/robocon_eval/part1/judge.py` 的 support/zone 常量与事件（high_wall 已改为该方式）；
+不建议在路线里复制判分逻辑，判分仍以独立 replay 为准。
 
 ## 3. 手柄按键（全部可选）
 
