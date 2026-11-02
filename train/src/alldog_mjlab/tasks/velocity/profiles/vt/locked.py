@@ -367,34 +367,45 @@ def feet_air_time_cmd(
 def foot_stance_time(
     env,
     max_stance_s: float = 0.60,
-    sigma: float = 0.15,
+    sigma: float = 0.20,
+    per_foot_cap: float = 2.0,
+    total_cap: float = 3.0,
 ) -> torch.Tensor:
-    """Penalise a wheel that stays planted too long while a command is active.
+    """Penalise wheels that stay planted too long while a command is active.
 
     Stateless equivalent of a per-foot duty-cycle bound; together with
     ``foot_air_time_penalty`` it forces all four feet to participate in the
-    stepping cycle instead of a three-legged stance.
+    stepping cycle instead of a three-legged stance.  Both the per-foot and the
+    total penalty are capped: without a cap a standing policy accumulates an
+    unbounded penalty (the first S1 run reached -2.5e3/s and destroyed the value
+    function) instead of producing a usable "step now" gradient.
     """
     contact = _contact_legs(env)
     stance_t = _leg_field(env, "current_contact_time")
     moving = _moving(env)
     excess = torch.relu(stance_t - max_stance_s) / max(sigma, 1e-6)
-    return torch.sum(excess * excess * contact.to(excess.dtype)
-                     * moving.unsqueeze(1).to(excess.dtype), dim=1)
+    per_foot = torch.clamp(excess * excess, max=per_foot_cap)
+    total = torch.sum(per_foot * contact.to(per_foot.dtype)
+                      * moving.unsqueeze(1).to(per_foot.dtype), dim=1)
+    return torch.clamp(total, max=total_cap)
 
 
 def foot_air_time_penalty(
     env,
     max_air_s: float = 0.40,
-    sigma: float = 0.10,
+    sigma: float = 0.15,
+    per_foot_cap: float = 2.0,
+    total_cap: float = 2.0,
 ) -> torch.Tensor:
     """Penalise a wheel that dangles in the air while a command is active."""
     contact = _contact_legs(env)
     air_t = _leg_field(env, "current_air_time")
     moving = _moving(env)
     excess = torch.relu(air_t - max_air_s) / max(sigma, 1e-6)
-    return torch.sum(excess * excess * (~contact).to(excess.dtype)
-                     * moving.unsqueeze(1).to(excess.dtype), dim=1)
+    per_foot = torch.clamp(excess * excess, max=per_foot_cap)
+    total = torch.sum(per_foot * (~contact).to(per_foot.dtype)
+                      * moving.unsqueeze(1).to(per_foot.dtype), dim=1)
+    return torch.clamp(total, max=total_cap)
 
 
 def foot_clearance(
