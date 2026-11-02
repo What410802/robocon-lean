@@ -1,0 +1,12 @@
+<mujoco model="part2_full_field">
+  <!-- 官方 Part2 能力场地整场（地形源：terrain/official/map.xml，sha256
+       57531fe29fe4c2c0a33b65c12b71ba2e169d733d3f7518fc95eec291512f4b32）。
+       一行一种障碍、一列一档难度；只用于人工查看/驾驶整场，判分仍走 ../generated/ 下的
+       20 个单关场景（part2_off_<level>.xml）。
+       官方 map.xml 引用 labels/ 下的 85 张难度标签纹理（2.2 MB，随本场景入库）。
+       机器人来自单一资产库 robots/blackW/：blackW_description.xml 里的 compiler meshdir="assets"
+       由 MuJoCo 相对“主场景文件所在目录”解析，所以这里的 assets 是指向
+       ../../../robots/blackW/assets 的软链接。 -->
+  <include file="../../../robots/blackW/blackW_description.xml"/>
+  <include file="../official/map.xml"/>
+</mujoco>

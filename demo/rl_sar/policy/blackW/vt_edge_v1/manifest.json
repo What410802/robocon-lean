@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "robot": "blackW",
+  "policy": "vt_edge_v1",
+  "round": "2026-11-01_pose_edge_robustness",
+  "source": "training run 2026-11-01_17-23-25_vt_pose_v2_r6 model_5000 (r6: RC_POSE_CMD envelope + low-speed mixture + platform-edge terrain + upright 1.2 + joint-space stance anchor 0.6); exported via training/scripts/export/export_history_policy.py; see docs/agent-docs/pose-primitive-vt-pose-v2-20261101.md (umbrella)",
+  "weight_file": "policy.pt",
+  "policy_sha256": "b65be279d55428220176e4294fb12222245f4012acf722630db64bef3f204381",
+  "checkpoint": "logs/rsl_rl/black_velocity/2026-11-01_17-23-25_vt_pose_v2_r6/model_5000.pt",
+  "contract": {
+    "num_dofs": 16,
+    "num_observations": 57,
+    "history": 6,
+    "support_kind": "wheel",
+    "action_contract": "signed"
+  },
+  "evidence": {
+    "kind": "checkpoint sweep + edge recovery probe + support rectangle probe",
+    "command_response_flat": "vx 0.10/0.15/0.20/0.30 -> 0.079/0.129/0.180/0.282; reverse -0.10 -> -0.101; wz +0.20/-0.20 -> +0.154/-0.137 (asym 4%); +0.40/-0.40 -> +0.364/-0.345; stance z 0.49 (nominal), tilt 6.7 deg",
+    "edge_recovery": "h=0.20 wheel-off recover 2/2; h=0.10 0/2; no falls at any height; mount-from-floor not learned (experts own that)",
+    "artifacts": "artifacts/velocity-tracking/pose/{sweep_pose_r6,edge_recovery_r6,support_rect_r6}.json"
+  },
+  "usage": "edge-recovery specialist for the Part1 pose-primitive route: when the closed-loop controller detects the four wheels on two planes on flat ground (wheel level spread > 6 cm, tilt < 10 deg), it switches to this policy, drives toward the majority-plane wheel centroid until the wheels share one level, then switches back to the pose policy. LAUNCH-ONLY via policy_name:=vt_edge_v1 for standalone checks.",
+  "limitations": [
+    "not an obstacle policy; not a general replacement for vt_pose_v1 (in-place rotation drifts the wheel rectangle 0.18-0.65 m per 90 deg, which breaks tight waypoint placement)",
+    "vy not tracked (disabled in training by design)",
+    "0.10 m edges: wheel-off recovery did not succeed in probe; 0.20 m (bridge platform height) works"
+  ]
+}

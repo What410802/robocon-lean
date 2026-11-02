@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "robot": "blackW",
+  "policy": "vt_pose_v1",
+  "round": "2026-11-01_plan_a_pose_alignment",
+  "source": "training/models/20261101-blackW-vt-pose-v1 (600 iters from vt_flat_v2 model_2048; RC_POSE_CMD low-speed 3-axis envelope)",
+  "weight_file": "policy.pt",
+  "policy_sha256": "151f26b776b143b36d189f9ba27bd446247c042b1cee13a62c69313a9ba859ec",
+  "config_sha256": "c43a0d40eeb6a78d6aa9f6bc82da83920081e611e4c693a516396aa3deed2976",
+  "robot_sha256": "43aab9c4fc20c0106e1e716fa4d8218c1c22e2fc2ae454fb94180fe2d4f63740",
+  "checkpoint": "logs/rsl_rl/black_velocity/2026-11-01_01-15-19_vt_pose_v1/model_2647.pt",
+  "contract": {
+    "num_dofs": 16,
+    "num_observations": 57,
+    "history": 6,
+    "support_kind": "wheel",
+    "action_contract": "signed"
+  },
+  "evidence": {
+    "kind": "low_speed_pose_probe",
+    "gate": "vx/wz closed-loop usable; vy not learned (wheel-leg weak axis)",
+    "artifact": "training/models/20261101-blackW-vt-pose-v1/probe.json",
+    "notes": "wz monotonic from ~0.1 rad/s (both directions, in-place and with vx=0.1); vx forward monotonic; reverse dead zone below ~0.1 m/s; vy near zero -> use turn-drive-turn for lateral"
+  },
+  "usage": "closed-loop position/alignment primitive (route node) and manual low-speed alignment; LB+D-pad left switches to it; NOT an obstacle policy.",
+  "limitations": [
+    "lateral vy tracking ~0 (use turn-drive-turn)",
+    "reverse vx dead zone below ~0.1 m/s",
+    "flat-only: do not cross obstacles with it"
+  ]
+}

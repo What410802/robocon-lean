@@ -1,0 +1,20 @@
+# tools/
+
+| 文件 | 作用 |
+|---|---|
+| `build.sh` | colcon 构建 `demo/rl_sar` + `demo/quadruped_ros2`，产物在 `demo/build`、`demo/install` |
+| `activate.sh` | source `demo/install/setup.bash`（非 demo env 时给 warning） |
+| `demo_tests.sh` | 机器/策略契约/出生点自检 + Part1/Part2 场景 MuJoCo 加载冒烟 |
+| `record_video.py` | 由 trace 重放同一策略并渲染带判分标注的复盘视频（需要 eval env + 场景） |
+| `check_env.py` | 打印当前 pixi 环境解析到的关键版本 |
+| `mpc/` | Part1 固定路线 MPC 的设计与代码（规划中，见 `mpc/README.md`） |
+
+第三方二进制资产清单在 `assets/`（`python assets/verify.py` 校验哈希）。
+
+## 常用命令
+
+```bash
+pixi run -e demo demo-build
+pixi run -e eval demo-tests
+pixi run -e eval python tools/record_video.py --help
+```

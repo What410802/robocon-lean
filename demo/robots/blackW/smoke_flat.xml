@@ -1,0 +1,8 @@
+<mujoco model="deploy_smoke_flat">
+  <include file="blackW_description.xml"/>
+  <statistic center="0 0 0.4" extent="3.0"/>
+  <worldbody>
+    <light pos="0 0 2" dir="0 0 -1" directional="true"/>
+    <geom name="floor" type="plane" size="20 20 0.1" rgba="0.7 0.7 0.7 1"/>
+  </worldbody>
+</mujoco>

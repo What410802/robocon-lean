@@ -1,0 +1,85 @@
+{
+  "_comment": "Vendored third-party binary assets. Verify with: python assets/verify.py",
+  "files": {
+    "demo/robots/blackW/assets/FL_calf.STL": {
+      "sha256": "14efa74d6c19f1f0653b9f8562cf809de5bbc15d3ac1886f1774c1c75a8d8524",
+      "size": 2561484
+    },
+    "demo/robots/blackW/assets/FL_foot.STL": {
+      "sha256": "ce1dfcee8900a91e42d4846fe48b8da0d88c6cd762d4c12d17ab9c6c8a629001",
+      "size": 493084
+    },
+    "demo/robots/blackW/assets/FL_hip.STL": {
+      "sha256": "ad528825e3a6031d262bb4454224b316adbf4ed2291e09abf6e9376e98edc336",
+      "size": 3019584
+    },
+    "demo/robots/blackW/assets/FL_thigh.STL": {
+      "sha256": "1b0296f8e1b3d32ac47ad045e09921dfa53a36cc7432b3a96d6a103efaf9e9c1",
+      "size": 3936184
+    },
+    "demo/robots/blackW/assets/FR_calf.STL": {
+      "sha256": "0236282843102c4de0c2fa0d39c33b906a40ec6941806aacf8dd8a05d123dabb",
+      "size": 2562684
+    },
+    "demo/robots/blackW/assets/FR_foot.STL": {
+      "sha256": "a1f5218b067cda2eab27a584a4ad86264cb22ef42f5067381989fb9f7f09f9a7",
+      "size": 493084
+    },
+    "demo/robots/blackW/assets/FR_hip.STL": {
+      "sha256": "3e7a2004d4fca373a2afaf5dbc4e3eb8a8af90883b3647ba79e67104bf1c9217",
+      "size": 3019584
+    },
+    "demo/robots/blackW/assets/FR_thigh.STL": {
+      "sha256": "ef79f20fc608f2b79c6fb3c7984dbddc4aecdd3f0ec4c7679b17208734ebc4d5",
+      "size": 3948184
+    },
+    "demo/robots/blackW/assets/RL_calf.STL": {
+      "sha256": "af0b4c7397b950967a513d026246d6c52e27a26077664df0da0b7368ef550498",
+      "size": 2561484
+    },
+    "demo/robots/blackW/assets/RL_foot.STL": {
+      "sha256": "4babe6132a43901219499d0f3df7472bf4c7a30887f6a60a21a326fa8ae6d283",
+      "size": 493084
+    },
+    "demo/robots/blackW/assets/RL_hip.STL": {
+      "sha256": "82da4038adab8a2f3f127cf85050d59de33e7a71fec6bf603015024e9f15b8ae",
+      "size": 3019584
+    },
+    "demo/robots/blackW/assets/RL_thigh.STL": {
+      "sha256": "46c8836485f85b938cad5c46549ce987de45ccbe2ff94863e5cb6607e99d65c5",
+      "size": 3935384
+    },
+    "demo/robots/blackW/assets/RR_calf.STL": {
+      "sha256": "ce1b3f7bf30bafbc41ee9234424f754ef4ca06e5b9ec7863deda768f06c5f9a0",
+      "size": 2562684
+    },
+    "demo/robots/blackW/assets/RR_foot.STL": {
+      "sha256": "e5d77cb408fc2d4bb08b6d565838db9bb0648a0b773b7c1b9c9b9c2fd0afc6f9",
+      "size": 493084
+    },
+    "demo/robots/blackW/assets/RR_hip.STL": {
+      "sha256": "f24a12e5aa55f7c88efa0765bdf86fc6bb27ad2c5264bf0a435358528f25072c",
+      "size": 3019584
+    },
+    "demo/robots/blackW/assets/RR_thigh.STL": {
+      "sha256": "1a5e9fc5c862db60d07a9a61324bb0a6fdd0a25b08f84fa8232ec69dbad695f1",
+      "size": 3948184
+    },
+    "demo/robots/blackW/assets/trunk.STL": {
+      "sha256": "467785832cab95245db8f4c18e1059557d257a13f3792bd3ffef4134be0443b6",
+      "size": 3000034
+    },
+    "demo/robots/blackW/assets/d435.stl": {
+      "sha256": "a373adb4a2142f36c1b12a5ca4cd227a94aab263ad164239347c96874a2bb18f",
+      "size": 517134
+    },
+    "terrain/official/map.xml": {
+      "sha256": "57531fe29fe4c2c0a33b65c12b71ba2e169d733d3f7518fc95eec291512f4b32",
+      "size": 187570
+    },
+    "terrain/official/scene_terrain.xml": {
+      "sha256": "730ccebd2c400720ca50eb000afc7cd0791f7484957c25ca18b9eb3816a4a6d0",
+      "size": 28070
+    }
+  }
+}

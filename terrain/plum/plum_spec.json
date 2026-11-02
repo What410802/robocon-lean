@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "source": {
+    "file": "gen_plum.py",
+    "sha256": "d1e70ad082200deafa5a80c92d6a4676534cbf4fe210e1faf126ddee353a0910",
+    "rule_basis": "Owner decision 2026-11-02: Part 2 plum = no ramps; entry/exit platforms 0.8x0.8x0.2 m (top z=0.2 m) centred on y=0; 3 cubes 0.2x0.2x0.2 m in a single row along +x with cube-centre spacing 0.6 m; 0.1 m gap between the entry platform and the first cube, 0.1 m between the last cube and the exit platform; robot steps down 0.2 m from the exit platform to normal ground."
+  },
+  "plum": {
+    "layout": "3-pile single row, no ramps (owner decision 2026-11-02)",
+    "no_ramps": true,
+    "start_x_m": 1.8,
+    "runway_m": 1.8,
+    "platform_size_m": [
+      0.8,
+      0.8,
+      0.2
+    ],
+    "platform_half_x_m": 0.4,
+    "platform_half_y_m": 0.4,
+    "platform_height_m": 0.2,
+    "platform_top_z_m": 0.2,
+    "cube_size_m": [
+      0.2,
+      0.2,
+      0.2
+    ],
+    "cube_half_m": 0.1,
+    "cube_top_m": 0.2,
+    "num_cubes": 3,
+    "cube_centers_x_m": [
+      2.8,
+      3.4,
+      4.0
+    ],
+    "cube_center_y_m": 0.0,
+    "cube_center_spacing_m": 0.6,
+    "gap_entry_to_first_cube_m": 0.1,
+    "gap_last_cube_to_exit_m": 0.1,
+    "entry_platform_x_range_m": [
+      1.8,
+      2.6
+    ],
+    "exit_platform_x_range_m": [
+      4.2,
+      5.0
+    ],
+    "exit_ground_x_m": 5.0,
+    "step_down_m": 0.2,
+    "total_x_range_m": [
+      1.8,
+      5.0
+    ]
+  },
+  "boxes": [
+    {
+      "name": "plum_entry",
+      "center_m": [
+        2.2,
+        0.0,
+        0.1
+      ],
+      "half_size_m": [
+        0.4,
+        0.4,
+        0.1
+      ],
+      "top_z_m": 0.2
+    },
+    {
+      "name": "plum_r1_01",
+      "center_m": [
+        2.8,
+        0.0,
+        0.1
+      ],
+      "half_size_m": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "top_z_m": 0.2
+    },
+    {
+      "name": "plum_r1_02",
+      "center_m": [
+        3.4,
+        0.0,
+        0.1
+      ],
+      "half_size_m": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "top_z_m": 0.2
+    },
+    {
+      "name": "plum_r1_03",
+      "center_m": [
+        4.0,
+        0.0,
+        0.1
+      ],
+      "half_size_m": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "top_z_m": 0.2
+    },
+    {
+      "name": "plum_exit",
+      "center_m": [
+        4.6,
+        0.0,
+        0.1
+      ],
+      "half_size_m": [
+        0.4,
+        0.4,
+        0.1
+      ],
+      "top_z_m": 0.2
+    }
+  ]
+}

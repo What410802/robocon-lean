@@ -1,0 +1,18 @@
+<mujoco model="part2_official_level">
+  <include file="../../../robots/blackW/blackW_description.xml"/>
+  <statistic center="2.0 0 0.5" extent="3.0"/>
+  <visual><global azimuth="90" elevation="-20"/></visual>
+  <asset>
+    <mesh name="slope_45deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 2 0 0.7 0 2 0.7 0 2 0.7 2" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_45deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 2 0 0.7 0 2 0.7 0 2 0.7 2" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+  </asset>
+  <worldbody>
+    <light pos="0 0 3" dir="0 0 -1" directional="true"/>
+    <geom name="level_floor" type="plane" size="0 0 0.05" rgba="0.20 0.20 0.20 1"/>
+    <body name="obstacle" pos="-49.2 -6.0 0">
+      <geom name="slope_45deg_up" type="mesh" mesh="slope_45deg_up_mesh" pos="51 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+      <geom name="slope_45deg_landing" type="box" pos="53.4 6 1" size="0.4 0.7 1" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+      <geom name="slope_45deg_down" type="mesh" mesh="slope_45deg_down_mesh" pos="55.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    </body>
+  </worldbody>
+</mujoco>

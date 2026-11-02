@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "robot": "blackW",
+  "policy": "flat",
+  "source": "legacy @20261024_blackw policy tree (migration copy)",
+  "policy_file": "policy.pt",
+  "policy_sha256": "80b081bb4edcfbf5805925a2f62a61e1198a7c650c1444782d833e127f4f0cf6",
+  "config_sha256": "b967e9d331bd7228eb0f4d324db69e16201788ab09e8fa78a28e1c83c62cd047",
+  "robot_sha256": "1de35324ce24172fb0149413a207afbab8429cdf071a671c3dcfda856976a157",
+  "contract": {
+    "num_dofs": 16,
+    "num_observations": 57,
+    "history": 6,
+    "support_kind": "wheel"
+  }
+}

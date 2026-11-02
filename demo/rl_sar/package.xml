@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!-- Adapted from upstream rl_sar e5c2f41 package.ros2.xml: dependencies trimmed to what rl_sim uses here. -->
+<package format="3">
+    <name>rl_sar</name>
+    <version>3.0.0</version>
+    <description>rl_sar (fan-ziqi/rl_sar) ported to drive the MuJoCo sim node of @20261005_ros2 with an RL policy</description>
+
+    <maintainer email="what410802@126.com">What410802</maintainer>
+    <author email="fanziqi614@gmail.com">Ziqi Fan</author>
+
+    <license>Apache-2.0</license>
+
+    <buildtool_depend>ament_cmake</buildtool_depend>
+    <depend>rclcpp</depend>
+    <depend>sensor_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>std_srvs</depend>
+    <depend>yaml-cpp</depend>
+    <depend>quadruped_ros2</depend>
+    <exec_depend>launch_ros</exec_depend>
+
+    <export>
+        <build_type>ament_cmake</build_type>
+    </export>
+</package>

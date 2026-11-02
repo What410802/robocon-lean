@@ -1,0 +1,27 @@
+<mujoco model="part2_official_level">
+  <include file="../../../robots/blackW/blackW_description.xml"/>
+  <statistic center="2.0 0 0.5" extent="3.0"/>
+  <visual><global azimuth="90" elevation="-20"/></visual>
+  <asset>
+
+  </asset>
+  <worldbody>
+    <light pos="0 0 3" dir="0 0 -1" directional="true"/>
+    <geom name="level_floor" type="plane" size="0 0 0.05" rgba="0.20 0.20 0.20 1"/>
+    <body name="obstacle" pos="-23.7 -3.0 0">
+      <geom name="stairs_10cm_up_1" type="box" pos="25.65 3 0.05" size="0.15 0.7 0.05" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_up_2" type="box" pos="25.95 3 0.1" size="0.15 0.7 0.1" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_up_3" type="box" pos="26.25 3 0.15" size="0.15 0.7 0.15" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_up_4" type="box" pos="26.55 3 0.2" size="0.15 0.7 0.2" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_up_5" type="box" pos="26.85 3 0.25" size="0.15 0.7 0.25" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_up_6" type="box" pos="27.15 3 0.3" size="0.15 0.7 0.3" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_landing" type="box" pos="27.7 3 0.3" size="0.4 0.7 0.3" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_down_1" type="box" pos="28.25 3 0.3" size="0.15 0.7 0.3" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_down_2" type="box" pos="28.55 3 0.25" size="0.15 0.7 0.25" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_down_3" type="box" pos="28.85 3 0.2" size="0.15 0.7 0.2" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_down_4" type="box" pos="29.15 3 0.15" size="0.15 0.7 0.15" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_down_5" type="box" pos="29.45 3 0.1" size="0.15 0.7 0.1" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+      <geom name="stairs_10cm_down_6" type="box" pos="29.75 3 0.05" size="0.15 0.7 0.05" rgba=".95 .65 .2 1" friction="1 .005 .0001" condim="3" />
+    </body>
+  </worldbody>
+</mujoco>

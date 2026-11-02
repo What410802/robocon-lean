@@ -1,0 +1,13 @@
+<mujoco model="deploy_smoke_flat">
+  <include file="../../robots/blackW/blackW_description.xml"/>
+  <statistic center="0 0 0.4" extent="3.0"/>
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="90" elevation="-20"/>
+  </visual>
+  <worldbody>
+    <light pos="0 0 2" dir="0 0 -1" directional="true"/>
+    <geom name="floor" type="plane" size="20 20 0.1" rgba="0.7 0.7 0.7 1"/>
+  </worldbody>
+</mujoco>

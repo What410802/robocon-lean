@@ -1,0 +1,1123 @@
+{
+  "schema_version": 2,
+  "source_map": "terrain/official/map.xml",
+  "levels": [
+    {
+      "key": "high_platform_10cm",
+      "category": "high_platform",
+      "level": 10,
+      "unit": "cm",
+      "scene": "part2_off_high_platform_10cm.xml",
+      "source": "official terrain.zip map.xml: platform_10cm",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.8,
+          0.0
+        ],
+        "max": [
+          3.3,
+          0.8,
+          0.1
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "platform",
+        "top_z": 0.1,
+        "x_range": [
+          2.0,
+          3.25
+        ],
+        "z_margin": 0.35,
+        "exit_x_min": 3.35,
+        "exit_ground_tol": 0.08,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "high_platform_20cm",
+      "category": "high_platform",
+      "level": 20,
+      "unit": "cm",
+      "scene": "part2_off_high_platform_20cm.xml",
+      "source": "official terrain.zip map.xml: platform_20cm",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.8,
+          0.0
+        ],
+        "max": [
+          3.3,
+          0.8,
+          0.2
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "platform",
+        "top_z": 0.2,
+        "x_range": [
+          2.0,
+          3.25
+        ],
+        "z_margin": 0.35,
+        "exit_x_min": 3.35,
+        "exit_ground_tol": 0.08,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "high_platform_30cm",
+      "category": "high_platform",
+      "level": 30,
+      "unit": "cm",
+      "scene": "part2_off_high_platform_30cm.xml",
+      "source": "official terrain.zip map.xml: platform_30cm",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.8,
+          0.0
+        ],
+        "max": [
+          3.3,
+          0.8,
+          0.3
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "platform",
+        "top_z": 0.3,
+        "x_range": [
+          2.0,
+          3.25
+        ],
+        "z_margin": 0.35,
+        "exit_x_min": 3.35,
+        "exit_ground_tol": 0.08,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "high_platform_40cm",
+      "category": "high_platform",
+      "level": 40,
+      "unit": "cm",
+      "scene": "part2_off_high_platform_40cm.xml",
+      "source": "official terrain.zip map.xml: platform_40cm",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.8,
+          0.0
+        ],
+        "max": [
+          3.3,
+          0.8,
+          0.4
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "platform",
+        "top_z": 0.4,
+        "x_range": [
+          2.0,
+          3.25
+        ],
+        "z_margin": 0.35,
+        "exit_x_min": 3.35,
+        "exit_ground_tol": 0.08,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "stairs_10cm",
+      "category": "stairs",
+      "level": 10,
+      "unit": "cm",
+      "scene": "part2_off_stairs_10cm.xml",
+      "source": "official terrain.zip map.xml: stairs_10cm_up_1, stairs_10cm_up_2, stairs_10cm_up_3...",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          6.2,
+          0.7,
+          0.6
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "stairs",
+        "top_z": 0.6,
+        "goal_x_min": 3.7,
+        "descend_end_x": 6.2,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "stairs_15cm",
+      "category": "stairs",
+      "level": 15,
+      "unit": "cm",
+      "scene": "part2_off_stairs_15cm.xml",
+      "source": "official terrain.zip map.xml: stairs_15cm_up_1, stairs_15cm_up_2, stairs_15cm_up_3...",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          6.2,
+          0.7,
+          0.9
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "stairs",
+        "top_z": 0.9,
+        "goal_x_min": 3.7,
+        "descend_end_x": 6.2,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "stairs_20cm",
+      "category": "stairs",
+      "level": 20,
+      "unit": "cm",
+      "scene": "part2_off_stairs_20cm.xml",
+      "source": "official terrain.zip map.xml: stairs_20cm_up_1, stairs_20cm_up_2, stairs_20cm_up_3...",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          6.2,
+          0.7,
+          1.2
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "stairs",
+        "top_z": 1.2,
+        "goal_x_min": 3.7,
+        "descend_end_x": 6.2,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "stairs_30cm",
+      "category": "stairs",
+      "level": 30,
+      "unit": "cm",
+      "scene": "part2_off_stairs_30cm.xml",
+      "source": "official terrain.zip map.xml: stairs_30cm_up_1, stairs_30cm_up_2, stairs_30cm_up_3...",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          6.2,
+          0.7,
+          1.8
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "stairs",
+        "top_z": 1.8,
+        "goal_x_min": 3.7,
+        "descend_end_x": 6.2,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "slope_20deg",
+      "category": "slope",
+      "level": 20,
+      "unit": "deg",
+      "scene": "part2_off_slope_20deg.xml",
+      "source": "official terrain.zip map.xml: slope_20deg_up, slope_20deg_landing, slope_20deg_down",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          6.6,
+          0.7,
+          0.7279
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "slope",
+        "rise_z": 0.72794047,
+        "goal_x_min": 3.9,
+        "exit_x_min": 6.5,
+        "exit_ground_tol": 0.08,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "slope_30deg",
+      "category": "slope",
+      "level": 30,
+      "unit": "deg",
+      "scene": "part2_off_slope_30deg.xml",
+      "source": "official terrain.zip map.xml: slope_30deg_up, slope_30deg_landing, slope_30deg_down",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          6.6,
+          0.7,
+          1.1547
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "slope",
+        "rise_z": 1.15470054,
+        "goal_x_min": 3.9,
+        "exit_x_min": 6.5,
+        "exit_ground_tol": 0.08,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "slope_35deg",
+      "category": "slope",
+      "level": 35,
+      "unit": "deg",
+      "scene": "part2_off_slope_35deg.xml",
+      "source": "official terrain.zip map.xml: slope_35deg_up, slope_35deg_landing, slope_35deg_down",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          6.6,
+          0.7,
+          1.4004
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "slope",
+        "rise_z": 1.4004151,
+        "goal_x_min": 3.9,
+        "exit_x_min": 6.5,
+        "exit_ground_tol": 0.08,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "slope_45deg",
+      "category": "slope",
+      "level": 45,
+      "unit": "deg",
+      "scene": "part2_off_slope_45deg.xml",
+      "source": "official terrain.zip map.xml: slope_45deg_up, slope_45deg_landing, slope_45deg_down",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          6.6,
+          0.7,
+          2.0
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "slope",
+        "rise_z": 2.0,
+        "goal_x_min": 3.9,
+        "exit_x_min": 6.5,
+        "exit_ground_tol": 0.08,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "high_wall_10cm",
+      "category": "high_wall",
+      "level": 10,
+      "unit": "cm",
+      "scene": "part2_off_high_wall_10cm.xml",
+      "source": "official terrain.zip map.xml: cross_bar_3",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          1.92,
+          0.7,
+          0.1
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "wall",
+        "wall_h": 0.1,
+        "wall_x": 1.86,
+        "goal_x_min": 2.27,
+        "climb_z_min": 0.52,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "high_wall_20cm",
+      "category": "high_wall",
+      "level": 20,
+      "unit": "cm",
+      "scene": "part2_off_high_wall_20cm.xml",
+      "source": "official terrain.zip map.xml: cross_bar_5",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          1.92,
+          0.7,
+          0.2
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "wall",
+        "wall_h": 0.2,
+        "wall_x": 1.86,
+        "goal_x_min": 2.27,
+        "climb_z_min": 0.54,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "high_wall_30cm",
+      "category": "high_wall",
+      "level": 30,
+      "unit": "cm",
+      "scene": "part2_off_high_wall_30cm.xml",
+      "source": "official terrain.zip map.xml: cross_bar_6",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          1.92,
+          0.7,
+          0.3
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "wall",
+        "wall_h": 0.3,
+        "wall_x": 1.86,
+        "goal_x_min": 2.27,
+        "climb_z_min": 0.56,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "high_wall_40cm",
+      "category": "high_wall",
+      "level": 40,
+      "unit": "cm",
+      "scene": "part2_off_high_wall_40cm.xml",
+      "source": "official terrain.zip map.xml: cross_bar_7",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          1.92,
+          0.7,
+          0.4
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "wall",
+        "wall_h": 0.4,
+        "wall_x": 1.86,
+        "goal_x_min": 2.27,
+        "climb_z_min": 0.58,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "trench_10cm",
+      "category": "trench",
+      "level": 10,
+      "unit": "cm",
+      "scene": "part2_off_trench_10cm.xml",
+      "source": "official terrain.zip map.xml: trench_10cm_entry, trench_10cm_near, trench_10cm_far...",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          5.9,
+          0.7,
+          0.3
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "gap",
+        "gap_x": 3.85,
+        "width": 0.1,
+        "plateau_z": 0.3,
+        "near_x": 3.8,
+        "far_x": 3.9,
+        "z_cross_min": 0.58,
+        "gap_max_drop_m": 0.103,
+        "exit_ramp_end": 5.9,
+        "exit_ground_tol": 0.08,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "trench_20cm",
+      "category": "trench",
+      "level": 20,
+      "unit": "cm",
+      "scene": "part2_off_trench_20cm.xml",
+      "source": "official terrain.zip map.xml: trench_20cm_entry, trench_20cm_near, trench_20cm_far...",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          6.0,
+          0.7,
+          0.3
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "gap",
+        "gap_x": 3.9,
+        "width": 0.2,
+        "plateau_z": 0.3,
+        "near_x": 3.8,
+        "far_x": 4.0,
+        "z_cross_min": 0.58,
+        "gap_max_drop_m": 0.103,
+        "exit_ramp_end": 6.0,
+        "exit_ground_tol": 0.08,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "trench_30cm",
+      "category": "trench",
+      "level": 30,
+      "unit": "cm",
+      "scene": "part2_off_trench_30cm.xml",
+      "source": "official terrain.zip map.xml: trench_30cm_entry, trench_30cm_near, trench_30cm_far...",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.7,
+          0.0
+        ],
+        "max": [
+          6.1,
+          0.7,
+          0.3
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "gap",
+        "gap_x": 3.95,
+        "width": 0.3,
+        "plateau_z": 0.3,
+        "near_x": 3.8,
+        "far_x": 4.1,
+        "z_cross_min": 0.58,
+        "gap_max_drop_m": 0.103,
+        "exit_ramp_end": 6.1,
+        "exit_ground_tol": 0.08,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
+    },
+    {
+      "key": "plum_1",
+      "category": "plum",
+      "level": 1,
+      "unit": "bool",
+      "scene": "part2_off_plum_1.xml",
+      "source": "owner-confirmed 3-pile plum layout (terrain/gen_plum.py): plum_entry, plum_r1_01, plum_r1_02, plum_r1_03, plum_exit",
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.4,
+          0.0
+        ],
+        "max": [
+          5.0,
+          0.4,
+          0.2
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "plum",
+        "top_z": 0.2,
+        "cube_x_range": [
+          2.55,
+          4.25
+        ],
+        "goal_x_min": 4.2,
+        "z_margin": 0.35,
+        "z_cross_min": 0.05,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2,
+        "exit_ramp_end": 5.0,
+        "exit_ground_tol": 0.08
+      }
+    }
+  ]
+}

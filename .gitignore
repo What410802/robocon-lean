@@ -1,0 +1,36 @@
+# pixi environments
+.pixi/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+.pytest_cache/
+
+# Build output (colcon / ROS 2)
+build/
+install/
+log/
+
+# Trained weights are retrained locally and never committed.
+demo/**/policy.pt
+demo/**/best.pt
+demo/**/*.onnx
+demo/**/*.trt
+demo/**/*.engine
+
+# Local-only run output and media
+artifacts/
+logs/
+*.mp4
+*.bag/
+MUJOCO_LOG.TXT
+
+# Restored third-party assets (kept local, hashes in assets/manifest.json)
+assets/store/
+
+# Editor / OS
+.vscode/
+.DS_Store

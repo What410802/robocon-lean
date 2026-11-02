@@ -1,0 +1,57 @@
+schema_version: 1
+name: black
+support_kind: foot
+num_dofs: 12
+description_file: robots/black/black_policy.xml
+joint_names:
+  [FL_hip_joint, FL_thigh_joint, FL_calf_joint,
+   FR_hip_joint, FR_thigh_joint, FR_calf_joint,
+   RL_hip_joint, RL_thigh_joint, RL_calf_joint,
+   RR_hip_joint, RR_thigh_joint, RR_calf_joint]
+joint_mapping: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+wheel_indices: []
+default_dof_pos:
+  [0.0, 0.8014, -1.527, -0.0, -0.8014, 1.527,
+   0.0, 0.8014, -1.527, -0.0, -0.8014, 1.527]
+torque_limits: [33.5, 33.5, 33.5, 33.5, 33.5, 33.5,
+                33.5, 33.5, 33.5, 33.5, 33.5, 33.5]
+model_torque_limits: [20.0, 20.0, 20.0, 20.0, 20.0, 20.0,
+                      20.0, 20.0, 20.0, 20.0, 20.0, 20.0]
+command_envelope:
+  tau_limit: 33.5
+  kp_max: 80.0
+  kd_max: 10.0
+  dq_max: 20.0
+  slew: 60.0
+  kd_passive: 8.0
+  getup_pre_cycles: 200
+  getup_cycles: 400
+  getdown_cycles: 500
+action_contract:
+  dim: 12
+  clip: 100.0
+  scale: [0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+          0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+  wheel_velocity_sign: []
+  wheel_sides: []
+obs_contract:
+  num_observations: 45
+  terms: [commands, ang_vel, gravity_vec, dof_pos, dof_vel, actions]
+  history: 6
+  history_order: newest_first
+  layout: term_major_concat
+  scales:
+    commands: [2.0, 2.0, 0.25]
+    ang_vel_body: 0.25
+    gravity_vec: 1.0
+    dof_pos: 1.0
+    dof_vel: 0.05
+    actions: 1.0
+  clip: 100.0
+  wheel_dof_pos_zeroed: false
+spawn:
+  part1: [3.7, -9.0, 0.55, 0.0]
+  part2_source: scenes/part2/part2_official_levels.json
+scene_roots:
+  part1: robots/black
+  part2: scenes/part2/generated

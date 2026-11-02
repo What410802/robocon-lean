@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "robot": "blackW",
+  "policy": "s1d_trench_reward_v75_m100",
+  "round": "s1_foothold_reward_100",
+  "source": "S1 reward-only blackw-trench-foothold, arm=reward-only, actor 342-D; exported from /home/bis/RoboCon/logs/rsl_rl/blackw_velocity_foothold/2026-10-31_01-49-46_s1d_trench_reward_v75/model_100.pt (iter 100) at 2026-10-31T01:54:06+08:00",
+  "weight_file": "policy.pt",
+  "policy_sha256": "25477330d3e179466cdb85d8a1ecbbe8fdc7fe1a8bae6e58a4da40dc97c03d15",
+  "config_sha256": "1ab80ef0bb99dd8f432f2f1ee638440f59f69fe11bfd1bf5c96e266db1c88bd7",
+  "checkpoint": "/home/bis/RoboCon/logs/rsl_rl/blackw_velocity_foothold/2026-10-31_01-49-46_s1d_trench_reward_v75/model_100.pt",
+  "checkpoint_sha256": "be705726d3e1fe596a30900ba46bbb729c7a3a1682e9f3bda9c769084a034b9f",
+  "contract": {
+    "num_dofs": 16,
+    "num_observations": 57,
+    "history": 6,
+    "support_kind": "wheel",
+    "action_contract": "signed"
+  },
+  "promotion": {
+    "status": "verified: official judge v7.5, trench_10/20/30 (deployment gate 2026-10-31)",
+    "date": "2026-10-31",
+    "command_mode": "manual joystick LY (x) ~0.8-1.0 m/s; eval adaptive_heading_centerline_vy vx=0.75-1.0; fixed-command path also passes",
+    "judge_version": "v7.5-trench-exit-2026-10-31",
+    "gate_result": "trench_10cm/20cm/30cm 10/10 each at adaptive vx=0.8 (30/30); trench_30cm 10/10 fixed vx=0.8, 10/10 fixed vx=1.0, 10/10 adaptive vx=1.0; negative control 0/5 adaptive vx=0.5 (speed is a necessary condition)",
+    "gate_artifact": "deployment/artifacts/phase2/trench30-gate/summary.json (fresh gate) + artifacts/puma-s1/eval/policies/s1d_trench_reward_v75_m100/trench_30cm (S1 ledger, 100 trial traces)",
+    "supports": [
+      "trench_10cm",
+      "trench_20cm",
+      "trench_30cm"
+    ],
+    "known_gaps": [
+      "stairs_30cm",
+      "slope_45deg",
+      "plum_1"
+    ],
+    "report": "artifacts/puma-s1/REPORT.md §11"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "robot": "black",
+  "policy": "himloco",
+  "source": "legacy @20261024_blackw policy tree (migration copy)",
+  "policy_file": "best.pt",
+  "policy_sha256": "a5979a6b56a820642ab5f33c6e885de51c5747099777c678c3a0897e71e8afa1",
+  "config_sha256": "f1913694d6a49d5e60ddc8f2349fd5c1162af2fa9e7c019790e6cd1a61647f31",
+  "robot_sha256": "7e4204e649bb1f3e95ae97716e767c6ce3eca21fbfa52d8cf85a7d11111f15d6",
+  "contract": {
+    "num_dofs": 12,
+    "num_observations": 45,
+    "history": 6,
+    "support_kind": "foot"
+  }
+}

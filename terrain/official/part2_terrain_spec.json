@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "source": {
+    "file": "map.xml",
+    "sha256": "57531fe29fe4c2c0a33b65c12b71ba2e169d733d3f7518fc95eec291512f4b32",
+    "bytes": 187570
+  },
+  "protocol": {
+    "runway_m": 1.8,
+    "lane_half_width_m": 0.7,
+    "spawn_trunk_z_m": 0.5,
+    "note": "Judge scene convention: obstacle near face sits runway_m ahead of the spawn; the partial_difficulty rows interpolate between the official tier endpoints."
+  },
+  "categories": {
+    "high_platform": {
+      "levels": [
+        {
+          "level_cm": 10,
+          "top_m": 0.1,
+          "half_x_m": 0.75,
+          "half_y_m": 0.8
+        },
+        {
+          "level_cm": 20,
+          "top_m": 0.2,
+          "half_x_m": 0.75,
+          "half_y_m": 0.8
+        },
+        {
+          "level_cm": 30,
+          "top_m": 0.3,
+          "half_x_m": 0.75,
+          "half_y_m": 0.8
+        },
+        {
+          "level_cm": 40,
+          "top_m": 0.4,
+          "half_x_m": 0.75,
+          "half_y_m": 0.8
+        }
+      ],
+      "height_range_m": [
+        0.1,
+        0.4
+      ],
+      "half_x_m": 0.75,
+      "half_y_m": 0.8,
+      "center_x_m": 2.55
+    },
+    "slope": {
+      "levels": [
+        {
+          "level_deg": 20,
+          "run_m": 2.0,
+          "rise_m": 0.72794,
+          "angle_deg": 20.0,
+          "width_m": 1.4,
+          "landing_half_x_m": 0.4
+        },
+        {
+          "level_deg": 30,
+          "run_m": 2.0,
+          "rise_m": 1.1547,
+          "angle_deg": 30.0,
+          "width_m": 1.4,
+          "landing_half_x_m": 0.4
+        },
+        {
+          "level_deg": 35,
+          "run_m": 2.0,
+          "rise_m": 1.400415,
+          "angle_deg": 35.0,
+          "width_m": 1.4,
+          "landing_half_x_m": 0.4
+        },
+        {
+          "level_deg": 45,
+          "run_m": 2.0,
+          "rise_m": 2.0,
+          "angle_deg": 45.0,
+          "width_m": 1.4,
+          "landing_half_x_m": 0.4
+        }
+      ],
+      "deg_range": [
+        20.0,
+        45.0
+      ],
+      "ramp_horizontal_m": 2.0,
+      "ramp_width_m": 1.4,
+      "landing_half_x_m": 0.4,
+      "ramp_start_x_m": 1.8
+    },
+    "trench": {
+      "levels": [
+        {
+          "level_cm": 10,
+          "gap_m": 0.1,
+          "plateau_m": 0.3,
+          "near_half_x_m": 0.5,
+          "channel_half_y_m": 0.7,
+          "ramp_run_m": 1.0
+        },
+        {
+          "level_cm": 20,
+          "gap_m": 0.2,
+          "plateau_m": 0.3,
+          "near_half_x_m": 0.5,
+          "channel_half_y_m": 0.7,
+          "ramp_run_m": 1.0
+        },
+        {
+          "level_cm": 30,
+          "gap_m": 0.3,
+          "plateau_m": 0.3,
+          "near_half_x_m": 0.5,
+          "channel_half_y_m": 0.7,
+          "ramp_run_m": 1.0
+        }
+      ],
+      "gap_range_m": [
+        0.1,
+        0.3
+      ],
+      "plateau_m": 0.3,
+      "near_half_x_m": 0.5,
+      "channel_half_y_m": 0.7,
+      "ramp_run_m": 1.0,
+      "start_x_m": 1.8
+    },
+    "high_wall": {
+      "levels": [
+        {
+          "level_cm": 10,
+          "top_m": 0.1,
+          "half_y_m": 0.7,
+          "thickness_m": 0.12
+        },
+        {
+          "level_cm": 20,
+          "top_m": 0.2,
+          "half_y_m": 0.7,
+          "thickness_m": 0.12
+        },
+        {
+          "level_cm": 30,
+          "top_m": 0.3,
+          "half_y_m": 0.7,
+          "thickness_m": 0.12
+        },
+        {
+          "level_cm": 40,
+          "top_m": 0.4,
+          "half_y_m": 0.7,
+          "thickness_m": 0.12
+        }
+      ],
+      "height_range_m": [
+        0.1,
+        0.4
+      ],
+      "half_y_m": 0.7,
+      "thickness_m": 0.12,
+      "center_x_m": 1.86
+    },
+    "stairs": {
+      "levels": [
+        {
+          "level_cm": 10,
+          "num_steps": 6,
+          "tread_m": 0.3,
+          "half_width_m": 0.7,
+          "landing_half_x_m": 0.4,
+          "total_height_m": 0.6
+        },
+        {
+          "level_cm": 15,
+          "num_steps": 6,
+          "tread_m": 0.3,
+          "half_width_m": 0.7,
+          "landing_half_x_m": 0.4,
+          "total_height_m": 0.9
+        },
+        {
+          "level_cm": 20,
+          "num_steps": 6,
+          "tread_m": 0.3,
+          "half_width_m": 0.7,
+          "landing_half_x_m": 0.4,
+          "total_height_m": 1.2
+        },
+        {
+          "level_cm": 30,
+          "num_steps": 6,
+          "tread_m": 0.3,
+          "half_width_m": 0.7,
+          "landing_half_x_m": 0.4,
+          "total_height_m": 1.8
+        }
+      ],
+      "total_height_range_m": [
+        0.6,
+        1.8
+      ],
+      "num_steps": 6,
+      "tread_m": 0.3,
+      "half_width_m": 0.7,
+      "landing_half_x_m": 0.4,
+      "start_x_m": 1.8
+    },
+    "plum": {
+      "layout": "3-pile single row, no ramps (owner decision 2026-11-02)",
+      "no_ramps": true,
+      "start_x_m": 1.8,
+      "runway_m": 1.8,
+      "platform_size_m": [
+        0.8,
+        0.8,
+        0.2
+      ],
+      "platform_half_x_m": 0.4,
+      "platform_half_y_m": 0.4,
+      "platform_height_m": 0.2,
+      "platform_top_z_m": 0.2,
+      "cube_size_m": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "cube_half_m": 0.1,
+      "cube_top_m": 0.2,
+      "num_cubes": 3,
+      "cube_centers_x_m": [
+        2.8,
+        3.4,
+        4.0
+      ],
+      "cube_center_y_m": 0.0,
+      "cube_center_spacing_m": 0.6,
+      "gap_entry_to_first_cube_m": 0.1,
+      "gap_last_cube_to_exit_m": 0.1,
+      "entry_platform_x_range_m": [
+        1.8,
+        2.6
+      ],
+      "exit_platform_x_range_m": [
+        4.2,
+        5.0
+      ],
+      "exit_ground_x_m": 5.0,
+      "step_down_m": 0.2,
+      "total_x_range_m": [
+        1.8,
+        5.0
+      ]
+    }
+  }
+}

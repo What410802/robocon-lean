@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "robocon-eval"
+version = "0.2.0"
+description = "RoboCon 2026 competition evaluation: Part 1 / Part 2 judges, trace replay, independent policy runner"
+requires-python = ">=3.12"
+# The judge/scoring core only needs numpy; the policy runner additionally needs
+# MuJoCo 3.11 + CPU torch + PyYAML (provided by the `eval`/`demo` pixi envs).
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+runner = ["mujoco>=3.11,<3.12", "torch", "PyYAML"]
+
+[project.scripts]
+robocon-eval = "robocon_eval.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["robocon_eval"]

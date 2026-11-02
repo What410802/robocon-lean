@@ -1,0 +1,72 @@
+# Copyright (c) 2024-2025 Ziqi Fan
+# SPDX-License-Identifier: Apache-2.0
+#
+# Modified for @20261007_assignment: written for our robot "black" after upstream
+# policy/go2/base.yaml (rl_sar e5c2f41). Field-by-field sources: docs/porting.md §3.
+
+# Robot-level parameters read by the FSM (passive damping / get up / get down). The RL path reads
+# himloco/config.yaml instead. Every 12-element array is in POLICY order: FL / FR / RL / RR x
+# hip / thigh / calf (see joint_names).
+
+black:
+  # Not in the assignment config; values taken from the organiser fork's policy/black/base.yaml.
+  # S4: control and inference are paced by the feedback's sim_time, so `dt` is the CONTROL period
+  # (5 ms of sim time) and `decimation` is how many control cycles make one policy step: 4 x 5 = 20 ms,
+  # the value HIMLoco was trained with. Both must keep that product.
+  dt: 0.005
+  decimation: 4
+  # PD gains for get up / get down: same as the organiser fork and as the previous controller.
+  fixed_kp: [80.0, 80.0, 80.0,
+             80.0, 80.0, 80.0,
+             80.0, 80.0, 80.0,
+             80.0, 80.0, 80.0]
+  fixed_kd: [3.0, 3.0, 3.0,
+             3.0, 3.0, 3.0,
+             3.0, 3.0, 3.0,
+             3.0, 3.0, 3.0]
+  num_of_dofs: 12
+  wheel_indices: []
+  # The four keys below do not exist upstream (they were hard-coded in policy/black/fsm.hpp); they live
+  # here so tuning the get-up timing or the passive damping needs no recompile. Read once at
+  # construction - restart the node to apply.
+  kd_passive: 8.0          # kd in the passive state (kp = 0), as in upstream's README
+  getup_pre_cycles: 200    # control cycles for the pre-get-up crouch ramp (5 ms each -> 1.0 s)
+  getup_cycles: 400        # control cycles for the get-up ramp (5 ms each -> 2.0 s)
+  getdown_cycles: 500      # control cycles for the get-down ramp (5 ms each -> 2.5 s)
+
+  # Command-side limiting (S5): this node sends no torque, so the limits live on the MIT command -
+  # q_des / dq_des / kp / kd / tau_ff - and the implied torque
+  # tau = tau_ff + kp*(q_des - q) + kd*(dq_des - dq) is budgeted against the measured q/dq.
+  # See include/command_limit.hpp and docs/safety-limits.md section 3. 0 disables the slew rule.
+  # Calibration matters: these are *pathology* nets, not gait shaping. Clamping at the model's own
+  # 20 N.m was measured to bite ~2% of control cycles during a normal walk (the PD law implies more
+  # than 20 N.m on transient errors) and, because it rewrites q_des, it distorts the policy's output.
+  # So: 33.5 = the envelope the policy was trained in (our net), while the model/driver limit (20 N.m,
+  # sim_node's tau_max / MJCF ctrlrange) stays where it is and only limits the torque itself.
+  command_tau_limit: 33.5     # implied |tau| at the measured state [N.m]; 33.5 = the trained envelope
+  command_kp_max: 80.0        # gain caps: 80 / 10 are the largest gains this port sends (get-up ramps)
+  command_kd_max: 10.0
+  command_dq_max: 20.0        # |dq_des| cap [rad/s]
+  command_slew: 60.0          # max |q_des| rate [rad/s]: only catches steps (>12 rad/s per inference)
+  torque_limits: [33.5, 33.5, 33.5,
+                  33.5, 33.5, 33.5,
+                  33.5, 33.5, 33.5,
+                  33.5, 33.5, 33.5]
+  # Stance = default_dof_pos of the assignment config: the get-up target and the zero of RL actions.
+  default_dof_pos: [0.0, 0.8014, -1.527,
+                    -0.0, -0.8014, 1.527,
+                    0.0, 0.8014, -1.527,
+                    -0.0, -0.8014, 1.527]
+  joint_names: [FL_hip_joint, FL_thigh_joint, FL_calf_joint,
+                FR_hip_joint, FR_thigh_joint, FR_calf_joint,
+                RL_hip_joint, RL_thigh_joint, RL_calf_joint,
+                RR_hip_joint, RR_thigh_joint, RR_calf_joint]
+  # Only used by ROS 1 / Gazebo, but ReadYamlBase() reads it unconditionally, so keep it (upstream name).
+  joint_controller_names: [FL_hip_controller, FL_thigh_controller, FL_calf_controller,
+                           FR_hip_controller, FR_thigh_controller, FR_calf_controller,
+                           RL_hip_controller, RL_thigh_controller, RL_calf_controller,
+                           RR_hip_controller, RR_thigh_controller, RR_calf_controller]
+  # joint_mapping[policy index] = index in the sim message.  black_policy.xml's
+  # actuator order is FL / FR / RL / RR, identical to the policy order, so the
+  # mapping is the identity (the old FL/FR/RR/RL sim order is gone).
+  joint_mapping: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]

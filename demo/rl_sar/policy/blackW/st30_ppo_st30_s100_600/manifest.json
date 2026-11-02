@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "robot": "blackW",
+  "policy": "st30_ppo_st30_s100_600",
+  "round": "st30_ppo_st30_s100_600",
+  "source": "legacy @20261024_blackw policy tree (migration copy)",
+  "weight_file": "policy.pt",
+  "policy_sha256": "43ddc7f559e50dda17d9d99542013edf2f902457084d64506ada370ca1f8eeef",
+  "config_sha256": "4c28a377bc830e3faf22f270fba6cbe5f9c547c32bce8850d6108f8707c95f2b",
+  "contract": {
+    "num_dofs": 16,
+    "num_observations": 57,
+    "history": 6,
+    "support_kind": "wheel"
+  },
+  "promotion": {
+    "status": "row2-pass",
+    "date": "2026-10-29",
+    "command_mode": "adaptive_heading_centerline_vy vx=0.5",
+    "judge_version": "v7.4-side-grace-2026-10-28",
+    "gate_artifact": "artifacts/exp-row2/FINAL-gate-default4t/",
+    "gate_result": "row1 8/8 + row2 8/8 + high_platform_40cm 4/4 (4 trials each), total 52/52",
+    "supports": [
+      "row1",
+      "row2",
+      "row3:high_platform_40cm"
+    ],
+    "known_gaps": [
+      "high_wall_40cm",
+      "stairs_30cm",
+      "slope_45deg",
+      "trench_30cm",
+      "plum"
+    ],
+    "stability_notes": "deterministic official scenes; narrow success basin on platform30/slope35 (spawn-y +0.05m / vx=0.45 stress fails)",
+    "report": "artifacts/exp-row2/REPORT.md"
+  }
+}
