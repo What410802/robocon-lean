@@ -6,10 +6,31 @@ intra-squad repo migration.  The task/env/reward implementations live in
 ``env_cfgs.py`` / ``him.py``; only registration order and task ids are here.
 """
 
+from dataclasses import replace as _dc_replace
+
 from mjlab.tasks.registry import register_mjlab_task
 
 from alldog_mjlab.tasks.velocity.common.curriculum_checkpoint import BlackVelocityOnPolicyRunner
 from alldog_mjlab.tasks.velocity.common.rl_cfg import black_ppo_runner_cfg
+
+
+def _locked_ppo_runner_cfg():
+    """PPO runner config tuned for the 12-DoF locked-wheel gait.
+
+    The default Black recipe starts with Gaussian action std 1.0.  On the
+    locked-wheel robot that means +/-0.25 rad leg targets from the first step,
+    which knocks the robot over within ~13 control steps (mean episode length
+    0.27 s in the first S0 run), so PPO never collects a stand/gait transition.
+    A smaller initial std lets stand/lock be learned; the std is learnable and
+    grows again once the reset distribution is survivable.
+    """
+    cfg = black_ppo_runner_cfg(stage="flat")
+    cfg.actor = _dc_replace(
+        cfg.actor,
+        distribution_cfg={**cfg.actor.distribution_cfg, "init_std": 0.2},
+    )
+    cfg.algorithm = _dc_replace(cfg.algorithm, entropy_coef=0.003)
+    return cfg
 
 from .env_cfgs import (
     blackw_flat_env_cfg,
@@ -64,7 +85,7 @@ register_mjlab_task(
     task_id="blackw-vt-locked",
     env_cfg=blackw_vt_locked_env_cfg(stage=4),
     play_env_cfg=blackw_vt_locked_env_cfg(play=True, stage=4),
-    rl_cfg=black_ppo_runner_cfg(stage="flat"),
+    rl_cfg=_locked_ppo_runner_cfg(),
     runner_cls=BlackVelocityOnPolicyRunner,
 )
 
@@ -76,7 +97,7 @@ for _stage in range(5):
         task_id=f"blackw-vt-locked-s{_stage}",
         env_cfg=blackw_vt_locked_env_cfg(stage=_stage),
         play_env_cfg=blackw_vt_locked_env_cfg(play=True, stage=_stage),
-        rl_cfg=black_ppo_runner_cfg(stage="flat"),
+        rl_cfg=_locked_ppo_runner_cfg(),
         runner_cls=BlackVelocityOnPolicyRunner,
     )
 
