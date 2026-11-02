@@ -232,3 +232,77 @@ v3（foot lift/all-contact，原地踏步，tracking 0.6/0.8）→ v4（tracking
 3. l_shape 在固定 staging 的 harness 里是诊断项（受路线"先转后走/先走后转"选择影响）；
    Part 1 路线用自身 `require_facing` 闭环，不依赖该脚本的 L 形结果。
 4. Part 2 规则只允许 RL，本模型只作 Part 1 衔接；未在 Part 2 计分链路使用。
+
+## 8. 锁轮（12-DoF point-foot）衔接模型：2026-11-02/03 实验
+
+目标：给 Part 1 平台段/换乘后的地形专家提供**零/低速高精度**初始状态，并把
+4 个落点限制在以躯干为中心、随速度指令增大的矩形框内。四轮锁死用于提高落点精度。
+
+### 8.1 实现要点
+
+- `profiles/vt/locked.py`：
+  - `support_box_half_extents(cmd)`：矩形半宽 `hx = 0.225 + 0.015 + 0.5*T*(|vx| + |wz|*0.235)`，
+    `hy = 0.235 + 0.015 + 0.5*T*(|vy| + |wz|*0.225)`，上限 0.30 m，`T=0.32 s`。
+    零指令时收紧到标称专家站姿，作为 handover 判据；指令越大框越大，平台 1 m 安全。
+  - `foot_landing_error / foot_swing_target / support_extent / support_area / raibert`
+    全部改为使用**动态目标**（指令前馈 + 躯干中心框），`support_center`/`handover_ready`
+    只在近零指令生效。
+  - 反作弊：`foot_lift` 改为指令门控的小权重（S1 0.2，后续 0.05），空时/支撑时
+    惩罚加 per-foot/total cap；`trot/gait_phase/feet_air_time_cmd` 统一 0.8 s 周期；
+    `track_linear_velocity_rel/track_yaw_velocity_rel` 修正低速死区（站住≈1 的代价）。
+- `locked_curriculum.py`：S0/S1 去掉严格 `locked_gait_fail`；S2 该终止项注册但实际
+  超时置大（低速度/原地转需要允许“站住再尝试”）；S3/S4 恢复严格门。
+- `blackw/env_cfgs.py`：锁轮任务删除滚动轮专用的 `wheel_plane_level`/`wheel_rotation_follow`；
+  `pose_dofpos` -0.8→-0.1；base_height 目标 0.51（专家实测 0.519–0.534）。
+- `blackw_constants.py`：锁轮初始高度 0.545（原 0.69 的 0.17 m 落差会把 BC 策略直接摔掉）；
+  轮锁 PD 与部署/教师配置一致（kp=80, kd=3）。
+- `blackw/__init__.py`：锁轮任务专用 `_locked_ppo_runner_cfg()`，init_std 1.0→0.2。
+- BC 热启动（新增 `train/scripts/teacher/`）：
+  - `collect_locked_teacher_demos.py` 从 N-W-wolf 锁轮教师（`nwwolf_locked16`）
+    在部署 342/16 契约下采 18k 对 (obs, act)；
+  - `bc_warmstart_locked.py` 克隆 512-256-128 actor；注意教师数据是**部署 frame-major
+    newest→oldest**，而 PPO actor 输入是 MjLab native **term-major oldest→newest**，
+    必须交换第一层列（否则 S1 立刻摔）。BC final |err| mean 0.023。
+- 验收脚本：`train/scripts/checks/check_locked_rewards.py`（符号/门控审计）、
+  `eval_locked_checkpoint.py`（指令响应/支撑框/足迹）。
+
+### 8.2 训练结果（8k envs，50 Hz）
+
+| 阶段 | 迭代 | 结果 |
+|---|---|---|
+| S0 stand | 150 | 1000 步（20 s）稳定；mean reward +4.4 |
+| S1 straight（BC 热启动） | 400 | 全程 20 s；mean reward +13；vx 0→0.017 / 0.1→0.096 / 0.2→0.224 / 0.3→0.325 / 0.5→0.494；0.5 m/s 时每帧约 2 脚触地（trot） |
+| S2 low-speed + pure yaw | 500 | 全程 20 s；wz +0.3→+0.235、-0.3→-0.180；vy 0.2→0.092；支撑框越界 ≤0.007 m、触地足迹半径 0.30–0.31 m（静止矩形 ~0.34 m）；但零指令仍爬行 ~0.06 m/s，低速 vx 过冲/非单调 |
+
+关键阳性结论：**S1 已把前进 0–0.5 m/s 的指令跟随和“零指令不爬行”做出来**，且是
+抬脚 trot 而非滑行；支撑框 penalty 从早期 -1.5/s 降到 -0.01/s，说明锁轮步态能把
+落点收进随速度增大的躯干中心框。S2 把 yaw 响应和支撑框/足迹做出来，但 vy 和
+零/低速 vx 精度仍不够。
+
+### 8.3 已知问题与下一步
+
+1. **三轴同时精确跟随未完成**：S2 的 vy(0.2→0.09) 和纯 yaw 不对称（+0.235/-0.180）
+   还达不到 F4/F5 目标；且 S2 换来 yaw 后零速爬行变差。下一步：S3 combined 在
+   S1 + S2 之间做低速度/vy/yaw 混合，严格门控从 1.5 s 逐步收紧；增加 standing
+   样本并单独冻结“零指令”head/动作偏置，目标是 stand creep <0.02 m/s、
+   vy error <0.08、wz error <0.15。
+2. **锁轮原地转的物理代价**：S2 的 `foot_slip` 仍 ~2.9/s，说明仍有一部分靠轮子
+   横向摩擦“拧”而不是抬脚换位。若要平台 1 m 内的精确转向，需把 yaw 与抬脚相位
+   绑定（foot_stance_time + gait_phase 已有），或改为 stepping-turn 专用奖励。
+3. 当前 S1/S2 均未 export/走 PolicyRunner sim2sim；BC 验证是在 PolicyRunner 下完成的
+   （vx 0.3→0.317 等），Export 后需重跑 `probe_pose_control`/支撑矩形/足迹。
+4. S2 严格门控关闭仅用于训练；交付前必须恢复 S3/S4 的 `locked_gait_fail` 并复测。
+
+复现命令（关键参数）：
+
+```bash
+# 教师 BC 数据 + 权重（部署契约 342/16）
+MUJOCO_GL=egl PYTHONPATH=eval .pixi/envs/eval/bin/python \
+  train/scripts/teacher/collect_locked_teacher_demos.py --teacher nwwolf_locked16 ...
+.pixi/envs/train/bin/python train/scripts/teacher/bc_warmstart_locked.py ...
+
+# S1 fine-tune（必须用 RC_RESUME_LR，否则 checkpoint 的 1.5e-3 覆盖 CLI 1e-4）
+RC_RESUME_LR=5e-5 .pixi/envs/train/bin/train blackw-vt-locked-s1 \
+  --env.scene.num-envs 8192 --agent.max-iterations 400 --agent.resume True \
+  --agent.load-run '.*locked3_s0$' --agent.load-checkpoint model_bc_std05_native.pt
+```

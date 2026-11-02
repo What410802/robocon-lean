@@ -86,10 +86,10 @@ STAGES: tuple[LockedStage, ...] = (
         wheel_axis=-1.0, push=False, reset_scale=0.00,
     ),
     LockedStage(
-        name="pure_yaw", vx=(-0.03, 0.10), vy=(-0.10, 0.10), wz=(-0.35, 0.35),
-        pure_yaw_frac=0.50, pure_yaw_vy_frac=0.30, pure_vx_frac=0.05, pure_yaw_wz=(0.05, 0.35),
-        standing_frac=0.05, low_frac=0.40,
-        tracking_lin=1.0, tracking_ang=3.0,
+        name="pure_yaw", vx=(-0.05, 0.15), vy=(-0.10, 0.10), wz=(-0.30, 0.30),
+        pure_yaw_frac=0.40, pure_yaw_vy_frac=0.25, pure_vx_frac=0.10, pure_yaw_wz=(0.05, 0.30),
+        standing_frac=0.20, low_frac=0.35,
+        tracking_lin=2.0, tracking_ang=3.0,
         foot_landing=0.50, foot_swing=0.20, support_extent=1.50,
         support_area=0.30, support_center=0.80,
         foot_lift=0.10, gait_phase=0.60, feet_air_time=0.50,
@@ -176,7 +176,7 @@ def _scale_reset_contract(cfg, scale: float) -> None:
 _STAGE_SAMPLER = {
     0: dict(low_vx=0.00, low_wz=0.00, resample_s=5.0),
     1: dict(low_vx=0.10, low_wz=0.05, resample_s=4.0),
-    2: dict(low_vx=0.08, low_wz=0.10, resample_s=4.0),
+    2: dict(low_vx=0.06, low_wz=0.10, resample_s=4.0),
     3: dict(low_vx=0.10, low_wz=0.15, resample_s=4.0),
     4: dict(low_vx=0.10, low_wz=0.20, resample_s=4.0),
 }
@@ -194,7 +194,7 @@ _STAGE_GAIT = {
             handover=-0.5, rel_lin=-1.5, rel_yaw=-0.5, all_feet=-1.0),
     2: dict(air_cmd=0.5, trot=0.7, clear=-4.0, impact=-4.0, progress=1.0,
             raibert=1.0, gait_phase=0.6, stance_time=-0.8, air_pen=-0.6,
-            handover=-0.8, rel_lin=-1.5, rel_yaw=-1.0, all_feet=-0.8),
+            handover=-1.2, rel_lin=-1.5, rel_yaw=-1.0, all_feet=-0.8),
     3: dict(air_cmd=0.5, trot=0.8, clear=-6.0, impact=-6.0, progress=1.0,
             raibert=1.0, gait_phase=0.5, stance_time=-0.8, air_pen=-0.6,
             handover=-0.8, rel_lin=-1.8, rel_yaw=-1.2, all_feet=-0.8),
@@ -261,7 +261,7 @@ def apply_locked_stage(cfg, stage: int | str) -> None:
     r["handover_ready"] = replace(r["handover_ready"], weight=gait["handover"])
     r["hip_pos"] = replace(r["hip_pos"], weight=-0.5)
     r["all_joint_pos"] = replace(r["all_joint_pos"], weight=-0.001)
-    r["stand_still"] = replace(r["stand_still"], weight=-1.0)
+    r["stand_still"] = replace(r["stand_still"], weight=-2.0 if idx == 2 else -1.0)
     r["foot_slip"] = replace(r["foot_slip"], weight=s.foot_slip)
     r["foot_lift"] = replace(r["foot_lift"], weight=s.foot_lift)
     r["all_feet_contact"] = replace(r["all_feet_contact"], weight=gait["all_feet"])
@@ -273,7 +273,7 @@ def apply_locked_stage(cfg, stage: int | str) -> None:
     r["foot_swing_target"] = replace(r["foot_swing_target"], weight=-s.foot_swing)
     r["support_extent"] = replace(r["support_extent"], weight=-s.support_extent)
     r["support_area"] = replace(r["support_area"], weight=-s.support_area)
-    r["support_center"] = replace(r["support_center"], weight=-s.support_center)
+    r["support_center"] = replace(r["support_center"], weight=-(1.2 if idx == 2 else s.support_center))
     if not s.push:
         cfg.events.pop("push_robot", None)
     _scale_reset_contract(cfg, s.reset_scale)
@@ -295,11 +295,15 @@ def apply_locked_stage(cfg, stage: int | str) -> None:
                 "lin_frac": 0.80 if loose else 0.50,
                 "ang_abs": 0.20 if loose else 0.10,
                 "ang_frac": 0.80 if loose else 0.50,
-                "track_timeout": 1.50 if loose else 0.80,
-                "static_timeout": 1.50 if loose else 0.80,
-                "air_timeout": 1.50 if loose else 0.80,
-                "stance_timeout": 2.00 if loose else 1.20,
-                "rect_timeout": 1.00 if loose else 0.50,
+                # S2 introduces low speeds and pure yaw.  The strict gait gate
+                # kills the very attempts S2 needs to explore (all four feet
+                # planted at 0.05 m/s, or a slow in-place turn), so S2 keeps the
+                # term registered but effectively disabled.  S3/S4 restore it.
+                "track_timeout": 3.00 if loose else 0.80,
+                "static_timeout": 1e6 if loose else 0.80,
+                "air_timeout": 1e6 if loose else 0.80,
+                "stance_timeout": 1e6 if loose else 1.20,
+                "rect_timeout": 3.00 if loose else 0.50,
                 "rect_x_margin": 0.08 if loose else 0.045,
                 "rect_y_margin": 0.08 if loose else 0.045,
             })
