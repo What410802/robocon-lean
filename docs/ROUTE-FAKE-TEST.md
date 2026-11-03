@@ -64,17 +64,24 @@ bash -c 'timeout 400 .pixi/envs/demo/bin/python tools/route/fake_kinematic_route
 
 修复：
 
-1. slalom `goto` 超时 9 s→15 s（转向 + 平移在理想模型下也需要 >9 s）。
-2. slalom 关键帧从距杆 0.35 m 拉到 **0.60–0.65 m**（杆心半径 0.35 m），
-   拐点保留在 corner checkpoint 0.30 m 内；7/7 PASS。
+1. slalom 改为**圆弧/直线拼接的密集路径 + pure-pursuit**：机器人从 B 圆东侧
+   （x=3.55）进入，绕 P3 北侧、在 P3/P2 杆间沿垂直方向穿过、绕 P2 南侧、
+   经 corner checkpoint（1.45,-12.85，距 corner 0.14 m）、在 P2/P1 与 P1/P0
+   杆间水平穿过，最后从 P0 北侧进入 A 圆。路径 255 个密集点，`vx=0.14`，
+   前视 0.22 m，前进同时转向。
+2. 几何净空检查（fake 状态里的四个轮心）：整个 slalom 段轮心到杆心最近
+   **0.205 m**；轮半径 0.103 + 杆半径 0.05 = 0.153 m，因此无接触。
+   平面图：`artifacts/route/slalom_arc_plan.png`。
 3. bridge B 前横向对带：原 `adaptive_lane_cmd(axis="y", lane_yaw=-pi/2)` 的横向
    符号是反的，理想模型被推到 x=8.71；改为专用 `vy=-0.8*(x-5.65)` +
    yaw 保持，实测进入固定动作前 **x=5.66 / yaw=-89.9°**。
-4. handover 日志由 `drift=pre→post` 改为 `moved=... target_err=...`，避免把
-   “从 x=5.25 继续前进到 5.77”误读成 drift。
 
-视频：`artifacts/route/fake_route_v2.mp4`（220.7 s，全场；含 bridge B 对带和
-加宽后的 slalom）。
+注意：这条无接触圆弧的杆心最近距离约 0.42 m，**没有进入官方 judge 的 0.35 m
+杆圆**；也就是说它优先保证不蹭杆，但若开启 live judge，slalom 还需要把弧线
+再收进 0.35 m 并保持轮心 >0.153 m（下一轮调，不在本轮“无接触”目标内）。
+
+视频：`artifacts/route/fake_route_arc.mp4`（219.9 s，全场；含 bridge B 对带和
+圆弧 slalom）。
 
 ### 2.2 高墙后切换模型时的关节状态（S2 路线失败的直接证据）
 
@@ -161,6 +168,7 @@ vt_locked_s1: forward_ok=True turns_ok=False turn_drift_max=0.2791 accepted=Fals
 
 | 视频 | 说明 |
 |---|---|
-| [fake_route_v2.mp4](artifacts/route/fake_route_v2.mp4) | 理想速度假模型，全场路线 PASS（bridge B x=5.66、slalom 7/7） |
+| [fake_route_arc.mp4](artifacts/route/fake_route_arc.mp4) | 理想速度假模型，全场路线 PASS；圆弧 slalom 无杆接触（轮心距 0.205 m） |
+| [slalom_arc_plan.png](artifacts/route/slalom_arc_plan.png) | slalom 圆弧路径平面图与最近轮心/杆距离 |
 | [highwall_wheel_q.png](artifacts/route/highwall_wheel_q.png) | 高墙 handover 四轮 q/dq 曲线 |
 | [locked_s2_route.mp4](artifacts/route/locked_s2_route.mp4) | 当前 S2 锁轮模型；显示 expert→connector handover 后倒下，路线未完成 |

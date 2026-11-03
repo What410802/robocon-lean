@@ -836,6 +836,97 @@ class RouteNode(Node):
         self.fixed_command(0.0, 0.0)
         return False
 
+    # ---- smooth slalom path helpers -------------------------------------
+    def _slalom_arc_waypoints(self):
+        """Dense forward+turn path around the four slalom posts.
+
+        The path is an arc/line approximation: it leaves B eastward, goes
+        north around post3, crosses the post3-post2 gap perpendicularly,
+        goes south around post2, detours through the corner checkpoint,
+        crosses the post2-post1 gap horizontally, arcs east of post1,
+        crosses post1-post0 horizontally and ends north of post0.  The
+        mid-gap crossings are perpendicular to the two-post line, which is
+        what avoids clipping the poles.
+        """
+        # Control polyline, checked for clearance from post centres below.
+        ctrl = [
+            (3.55, -12.50),  # east side of B circle, clear of post3
+            (3.55, -11.90),
+            (3.50, -11.95),
+            (2.80, -11.75),  # north of post3, ~0.75 m
+            (2.30, -11.95),
+            (2.30, -12.50),  # perpendicular crossing post3/post2
+            (2.30, -12.95),
+            (1.80, -13.20),  # south of post2, ~0.70 m
+            (1.45, -12.85),  # corner checkpoint, 0.14 m from corner, 0.49 m from P2
+            (1.20, -12.45),
+            (1.15, -12.00),  # west of post2
+            (1.80, -12.00),  # perpendicular crossing post2/post1
+            (2.45, -12.00),
+            (2.50, -11.50),  # east of post1, ~0.70 m
+            (2.45, -11.00),
+            (1.80, -11.00),  # perpendicular crossing post1/post0
+            (1.10, -11.00),
+            (1.10, -10.50),  # west of post0, ~0.70 m
+            (1.10, -9.80),
+            (1.80, -9.80),   # north of post0, end A
+            (1.80, -9.90),
+        ]
+        dense = []
+        step = 0.04
+        for (x0, y0), (x1, y1) in zip(ctrl[:-1], ctrl[1:]):
+            d = math.hypot(x1 - x0, y1 - y0)
+            n = max(1, int(d / step))
+            for i in range(n):
+                t = i / n
+                dense.append((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t))
+        dense.append(ctrl[-1])
+        return dense
+
+    def follow_path(self, pts, speed: float = 0.14, lookahead: float = 0.22,
+                    tol: float = 0.12, timeout_s: float = 120.0) -> bool:
+        """Pure-pursuit forward+turn follower for a dense point path."""
+        self._cmd = "follow_path"
+        self._emit_plan()
+        self.ensure_transfer()
+        t0 = time.monotonic()
+        idx = 0
+        n = len(pts)
+        while time.monotonic() - t0 < timeout_s:
+            p = self.pose()
+            if self.fallen():
+                return False
+            while idx < n - 1 and math.hypot(pts[idx][0] - p.x,
+                                            pts[idx][1] - p.y) < lookahead:
+                idx += 1
+            # lookahead target: first path point at least `lookahead` ahead
+            j = idx
+            acc = 0.0
+            last = idx
+            while j < n - 1:
+                seg = math.hypot(pts[j + 1][0] - pts[j][0],
+                                 pts[j + 1][1] - pts[j][1])
+                acc += seg
+                last = j + 1
+                if acc >= lookahead:
+                    break
+                j += 1
+            tx, ty = pts[last]
+            if last == n - 1 and math.hypot(tx - p.x, ty - p.y) < tol:
+                self.stop(0.3)
+                return True
+            err = wrap(math.atan2(ty - p.y, tx - p.x) - p.yaw)
+            if abs(err) > 1.2:
+                wz = math.copysign(max(0.20, min(0.60, 1.8 * abs(err))), err)
+                self.command(0.0, 0.0, wz)
+            else:
+                v = max(0.04, speed * math.cos(err)) if abs(err) < 1.2 else 0.0
+                wz = max(-0.50, min(0.50, 1.8 * err))
+                self.command(v, 0.0, wz)
+            self._tick()
+        self.stop(0.3)
+        return False
+
     def _run(self) -> None:
         try:
             self._route()
@@ -1440,30 +1531,21 @@ class RouteNode(Node):
         # post0 / A.  Keyframe headings are chosen to keep the wheel rectangle
         # clear of each pole.
         self.set_leg("slalom")
-        self.require((3.2, -12.5), tol=0.18, timeout_s=15.0, speed=0.20)
+        # Enter the B circle on its east side: the arc starts at x=3.55, so the
+        # robot does not have to turn around next to post3 (x=2.8).
+        self.require((3.55, -12.5), tol=0.18, timeout_s=15.0, speed=0.20)
         # Keyframe centres widened to >=0.60 m from the post centres (posts:
         # (2.8,-12.5), (1.8,-12.5), (1.8,-11.5), (1.8,-10.5), radius 0.35 m).
         # The old 0.35 m offsets put the wheel rectangle on the poles.
-        slalom = [
-            ((2.80, -11.90), 150.0),   # north of post3
-            ((1.80, -13.10), 225.0),   # south of post2
-            ((1.25, -12.75), 180.0),   # corner checkpoint (<=0.30 m)
-            ((1.15, -12.50), 90.0),    # west of post2
-            ((2.45, -11.50), 120.0),   # east of post1
-            ((1.15, -10.50), 55.0),    # west of post0
-            ((1.80, -9.90), 90.0),     # end A, north of post0
-        ]
-        reached = 0
-        for pt, deg in slalom:
-            # 9 s was too short when a keyframe follows a large heading change:
-            # the ideal-velocity fake-model route failed 2/7 keyframes on the
-            # turn-first-then-translate leg (turn ~4 s at route gains + drive
-            # >1 m at 0.14 m/s).  15 s keeps the segment bounded while allowing
-            # the fixed choreography to finish.
-            if self.goto(pt, tol=0.12, timeout_s=15.0, speed=0.16):
-                reached += 1
-        self.report("slalom keyframes", reached == len(slalom),
-                    f"{reached}/{len(slalom)}")
+        # Smooth arc/line path; pure pursuit keeps the robot moving forward
+        # while steering, and the mid-gap legs cross perpendicular to the line
+        # joining the two posts (the old point-to-point chords cut the poles).
+        slalom_path = self._slalom_arc_waypoints()
+        ok_slalom = self.follow_path(slalom_path, speed=0.14,
+                                     lookahead=0.22, tol=0.12,
+                                     timeout_s=150.0)
+        self.report("slalom keyframes", ok_slalom,
+                    f"arc path {len(slalom_path)} pts")
 
         # 9) return to start
         sx0, sx1, sy0, sy1 = P1_ZONES["start_area"]
