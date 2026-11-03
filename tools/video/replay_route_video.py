@@ -12,6 +12,7 @@ demo quality.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import subprocess
@@ -54,9 +55,17 @@ def load_plan(path: Path):
 
 
 def main() -> int:
-    src = Path(sys.argv[1])
-    dst = Path(sys.argv[2])
-    plan_path = Path(sys.argv[3]) if len(sys.argv) > 3 else None
+    ap = argparse.ArgumentParser()
+    ap.add_argument("states", type=Path)
+    ap.add_argument("video", type=Path)
+    ap.add_argument("plan", type=Path, nargs="?")
+    ap.add_argument("--operator-only", action="store_true",
+                    help="show only the scene and the auto-operator CLI command "
+                         "(no telemetry/wheel/top-down debug overlay)")
+    args = ap.parse_args()
+    src = args.states
+    dst = args.video
+    plan_path = args.plan
     dst.parent.mkdir(parents=True, exist_ok=True)
     frames = [json.loads(l) for l in src.read_text().splitlines() if l.strip()]
     plan = load_plan(plan_path) if plan_path and plan_path.exists() else []
@@ -72,9 +81,10 @@ def main() -> int:
         font_big = ImageFont.truetype(FONT, 16)
     except Exception:  # noqa: BLE001
         font = font_small = font_big = ImageFont.load_default()
+    out_w, out_h = (W, H + 64) if args.operator_only else (OUT_W, OUT_H)
     ff = subprocess.Popen(
         ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
-         "-s", f"{OUT_W}x{OUT_H}", "-r", "25", "-i", "-", "-c:v", "libx264",
+         "-s", f"{out_w}x{out_h}", "-r", "25", "-i", "-", "-c:v", "libx264",
          "-preset", "veryfast", "-crf", "23", "-pix_fmt", "yuv420p", str(dst)],
         stdin=subprocess.PIPE,
     )
@@ -105,6 +115,24 @@ def main() -> int:
             cam.lookat = base
             renderer.update_scene(data, camera=cam)
             im = Image.fromarray(renderer.render())
+            cli = cur.get("cli", "") or "(none)"
+            if args.operator_only:
+                canvas = Image.new("RGB", (W, H + 64), (0, 0, 0))
+                canvas.paste(im, (0, 64))
+                dr = ImageDraw.Draw(canvas)
+                dr.text((8, 6), "Part1 auto-operator", font=font_small,
+                        fill=(150, 150, 150))
+                # Wrap long CLI strings over two lines instead of clipping.
+                line = f"> CLI: {cli}"
+                if len(line) > 76:
+                    dr.text((8, 24), line[:76], font=font, fill=(255, 220, 120))
+                    dr.text((8, 44), "       " + line[76:], font=font,
+                            fill=(255, 220, 120))
+                else:
+                    dr.text((8, 28), line, font=font, fill=(255, 220, 120))
+                ff.stdin.write(np.asarray(canvas).tobytes())
+                n += 1
+                continue
             canvas = Image.new("RGB", (OUT_W, OUT_H), (16, 18, 22))
             canvas.paste(im, (0, 100))
             dr = ImageDraw.Draw(canvas)
@@ -118,7 +146,13 @@ def main() -> int:
             corr = cur.get("corr", {})
             cmd = cur.get("cmd", "")
             dr.text((8, 52), f"> CLI: {cli}", font=font, fill=(255, 220, 120))
-            ctxt = f"corr: dx={corr.get('dx',0):+.3f}m dy={corr.get('dy',0):+.3f}m dyaw={math.degrees(corr.get('dyaw',0)):+.1f}deg"
+            if corr:
+                ctxt = (f"corr: dx={corr.get('dx',0):+.3f}m "
+                        f"dy={corr.get('dy',0):+.3f}m "
+                        f"dyaw={math.degrees(corr.get('dyaw',0)):+.1f}deg")
+            else:
+                ctxt = "corr: — (no pose_move_to target)"
+
             dr.text((8, 70), f"> {ctxt}   cmd={cmd}", font=font_small, fill=(120, 255, 160))
             # bottom wheel/rectangle bar
             dr.rectangle((0, 100 + H, OUT_W, OUT_H), fill=(0, 0, 0))

@@ -112,6 +112,7 @@ class RouteNode(Node):
         self._target = None
         self._cmd = "start"
         self._cli = ""
+        self._fixed_mode = None
         self._corr = {}
         self._sim_t = 0.0
         self._last_pose_wall = 0.0
@@ -150,6 +151,11 @@ class RouteNode(Node):
         """Advance one control step: wait for the next state frame (step-lock)
         or sleep the wall-clock fallback."""
         if self._steplock:
+            # Publish once per control frame, immediately before waiting for
+            # the next /eval_state frame.  The 50 Hz timer is disabled in
+            # step-lock so command/button edges are tied to policy frames rather
+            # than ROS timer scheduling.
+            self._send_joy()
             if self._frame_evt.wait(timeout=0.5):
                 self._frame_evt.clear()
             return
@@ -257,7 +263,7 @@ class RouteNode(Node):
         if self._steplock:
             self._frame_evt.set()
 
-    def _publish(self) -> None:
+    def _send_joy(self) -> None:
         m = Joy()
         m.header.stamp = self.get_clock().now().to_msg()
         m.header.frame_id = "part1_auto_route"
@@ -265,6 +271,12 @@ class RouteNode(Node):
             m.axes = list(self._axes)
             m.buttons = list(self._buttons)
         self._joy_pub.publish(m)
+
+    def _publish(self) -> None:
+        # Timer path: inert in step-lock; _tick drives publishing instead.
+        if self._steplock:
+            return
+        self._send_joy()
 
     def pose(self) -> _Pose:
         with self._lock:
@@ -389,6 +401,14 @@ class RouteNode(Node):
         buttons, hat = combos[name]
         self._press(buttons=buttons, hat=hat, hold_s=0.15)
         self._current_policy = name
+        # Do not overwrite a motion primitive's CLI here: ensure_transfer()
+        # switches internally during goto/rotate_hold, and the overlay should
+        # keep showing the operator command (e.g. "turn(+36deg)"), not the
+        # transient model load.  Explicit drive_* methods overwrite the CLI
+        # with "switch <policy>; forward ..." immediately afterwards.
+        if not self._cmd or self._cmd == "start":
+            self._cli = f"switch {name}"
+            self._emit_plan()
         self.get_logger().info(f"switch -> {name}")
         self._hold(0.45)
 
@@ -415,7 +435,9 @@ class RouteNode(Node):
         self.switch(TRANSFER_POLICY)
 
     def enter_fixed(self, kind: str) -> None:
+        self._fixed_mode = kind
         self._cmd = f"enter_fixed({kind})"
+        self._cli = f"switch mode {kind}"
         self._emit_plan()
         combos = {"low_bar": ([BTN_BACK], (0, -1)), "bridge": ([BTN_BACK], (1, 0))}
         buttons, hat = combos[kind]
@@ -424,6 +446,9 @@ class RouteNode(Node):
         self._hold(0.9)
 
     def exit_fixed(self) -> None:
+        self._fixed_mode = None
+        self._cli = "switch mode walk"
+        self._emit_plan()
         self._press(buttons=[BTN_RB], hat=(0, 1), hold_s=0.15)
         self._hold(0.5)
 
@@ -486,6 +511,7 @@ class RouteNode(Node):
     def rotate_by(self, delta: float, tol: float = 0.10, timeout_s: float = 10.0) -> bool:
         self.ensure_transfer()
         target = wrap(self.pose().yaw + delta)
+        self._set_turn_cli(target)
         t0 = self._now()
         while self._now() - t0 < timeout_s:
             err = wrap(target - self.pose().yaw)
@@ -501,6 +527,8 @@ class RouteNode(Node):
     def rotate_hold(self, target_yaw: float, timeout_s: float = 8.0) -> bool:
         """In-place yaw turn with position feedback to stay on a small platform."""
         self._cmd = f"rotate_hold({target_yaw:.2f})"
+        self._corr = {}
+        self._set_turn_cli(target_yaw)
         self._emit_plan()
         self.ensure_transfer()
         p0 = self.pose()
@@ -532,6 +560,7 @@ class RouteNode(Node):
                       speed: float = 0.15) -> bool:
         """Closed-loop relative move using pose policy, reporting residual error."""
         self._cmd = f"pose_move_to({tx:.2f},{ty:.2f})"
+        self._set_move_cli(tx, ty, target_yaw)
         self._emit_plan()
         self.ensure_transfer()
         t0 = self._now()
@@ -582,6 +611,8 @@ class RouteNode(Node):
 
     def face(self, yaw: float) -> None:
         self._cmd = f"face({yaw:.2f})"
+        self._corr = {}
+        self._set_turn_cli(yaw)
         self._emit_plan()
         if not self.rotate_by(wrap(yaw - self.pose().yaw), timeout_s=18.0):
             p = self.pose()
@@ -593,6 +624,8 @@ class RouteNode(Node):
         self.ensure_transfer()
         tx, ty = float(target[0]), float(target[1])
         self._cmd = f"goto(({tx:.2f},{ty:.2f}))"
+        self._corr = {}
+        self._set_move_cli(tx, ty)
         self._emit_plan()
         t0 = self._now()
         while self._now() - t0 < timeout_s:
@@ -658,6 +691,24 @@ class RouteNode(Node):
         if self._stop_on_fail:
             raise RuntimeError(line)
 
+    def _set_move_cli(self, tx: float, ty: float, yaw=None) -> None:
+        """Pseudo-REPL relative move, matching what an operator would type."""
+        p = self.pose()
+        ex, ey = float(tx) - p.x, float(ty) - p.y
+        c, s = math.cos(p.yaw), math.sin(p.yaw)
+        fwd = ex * c + ey * s
+        left = -ex * s + ey * c
+        parts = [f"fwd={fwd:+.2f}m", f"left={left:+.2f}m"]
+        if yaw is not None:
+            dyaw = wrap(float(yaw) - p.yaw)
+            if abs(dyaw) > 0.02:
+                parts.append(f"turn={math.degrees(dyaw):+.0f}deg")
+        self._cli = "move(" + ",".join(parts) + ")"
+
+    def _set_turn_cli(self, target_yaw: float) -> None:
+        dyaw = wrap(float(target_yaw) - self.pose().yaw)
+        self._cli = f"turn({math.degrees(dyaw):+.0f}deg)"
+
     def _emit_plan(self) -> None:
         if self._plan_fh is None:
             return
@@ -695,6 +746,8 @@ class RouteNode(Node):
         """
         p0 = self.pose()
         self.enter_fixed("bridge")
+        self._cli = f"mode bridge; spin {math.degrees(wrap(target_yaw - p0.yaw)):+.0f}deg"
+        self._emit_plan()
         ok = False
         t0 = self._now()
         max_seen = 0.0
@@ -769,6 +822,8 @@ class RouteNode(Node):
         """
         self.switch(policy)
         self._cmd = f"drive_expert({policy}, vx={vx:+.2f})"
+        self._corr = {}
+        self._cli = f"switch {policy}; forward {vx:+.2f}m/s"
         self._emit_plan()
         t0 = self._now()
         while self._now() - t0 < timeout_s:
@@ -810,6 +865,10 @@ class RouteNode(Node):
         the robot on the long axis without changing the policy's forward speed.
         """
         self.switch(policy)
+        self._cmd = f"drive_expert_heading({policy}, vx={vx:+.2f}, x_hold={x_hold})"
+        self._corr = {}
+        self._cli = f"switch {policy}; forward {vx:+.2f}m/s + lane hold"
+        self._emit_plan()
         t0 = self._now()
         while self._now() - t0 < timeout_s:
             p = self.pose()
@@ -830,6 +889,9 @@ class RouteNode(Node):
 
     def drive_fixed(self, x_cmd: float, target_yaw: float, until, timeout_s: float) -> bool:
         self._cmd = f"fixed_drive(x={x_cmd:+.2f})"
+        self._corr = {}
+        mode = self._fixed_mode or "fixed"
+        self._cli = f"mode {mode}; forward {x_cmd:+.2f}m/s"
         self._emit_plan()
         t0 = self._now()
         while self._now() - t0 < timeout_s:
@@ -897,6 +959,8 @@ class RouteNode(Node):
                     tol: float = 0.12, timeout_s: float = 120.0) -> bool:
         """Pure-pursuit forward+turn follower for a dense point path."""
         self._cmd = "follow_path"
+        self._corr = {}
+        self._cli = "follow path"
         self._emit_plan()
         self.ensure_transfer()
         t0 = self._now()
@@ -1431,7 +1495,7 @@ class RouteNode(Node):
         # report it).
         if not self.goto((5.65, -0.45), tol=0.10, timeout_s=15.0, speed=0.20):
             log.warning("bridge A east centre recentre failed; spin will report")
-        self._cli = "center correction"
+        self._cli = "lane hold (relative center)"
         self._emit_plan()
         # Turn with the 12-DoF locked policy, not the fixed-action differential
         # skid.  The fixed spin is momentum/friction sensitive: in the 12-DoF
