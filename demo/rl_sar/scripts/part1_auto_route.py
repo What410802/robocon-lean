@@ -1513,10 +1513,13 @@ class RouteNode(Node):
                  ("PASS" if ok_entry else "FAIL", p.x, p.y, math.degrees(p.yaw)))
         self.ensure_transfer()
 
-        # The expert reaches the bottom-row mid-line (y~-12.2) while the east
-        # arm is only 1 m wide; keep the 12-DoF connector for the turn and the
-        # bottom row, not for the narrow-arm forward leg.
-        ok_fwd = True
+        # The expert switches at y~-12.15; the SE turn must happen deeper in
+        # the bottom row (y~-12.55), otherwise the rear wheel centres sit on
+        # the y=-12 notch boundary (full5 trace: RL/RR margin ~0.0004 m) and
+        # the left wheels can step out on the real robot.  Go straight to the
+        # bottom-row centre before turning west.
+        ok_fwd = self.goto((5.72, -12.55), tol=0.10, timeout_s=10.0, speed=0.15)
+        self.stop(0.4)
         p = self.pose()
         log.info("gravel east-arm corner: %s at (%.2f,%.2f,%.1fdeg)" %
                  ("PASS" if ok_fwd else "FAIL", p.x, p.y, math.degrees(p.yaw)))
