@@ -574,8 +574,18 @@ class RouteNode(Node):
         self._cmd = f"face({yaw:.2f})"
         self._emit_plan()
         if not self.rotate_by(wrap(yaw - self.pose().yaw), timeout_s=18.0):
+            # On a platform lip the pure-yaw command can stall before the
+            # heading error is nulled.  rotate_hold adds a small vx correction
+            # from the initial centroid, which is the primitive that passed the
+            # position harness; retry absolute yaw through it before aborting.
             p = self.pose()
-            raise RuntimeError(f"face {yaw:.2f} failed at yaw {p.yaw:.2f} ({p.x:.2f},{p.y:.2f})")
+            self.get_logger().warning(
+                f"face {yaw:.2f} stall at yaw {p.yaw:.2f} ({p.x:.2f},{p.y:.2f}); "
+                "retry via rotate_hold")
+            if not self.rotate_hold(yaw, timeout_s=20.0):
+                p = self.pose()
+                raise RuntimeError(
+                    f"face {yaw:.2f} failed at yaw {p.yaw:.2f} ({p.x:.2f},{p.y:.2f})")
 
     def goto(self, target, tol: float = 0.12, timeout_s: float = 30.0,
              speed: float = 0.18) -> bool:
