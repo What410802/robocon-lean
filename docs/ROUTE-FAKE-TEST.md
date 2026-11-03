@@ -55,17 +55,49 @@ bash -c 'timeout 400 .pixi/envs/demo/bin/python tools/route/fake_kinematic_route
 | 段 | 结果 |
 |---|---|
 | high_wall / t_stairs / bridge_blocks | PASS |
-| bridge A east handover | `moved=0.630 m target_err=0.118 m`；PASS |
+| bridge A east handover | `moved=0.610 m target_err=0.100 m`；PASS |
 | bridge A east centre spin | PASS，drift 0 |
+| bridge B entry | **x=5.66, y=-0.90, yaw=-89.9°**（修正前 x=5.84/5.79，偏东） |
 | bridge_bands / long slope / height_bar / gravel | PASS |
 | slalom | 修复前 5/7（两个 keyframe 超时），**修复后 7/7 PASS** |
 | return_start | PASS；`wheel recoveries: 0` |
 
-修复：`part1_auto_route.py` 的 slalom `goto` 超时 9 s→15 s（转向 + 平移在理想模型下
-也需要 >9 s）。另外 handover 日志由 `drift=pre→post` 改为
-`moved=... target_err=...`，避免把“从 x=5.25 继续前进到 5.77”误读成 drift。
+修复：
 
-视频：`artifacts/route/fake_route.mp4`（205.8 s，全场）。
+1. slalom `goto` 超时 9 s→15 s（转向 + 平移在理想模型下也需要 >9 s）。
+2. slalom 关键帧从距杆 0.35 m 拉到 **0.60–0.65 m**（杆心半径 0.35 m），
+   拐点保留在 corner checkpoint 0.30 m 内；7/7 PASS。
+3. bridge B 前横向对带：原 `adaptive_lane_cmd(axis="y", lane_yaw=-pi/2)` 的横向
+   符号是反的，理想模型被推到 x=8.71；改为专用 `vy=-0.8*(x-5.65)` +
+   yaw 保持，实测进入固定动作前 **x=5.66 / yaw=-89.9°**。
+4. handover 日志由 `drift=pre→post` 改为 `moved=... target_err=...`，避免把
+   “从 x=5.25 继续前进到 5.77”误读成 drift。
+
+视频：`artifacts/route/fake_route_v2.mp4`（220.7 s，全场；含 bridge B 对带和
+加宽后的 slalom）。
+
+### 2.2 高墙后切换模型时的关节状态（S2 路线失败的直接证据）
+
+数据：`artifacts/route/highwall_switch_joints.csv`（t=28–34 s，16 关节 q/dq/tau），
+图：`artifacts/route/highwall_wheel_q.png`。
+
+四轮关节（q 是关节角 [rad]，dq 是角速度 [rad/s]）：
+
+| t [s] | base z | q wheels [FL,FR,RR,RL] | dq wheels | tau wheels |
+|---|---|---|---|---|
+| 29.0 | 0.557 | 15.97, -10.36, -11.99, 15.89 | -5.47, 5.23, 5.47, -5.54 | -0.9, 2.4, 0.9, -0.5 |
+| 30.1 | 0.493 | 10.25, -4.58, -6.41, 10.15 | -5.78, 5.39, 5.40, -5.43 | 1.0, 1.7, 1.4, -1.2 |
+| 30.5 | 0.328 | 8.28, -2.50, -4.35, 7.98 | -5.11, 4.98, 5.67, -5.39 | -3.1, 1.5, 1.2, -1.4 |
+| 31.5 | 0.298 | 3.15, -0.01, -0.04, 2.63 | -5.21, -0.05, 0.87, -5.42 | -2.4, 0.7, 0.8, -1.2 |
+| 32.0 | 0.300 | 0.75, -0.01, 0.01, 0.05 | -4.46, 0.07, -0.01, -1.56 | -7.3, 0.6, -0.9, 0.4 |
+| 33.0 | 0.297 | 0.04, 0.00, -0.01, 0.00 | -0.0, 0.0, 0.0, -0.0 | -3.1, -0.2, 0.4, -0.0 |
+
+解释：`q` 是**关节位置角**，`dq` 是角速度。滚动专家（row2p）期间四轮累计转到了
+约 ±10–25 rad；切到锁轮策略后，C++ `lock_wheels` 把轮目标设成默认角 **0**，位置 PD
+（rl_kp=80 / rl_kd=3，轮力矩上限 20 N·m）以约 **5.4 rad/s 的固定反向速度**把 q 拉回
+0，同时 base z 从 0.557 掉到 0.30、机器人侧倒。修复方向是**切换时把轮目标设为当前
+q（或先低速回零）**，而不是固定 0；本轮试过 hold-current 的 C++ 补丁，但该版本在
+route 启动后策略不前进，已回退，需要单独调通后再接路线。
 
 ## 3. 当前锁轮模型整场路线
 
@@ -129,5 +161,6 @@ vt_locked_s1: forward_ok=True turns_ok=False turn_drift_max=0.2791 accepted=Fals
 
 | 视频 | 说明 |
 |---|---|
-| [fake_route.mp4](artifacts/route/fake_route.mp4) | 理想速度假模型，全场路线 PASS（含修复后的 slalom 7/7） |
+| [fake_route_v2.mp4](artifacts/route/fake_route_v2.mp4) | 理想速度假模型，全场路线 PASS（bridge B x=5.66、slalom 7/7） |
+| [highwall_wheel_q.png](artifacts/route/highwall_wheel_q.png) | 高墙 handover 四轮 q/dq 曲线 |
 | [locked_s2_route.mp4](artifacts/route/locked_s2_route.mp4) | 当前 S2 锁轮模型；显示 expert→connector handover 后倒下，路线未完成 |

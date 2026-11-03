@@ -1244,12 +1244,12 @@ class RouteNode(Node):
                 self.ensure_transfer()
                 self.command(0.0, 0.0, 0.0)
                 self._hold(0.4)
-                if not self.goto((5.70, -0.45), tol=0.12, timeout_s=15.0, speed=0.20):
+                if not self.goto((5.65, -0.45), tol=0.10, timeout_s=15.0, speed=0.20):
                     log.warning("bridge A east handover recentre failed")
                 self.command(0.0, 0.0, 0.0)
                 self._hold(0.5)
                 p_post = self.pose()
-                target_err = math.hypot(p_post.x - 5.70, p_post.y + 0.45)
+                target_err = math.hypot(p_post.x - 5.65, p_post.y + 0.45)
                 log.info("bridge A east handover: pre=(%.2f,%.2f) post=(%.2f,%.2f) "
                          "moved=%.3f m target_err=%.3f m" %
                          (p_pre.x, p_pre.y, p_post.x, p_post.y,
@@ -1292,15 +1292,16 @@ class RouteNode(Node):
         # block edge stalls (observed 30-40 deg in 40 s).  Re-centre with the
         # transfer primitive first; failure is non-fatal (spin/stop_on_fail will
         # report it).
-        if not self.goto((5.70, -0.45), tol=0.12, timeout_s=15.0, speed=0.20):
+        if not self.goto((5.65, -0.45), tol=0.10, timeout_s=15.0, speed=0.20):
             log.warning("bridge A east centre recentre failed; spin will report")
         self._cli = "center correction"
         self._emit_plan()
         # Spin FIRST (burst+dwell, drift <=0.04 m in 5 consecutive runs), then
-        # drive SOUTH along the x=5.7 lane with the adaptive formula — the old
+        # drive SOUTH along the x=5.65 lane with the adaptive formula — the old
         # diagonal pose_move_to relied on lateral correction, which is the
         # zero-authority axis for every model (edge29/30 wedged at the west
-        # lip, 0.7 m off-centre).
+        # lip, 0.7 m off-centre).  x=5.65 is the centre of the three 0.2 m
+        # narrow bands (5.35/5.65/5.95); x=5.70+ put the wheels on the gaps.
         ok_spin = self.spin_fixed(-math.pi / 2.0, tol=0.10, timeout_s=40.0,
                                   max_drift=0.60, rate=0.70)
         if not ok_spin:
@@ -1318,26 +1319,53 @@ class RouteNode(Node):
             ok_spin = self.rotate_hold(-math.pi / 2.0, timeout_s=25.0)
         self.report("bridge A east centre spin", ok_spin,
                     f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
-        # Lane-south to the bridge B entry (lateral = x about 5.7).
-        prev_p = None
+        # Lane-south to the bridge B entry.  Exit only when both y and the
+        # narrow-band lateral coordinate are tight; the old 0.20 m x window let
+        # the ideal-model run stop at x=5.79, i.e. on the east edge of the three
+        # 0.2 m bands.  Keep the robot's centre at x=5.65.
+        # Dedicated lane command: adaptive_lane_cmd's axis='y' formula was
+        # derived for the +y (T-stairs) lane.  With lane_yaw=-pi/2 its lateral
+        # sign is inverted: the ideal-model run drove x from 5.72 to 8.71
+        # before entering bridge B.  World x = +vy_body at yaw=-90, so the
+        # correction is vy = -k*(x-5.65).
         t0s = time.monotonic()
         while time.monotonic() - t0s < 15.0:
             p = self.pose()
-            if p.y < -0.55 and abs(p.x - 5.7) < 0.25:
+            if p.y < -0.90:
                 break
             if self.fallen():
                 break
-            self.command(*self.adaptive_lane_cmd(
-                p, prev_p, -math.pi / 2.0, 5.7, "y", 0.15))
-            prev_p = p
+            ex = p.x - 5.65
+            vy = max(-0.15, min(0.15, -0.8 * ex))
+            dyaw = wrap(-math.pi / 2.0 - p.yaw)
+            wz = max(-0.25, min(0.25, 1.2 * dyaw))
+            self.command(0.15, vy, wz)
             self._tick()
         self.stop(0.4)
 
         self.set_leg("bridge_B")
+        # A pose_move_to with a fixed south heading cannot correct a ~0.14 m
+        # lateral error (it only commands forward + yaw); the fake model exposed
+        # exactly that: the robot faced south, x stayed at 5.79 and the goto
+        # timed out.  Do a dedicated lateral lane hold instead.
+        for _ in range(150):
+            p = self.pose()
+            if abs(p.x - 5.65) < 0.035:
+                break
+            ex = p.x - 5.65
+            vy = max(-0.15, min(0.15, -0.8 * ex))
+            dyaw = wrap(-math.pi / 2.0 - p.yaw)
+            wz = max(-0.25, min(0.25, 1.2 * dyaw))
+            self.command(0.0, vy, wz)
+            self._tick()
+        if abs(wrap(-math.pi / 2.0 - self.pose().yaw)) > 0.04:
+            self.rotate_hold(-math.pi / 2.0, timeout_s=8.0)
+        self.stop(0.3)
         p = self.pose()
-        if not (5.25 <= p.x <= 6.15 and -1.4 <= p.y <= 0.4):
-            log.warning(f"bridge B entry off-platform ({p.x:.2f},{p.y:.2f}); re-placing")
-            self._pose_move_to(5.7, -0.5, 0.0, tol=0.08, timeout_s=12.0, speed=0.12)
+        log.info("bridge B entry: x=%.2f y=%.2f yaw=%.1fdeg" %
+                 (p.x, p.y, math.degrees(p.yaw)))
+        if not (5.58 <= p.x <= 5.72 and -1.5 <= p.y <= 0.1):
+            log.warning("bridge B alignment failed; fixed action will report")
         self.enter_fixed("bridge")
         ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -3.9, 20.0)
         self.exit_fixed()
@@ -1413,14 +1441,17 @@ class RouteNode(Node):
         # clear of each pole.
         self.set_leg("slalom")
         self.require((3.2, -12.5), tol=0.18, timeout_s=15.0, speed=0.20)
+        # Keyframe centres widened to >=0.60 m from the post centres (posts:
+        # (2.8,-12.5), (1.8,-12.5), (1.8,-11.5), (1.8,-10.5), radius 0.35 m).
+        # The old 0.35 m offsets put the wheel rectangle on the poles.
         slalom = [
-            ((2.8, -12.15), 150.0),
-            ((1.8, -12.85), 225.0),
-            ((1.55, -12.75), 180.0),
-            ((1.45, -12.5), 90.0),
-            ((2.15, -11.5), 120.0),
-            ((1.45, -10.5), 55.0),
-            ((1.8, -10.1), 90.0),
+            ((2.80, -11.90), 150.0),   # north of post3
+            ((1.80, -13.10), 225.0),   # south of post2
+            ((1.25, -12.75), 180.0),   # corner checkpoint (<=0.30 m)
+            ((1.15, -12.50), 90.0),    # west of post2
+            ((2.45, -11.50), 120.0),   # east of post1
+            ((1.15, -10.50), 55.0),    # west of post0
+            ((1.80, -9.90), 90.0),     # end A, north of post0
         ]
         reached = 0
         for pt, deg in slalom:
