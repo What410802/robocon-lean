@@ -412,7 +412,7 @@ class RouteNode(Node):
         self.get_logger().info(f"switch -> {name}")
         self._hold(0.45)
 
-    def ensure_transfer(self) -> None:
+    def ensure_transfer(self, announce: bool = False) -> None:
         # The locked-wheel connector is BC-initialised and much more sensitive
         # to the expert handover state than the rolling vt_track models: loading
         # it while the expert is still walking (first locked-route run, after
@@ -431,8 +431,18 @@ class RouteNode(Node):
             # locked policy over in the first route run.
             self.command(0.0, 0.0, 0.0)
             self._hold(1.2)
+            if announce:
+                self._cmd = "ensure_transfer"
+                self._cli = f"switch {TRANSFER_POLICY}"
+                self._corr = {}
+                self._emit_plan()
             return
         self.switch(TRANSFER_POLICY)
+        if announce:
+            self._cmd = "ensure_transfer"
+            self._cli = f"switch {TRANSFER_POLICY}"
+            self._corr = {}
+            self._emit_plan()
 
     def enter_fixed(self, kind: str) -> None:
         self._fixed_mode = kind
@@ -1336,7 +1346,7 @@ class RouteNode(Node):
         self.stop(0.6)
         self.report("high_wall", ok,
                     f"supports_crossed={len(crossed)}/4 side_bypass={side_bypass}")
-        self.ensure_transfer()
+        self.ensure_transfer(announce=True)
 
         # 2) T stairs: south arm up, north arm down (different arms), exit north
         self.set_leg("t_stairs")
@@ -1369,7 +1379,7 @@ class RouteNode(Node):
             self._tick()
         self.stop(0.5)
         self.report("t_stairs (S up / N down)", ok)
-        self.ensure_transfer()
+        self.ensure_transfer(announce=True)
 
         # 3+4) Bridge A: mount the west platform straight from the floor at
         # yaw 0 (row2p climbs the 0.2 m face) and cross east.  The old
@@ -1507,7 +1517,7 @@ class RouteNode(Node):
             self.goto((0.8, 0.0), tol=0.22, timeout_s=15.0, speed=0.18)
             self.face(0.0)
         self.report("bridge_blocks", ok)
-        self.ensure_transfer()
+        self.ensure_transfer(announce=True)
 
         # 5) A east platform: stop immediately when the centre region is
         # reached; do not keep the old row2p forward command.  Switch to the
@@ -1598,7 +1608,7 @@ class RouteNode(Node):
         ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -3.50, 20.0)
         self.exit_fixed()
         self.report("bridge_bands", ok)
-        self.ensure_transfer()
+        self.ensure_transfer(announce=True)
 
         # 6) straight south through the long slope, then height bar fixed action
         self.set_leg("long_slope")
@@ -1612,7 +1622,7 @@ class RouteNode(Node):
             lambda p: p.y < -7.2 and p.z < 0.54, 12.0,
             x_hold=5.70, kp=0.8, max_wz=0.18)
         self.report("long slope straight S", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
-        self.ensure_transfer()
+        self.ensure_transfer(announce=True)
         self.set_leg("height_bar")
         # Position alignment in front of the height bar, not just heading:
         # the long-slope exit can be a few cm off x, and the fixed action is
@@ -1623,7 +1633,7 @@ class RouteNode(Node):
         ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -10.2, 15.0)
         self.exit_fixed()
         self.report("height_bar", ok)
-        self.ensure_transfer()
+        self.ensure_transfer(announce=True)
 
         # Position alignment at the gravel entrance face.  The east column is
         # commanded straight south; without a planar correction the expert
@@ -1699,7 +1709,7 @@ class RouteNode(Node):
         ok = ok_entry and ok_fwd and ok_turn and ok_west and ok_exit
         self.report("gravel_pit", ok,
                     f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
-        self.ensure_transfer()
+        self.ensure_transfer(announce=True)
 
         # 8) slalom keyframes: B start -> north of post3 -> south of post2 ->
         # corner / west of post2 -> east of post1 -> west of post0 -> north of
