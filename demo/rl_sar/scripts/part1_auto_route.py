@@ -1285,6 +1285,10 @@ class RouteNode(Node):
         # wheel support must cross y=-7 inside the wall x span; crossing outside the
         # span is a side bypass and fails.  Route previously stopped merely at y>-6.
         self.switch("row2p_p40w40_v1")
+        self._cmd = "high_wall_cross(policy=row2p, vx=+0.50)"
+        self._cli = "switch row2p_p40w40_v1; forward +0.50m/s"
+        self._corr = {}
+        self._emit_plan()
         support_prev: dict[str, tuple[float, float, float]] = {}
         crossed: set[str] = set()
         side_bypass = False
@@ -1333,6 +1337,10 @@ class RouteNode(Node):
         # adaptive formula is what st30 was trained with).  Lane x=1.8 along
         # +y; exit past the north arm foot.
         self.switch("st30_ppo_st30_s100_600")
+        self._cmd = "t_stairs_adaptive(policy=st30, lane=+y)"
+        self._cli = "switch st30_ppo_st30_s100_600; forward +0.45m/s + lane hold"
+        self._corr = {}
+        self._emit_plan()
         prev_t = None
         ok = False
         t0t = self._now()
@@ -1366,8 +1374,13 @@ class RouteNode(Node):
         # platform, then turn clockwise (yaw +90 -> 0) to face +x.  The old
         # west detour via (0.8,-2.0)->(0.8,0) was for the weak-rotation pose
         # model; the 12-DoF/row2p model no longer needs it.
-        # T-stairs exits at y~-1.8; do not drive back south to -2.0.
-        self.require((1.8, -1.75), tol=0.15, timeout_s=8.0, speed=0.15)
+        # T-stairs can exit at y=-1.3..-1.9 and x up to 2.3.  Align only the
+        # x lane at the current y: driving to a fixed y=-1.75 made full30
+        # re-enter the T top and abort at (2.30,-1.28).  The ramp is directly
+        # north at x=1.8, so keep the exit y and just centre the lane.
+        p_stair = self.pose()
+        p_stair_y = max(-1.60, min(-1.10, p_stair.y))
+        self.goto((1.8, p_stair_y), tol=0.10, timeout_s=8.0, speed=0.12)
         self.face(math.pi / 2.0)
         ok_ramp = self.drive_expert_heading(
             "row2p_p40w40_v1", 0.40, math.pi / 2.0,
@@ -1395,6 +1408,10 @@ class RouteNode(Node):
             # is not enough.  wz = heading error + lateral position term;
             # fail fast when the line is lost.
             self.switch("row2p_p40w40_v1")
+            self._cmd = f"bridge_blocks_adaptive(policy=row2p, vx={vx:+.2f}, lane=y=0)"
+            self._cli = f"switch row2p_p40w40_v1; forward {vx:+.2f}m/s + lane hold"
+            self._corr = {}
+            self._emit_plan()
             t0c = self._now()
             # Adaptive lane command (user suggestion 2026-11-01): the repo's
             # AdaptiveCommand formula (eval policy_runner.py:243, gains =
