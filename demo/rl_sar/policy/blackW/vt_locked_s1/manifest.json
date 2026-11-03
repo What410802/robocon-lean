@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "robot": "blackW",
+  "policy": "vt_locked_s1",
+  "weight_file": "policy.pt",
+  "policy_sha256": "55f48383d61d4eca4412e10028796998544e3e57bbd2c4c6b598301addd60bbd",
+  "checkpoint": "logs/rsl_rl/black_velocity/2026-11-02_23-54-15_locked3_s1_bc7/model_399.pt",
+  "checkpoint_sha256": "3483d9fa7bd7692969c7159c1ddae30e68fb9fc7dc18fcb21676196d475fa44a",
+  "contract": {
+    "num_dofs": 16,
+    "num_observations": 342,
+    "history": 6,
+    "support_kind": "wheel",
+    "action_contract": "signed"
+  },
+  "export": {
+    "schema_version": 1,
+    "robot": "blackW",
+    "task": "blackw-vt-locked-s1",
+    "frequency": {
+      "physics_dt": 0.002,
+      "control_period": 0.005,
+      "policy_period": 0.02,
+      "sim_decimation": 10,
+      "deployment_decimation": 4
+    },
+    "checkpoint_sha256": "3483d9fa7bd7692969c7159c1ddae30e68fb9fc7dc18fcb21676196d475fa44a",
+    "checkpoint": "logs/rsl_rl/black_velocity/2026-11-02_23-54-15_locked3_s1_bc7/model_399.pt",
+    "policy": "demo/rl_sar/policy/blackW/vt_locked_s1/policy.pt",
+    "sha256": "55f48383d61d4eca4412e10028796998544e3e57bbd2c4c6b598301addd60bbd",
+    "layout": "frame-major newest->oldest (HIM deployment)",
+    "history_length": 6,
+    "actor_dim": 342,
+    "cnn_latent_dim": 0,
+    "camera_shape": null,
+    "action_contract": "signed",
+    "observation_layout": {
+      "terms": [
+        "command",
+        "base_ang_vel",
+        "projected_gravity",
+        "joint_pos",
+        "joint_vel",
+        "actions"
+      ],
+      "term_dims": [
+        3,
+        3,
+        3,
+        16,
+        16,
+        16
+      ],
+      "frame_dim": 57,
+      "history": 6,
+      "deploy_layout": [
+        [
+          3,
+          0
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          16,
+          9
+        ],
+        [
+          16,
+          25
+        ],
+        [
+          16,
+          41
+        ]
+      ]
+    },
+    "action_shape": [
+      1,
+      16
+    ]
+  }
+}

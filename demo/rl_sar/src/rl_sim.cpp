@@ -357,7 +357,14 @@ void RL_Sim::RobotControl()
         if (in.has(input_map::Intent::PolicyEdge)) this->SwitchPolicy("vt_edge_v1");
         if (in.has(input_map::Intent::PolicyTrack)) this->SwitchPolicy("vt_track_v1");
         if (in.has(input_map::Intent::PolicyTrackV2)) this->SwitchPolicy("vt_track_v2");
-        if (in.has(input_map::Intent::PolicyNwwolf)) this->SwitchPolicy("nwwolf_locked16");
+        if (in.has(input_map::Intent::PolicyNwwolf))
+        {
+            // Default keeps the N-W-wolf teacher; the Part1 route can point the
+            // same button at a locally trained locked-wheel connector without a
+            // second gamepad binding (e.g. PART1_LOCKED_POLICY=vt_locked_s2).
+            const char* locked = std::getenv("PART1_LOCKED_POLICY");
+            this->SwitchPolicy(locked != nullptr && *locked != '\0' ? locked : "nwwolf_locked16");
+        }
         if (in.has(input_map::Intent::ToggleNavigation))
         {
             this->control.navigation_mode = !this->control.navigation_mode;

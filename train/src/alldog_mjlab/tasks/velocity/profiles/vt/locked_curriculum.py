@@ -94,7 +94,7 @@ STAGES: tuple[LockedStage, ...] = (
         support_area=0.30, support_center=0.80,
         foot_lift=0.10, gait_phase=0.60, feet_air_time=0.50,
         foot_clearance=-4.0, foot_slip=-8.0, stance_joint=-0.3,
-        wheel_axis=-1.0, push=False, reset_scale=0.50,
+        wheel_axis=-1.0, push=False, reset_scale=1.00,
     ),
     LockedStage(
         name="combined", vx=(-0.20, 0.40), vy=(-0.20, 0.20), wz=(-0.45, 0.45),
@@ -277,6 +277,15 @@ def apply_locked_stage(cfg, stage: int | str) -> None:
     if not s.push:
         cfg.events.pop("push_robot", None)
     _scale_reset_contract(cfg, s.reset_scale)
+    if idx == 2 and "reset_robot_joints" in cfg.events:
+        # The connector must survive handovers from terrain experts, whose leg
+        # pose is far outside the default-stance reset.  Widen the joint reset
+        # for the robustness fine-tune (S2 only; S1/S3/S4 keep their schedule).
+        ev = cfg.events["reset_robot_joints"]
+        params = dict(ev.params)
+        params["position_range"] = (-0.25, 0.25)
+        params["velocity_range"] = (-2.0, 2.0)
+        cfg.events["reset_robot_joints"] = replace(ev, params=params)
 
     # Task-priority terminations.  S0/S1 must be allowed to discover a gait:
     # the earlier locked_s1_vy run had 98.6% of episodes terminated by this

@@ -364,6 +364,8 @@ class RouteNode(Node):
             "vt_pose_v1": ([BTN_LB], (-1, 0)),
             "vt_track_v1": ([BTN_LB], (1, 0)),
             "vt_track_v2": ([BTN_LB], (0, 1)),
+            "vt_locked_s1": ([BTN_LB], (0, -1)),
+            "vt_locked_s2": ([BTN_LB], (0, -1)),
             "vt_edge_v1": ([BTN_BACK], (0, 1)),
             "row2p_p40w40_v1": ([BTN_START], (0, -1)),
             "st30_ppo_st30_s100_600": ([BTN_RB], (0, -1)),
@@ -382,6 +384,25 @@ class RouteNode(Node):
         self._hold(0.45)
 
     def ensure_transfer(self) -> None:
+        # The locked-wheel connector is BC-initialised and much more sensitive
+        # to the expert handover state than the rolling vt_track models: loading
+        # it while the expert is still walking (first locked-route run, after
+        # t_stairs) put the robot on its side within 1 s.  Stop first, let the
+        # command limiter settle, then load the connector.  Its zero-command
+        # creep is only ~0.02 m/s, so the old "zero command rolls back" failure
+        # does not apply.
+        if (TRANSFER_POLICY.startswith("vt_locked")
+                and self._current_policy != TRANSFER_POLICY):
+            self.command(0.0, 0.0, 0.0)
+            self._hold(0.6)
+            self.stop(0.3)
+            self.switch(TRANSFER_POLICY)
+            # Let the connector settle in its own stance before route commands
+            # resume; an immediate goto after the expert handover rolled the
+            # locked policy over in the first route run.
+            self.command(0.0, 0.0, 0.0)
+            self._hold(1.2)
+            return
         self.switch(TRANSFER_POLICY)
 
     def enter_fixed(self, kind: str) -> None:
@@ -447,9 +468,9 @@ class RouteNode(Node):
         floor and a bang-bang-ish gain for this model.  vt_pose_v1 keeps the
         historical gains that the route was tuned with.
         """
-        if TRANSFER_POLICY.startswith("vt_track"):
-            # Both vt_track models have a low-wz dead zone (v2's translation is
-            # also conservative); use the higher floor/gain that the route needs.
+        if TRANSFER_POLICY.startswith(("vt_track", "vt_locked")):
+            # vt_track and the locked-wheel connector both have a low-wz dead
+            # zone; use the higher floor/gain that the route needs.
             return (0.25, 0.65, 2.5)
         return (0.12, 0.45, 1.2)
 
@@ -577,7 +598,7 @@ class RouteNode(Node):
                 self.command(0.0, 0.0, wz)
             else:
                 v = min(speed, max(0.08, 0.7 * dist))
-                if TRANSFER_POLICY.startswith("vt_track"):
+                if TRANSFER_POLICY.startswith(("vt_track", "vt_locked")):
                     # The low-wz dead zone also hurts small heading corrections
                     # while driving (goto veered off the T-stairs approach).
                     wz = max(-0.40, min(0.40, 1.6 * err))
@@ -1228,10 +1249,12 @@ class RouteNode(Node):
                 self.command(0.0, 0.0, 0.0)
                 self._hold(0.5)
                 p_post = self.pose()
+                target_err = math.hypot(p_post.x - 5.70, p_post.y + 0.45)
                 log.info("bridge A east handover: pre=(%.2f,%.2f) post=(%.2f,%.2f) "
-                         "drift=%.3f m" % (p_pre.x, p_pre.y, p_post.x, p_post.y,
-                                           math.hypot(p_post.x - p_pre.x,
-                                                      p_post.y - p_pre.y)))
+                         "moved=%.3f m target_err=%.3f m" %
+                         (p_pre.x, p_pre.y, p_post.x, p_post.y,
+                          math.hypot(p_post.x - p_pre.x, p_post.y - p_pre.y),
+                          target_err))
             else:
                 self.stop(0.5)
             if ok:
@@ -1401,7 +1424,12 @@ class RouteNode(Node):
         ]
         reached = 0
         for pt, deg in slalom:
-            if self.goto(pt, tol=0.12, timeout_s=9.0, speed=0.14):
+            # 9 s was too short when a keyframe follows a large heading change:
+            # the ideal-velocity fake-model route failed 2/7 keyframes on the
+            # turn-first-then-translate leg (turn ~4 s at route gains + drive
+            # >1 m at 0.14 m/s).  15 s keeps the segment bounded while allowing
+            # the fixed choreography to finish.
+            if self.goto(pt, tol=0.12, timeout_s=15.0, speed=0.16):
                 reached += 1
         self.report("slalom keyframes", reached == len(slalom),
                     f"{reached}/{len(slalom)}")
