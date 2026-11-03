@@ -83,7 +83,35 @@ bash -c 'timeout 400 .pixi/envs/demo/bin/python tools/route/fake_kinematic_route
 视频：`artifacts/route/fake_route_arc.mp4`（219.9 s，全场；含 bridge B 对带和
 圆弧 slalom）。
 
-### 2.2 高墙后切换模型时的关节状态（S2 路线失败的直接证据）
+### 2.2 锁轮切换修复：hold 当前 q + 限速回零（0.5 rad/s）
+
+严格冻结 hold（轮目标固定为切换时 q）在 C++ 部署里会让策略停住：`cmd=0,0,0.65`
+时 yaw 30 s 从 10.1° 到 10.8°，base 静止；同样代码把轮目标改回 0 就正常，说明不是
+history/actions/FSM 初始化问题。PolicyRunner 里轮 q 设 3 rad 且目标固定 3 仍能走，
+所以是部署侧目标值与策略响应的耦合，不是轮角物理。
+
+采用的可工作方案（`rl_sdk.cpp` / `rl_sdk.hpp`）：
+
+- 切换锁轮策略后的第一个 `ComputeOutput` 捕获 `locked_wheel_q = obs.dof_pos`；
+- 轮位置目标从该 q 开始，以 **0.50 rad/s**（每 50 Hz 策略步 0.010 rad）限速回零；
+- 不再瞬间把 q 拉到 0（原来约 5.4 rad/s，会侧倒），也不会像严格 hold 那样冻结策略。
+
+实测高墙 handover（`holdq_ramp05_states.jsonl`）：
+
+| t | base | yaw | q wheels |
+|---|---|---|---|
+| 27.0 | (2.13,-5.93,0.522) | 77.3° | 23.24, -17.98, -21.08, 24.87 |
+| 30.0 | (2.11,-5.99,0.545) | 90.3° | 21.29, -15.93, -19.07, 22.88 |
+| 33.0 | (1.93,-5.57,0.562) | 128.3° | 19.79, -14.41, -17.57, 21.38 |
+| 35.0 | (1.94,-5.66,0.559) | 94.3° | 18.79, -13.42, -16.55, 20.39 |
+
+该次 high_wall 也 PASS（4/4 supports）。视频：
+`artifacts/route/locked_s2_ramp_highwall.mp4`。
+
+注意：整场高墙专家仍有 run-to-run 的 3/4 supports / side_bypass 失败；本轮只确认
+锁轮切换不再导致倒下，整场还要解决专家过墙稳定性与后续 bridge A 对位。
+
+### 2.3 高墙后切换模型时的关节状态（S2 路线失败的直接证据）
 
 数据：`artifacts/route/highwall_switch_joints.csv`（t=28–34 s，16 关节 q/dq/tau），
 图：`artifacts/route/highwall_wheel_q.png`。
@@ -170,5 +198,6 @@ vt_locked_s1: forward_ok=True turns_ok=False turn_drift_max=0.2791 accepted=Fals
 |---|---|
 | [fake_route_arc.mp4](artifacts/route/fake_route_arc.mp4) | 理想速度假模型，全场路线 PASS；圆弧 slalom 无杆接触（轮心距 0.205 m） |
 | [slalom_arc_plan.png](artifacts/route/slalom_arc_plan.png) | slalom 圆弧路径平面图与最近轮心/杆距离 |
+| [locked_s2_ramp_highwall.mp4](artifacts/route/locked_s2_ramp_highwall.mp4) | 锁轮 hold q + 0.5 rad/s 回零的高墙 handover（PASS，不侧倒） |
 | [highwall_wheel_q.png](artifacts/route/highwall_wheel_q.png) | 高墙 handover 四轮 q/dq 曲线 |
 | [locked_s2_route.mp4](artifacts/route/locked_s2_route.mp4) | 当前 S2 锁轮模型；显示 expert→connector handover 后倒下，路线未完成 |

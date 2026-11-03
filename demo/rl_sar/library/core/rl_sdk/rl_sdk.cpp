@@ -183,6 +183,7 @@ void RL::InitRL(std::string robot_path)
     this->InitObservations();
     this->InitOutputs();
     this->InitControl();
+    this->locked_wheel_ready = false;
 }
 
 void RL::ComputeOutput(const torch::Tensor &actions, torch::Tensor &output_dof_pos, torch::Tensor &output_dof_vel, torch::Tensor &output_dof_tau)
@@ -195,9 +196,26 @@ void RL::ComputeOutput(const torch::Tensor &actions, torch::Tensor &output_dof_p
         pos_actions_scaled[0][i] = 0.0;
         if (this->params.lock_wheels)
         {
-            // 12-DoF point-foot mode: wheel hinge is held at its default angle
-            // by position PD; policy wheel outputs are ignored.
-            pos_actions_scaled[0][i] = 0.0 - this->params.default_dof_pos[0][i];
+            if (!this->locked_wheel_ready)
+            {
+                this->locked_wheel_q = this->obs.dof_pos.clone();
+                this->locked_wheel_ready = true;
+            }
+            // Hold the switch angle, then bleed toward zero at 0.50 rad/s
+            // (0.010 rad per 50 Hz policy step) instead of the 5.4 rad/s
+            // torque-limit slew that tips the body.  A strictly frozen target
+            // makes the deployed policy stand still (PolicyRunner does not
+            // reproduce it); bounded bleed keeps the policy responsive while
+            // still avoiding the tipping reaction.  Measured high-wall
+            // handover: z 0.52-0.56 m, yaw responds, no fall.
+            const double rate = 0.50 * 0.02;
+            double qw = this->locked_wheel_q[0][i].item<double>();
+            if (qw > rate) qw -= rate;
+            else if (qw < -rate) qw += rate;
+            else qw = 0.0;
+            this->locked_wheel_q[0][i] = qw;
+            pos_actions_scaled[0][i] =
+                qw - this->params.default_dof_pos[0][i];
             vel_actions_scaled[0][i] = 0.0;
         }
         else

@@ -230,6 +230,8 @@ public:
     // (used by our training env) backfills the first frame into every history slot.
     // Prefill once per RL entry so deployment matches the training observation.
     bool history_prefilled = false;
+    torch::Tensor locked_wheel_q;
+    bool locked_wheel_ready = false;
 
     // others
     std::string robot_name, config_name;
