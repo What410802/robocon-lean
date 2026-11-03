@@ -59,6 +59,8 @@ def main() -> int:
     ap.add_argument("states", type=Path)
     ap.add_argument("video", type=Path)
     ap.add_argument("plan", type=Path, nargs="?")
+    ap.add_argument("--scene", type=Path, default=SCENE,
+                    help="MuJoCo scene used for replay (Part2 route field etc.)")
     ap.add_argument("--operator-only", action="store_true",
                     help="show only the scene and the auto-operator CLI command "
                          "(no telemetry/wheel/top-down debug overlay)")
@@ -69,7 +71,7 @@ def main() -> int:
     dst.parent.mkdir(parents=True, exist_ok=True)
     frames = [json.loads(l) for l in src.read_text().splitlines() if l.strip()]
     plan = load_plan(plan_path) if plan_path and plan_path.exists() else []
-    model = mujoco.MjModel.from_xml_path(str(SCENE))
+    model = mujoco.MjModel.from_xml_path(str(args.scene))
     data = mujoco.MjData(model)
     qadr = [int(model.jnt_qposadr[int(model.actuator_trnid[i, 0])]) for i in range(model.nu)]
     renderer = mujoco.Renderer(model, height=H, width=W)

@@ -109,14 +109,12 @@ class Terrain:
 
 
 class FakeRouteSim(Node):
-    def __init__(self, scene: Path, rate: float) -> None:
+    def __init__(self, scene: Path, rate: float, spawn=(3.7, -9.0, 0.0)) -> None:
         super().__init__("fake_route_sim")
         self.terrain = Terrain(scene)
         self.rate = rate
         self.dt = 1.0 / rate
-        self.x = 3.7
-        self.y = -9.0
-        self.yaw = 0.0
+        self.x, self.y, self.yaw = (float(v) for v in spawn)
         self.t = 0.0
         self.steps = 0
         self.axes = [0.0] * 8
@@ -201,9 +199,13 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--scene", default=str(DEFAULT_SCENE))
     ap.add_argument("--rate", type=float, default=50.0)
+    ap.add_argument("--spawn-x", type=float, default=3.7)
+    ap.add_argument("--spawn-y", type=float, default=-9.0)
+    ap.add_argument("--spawn-yaw", type=float, default=0.0)
     args = ap.parse_args()
     rclpy.init()
-    node = FakeRouteSim(Path(args.scene), args.rate)
+    node = FakeRouteSim(Path(args.scene), args.rate,
+                        (args.spawn_x, args.spawn_y, args.spawn_yaw))
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:

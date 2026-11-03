@@ -45,7 +45,9 @@ ROOT = Path(__file__).resolve().parents[2]  # .../demo (rl_sar/launch/<this file
 POLICY_ROOT = ROOT / "rl_sar" / "policy"
 ROBOT_ROOT = ROOT / "robots"
 ROUTE_SCRIPT = ROOT / "rl_sar" / "scripts" / "part1_auto_route.py"
+PART2_ROUTE_SCRIPT = ROOT / "rl_sar" / "scripts" / "part2_auto_route.py"
 FULL_FIELD_SCENE = ROOT / "scenes" / "part2" / "full_field" / "part2_full_field.xml"
+PART2_ROUTE_SCENE = ROOT / "scenes" / "part2" / "full_field" / "part2_route_field.xml"
 
 
 def _unwrap_config(data):
@@ -113,13 +115,19 @@ def _sim_params(context):
     full_field = context.perform_substitution(LaunchConfiguration("full_field")).strip().lower()
     route = context.perform_substitution(LaunchConfiguration("route")).strip()
     eval_state_every = int(context.perform_substitution(LaunchConfiguration("eval_state_every")))
+    # The Part2 route runs on the separately-saved route field.
+    if route == "part2":
+        scene = PART2_ROUTE_SCENE
+        spawn = (0.0, 0.0, 0.675, 0.0)
     # The auto route consumes /eval_state as its pose feedback. Judged runs keep the default
     # (1 = every 2 ms physics frame); an explicit `eval_state_every:=0` still enables the
     # route's 50 Hz feedback instead of leaving it without pose input.
     if route and eval_state_every == 0:
         eval_state_every = 10
     _validate_contract(robot, policy)
-    if explicit:
+    if route == "part2" and not explicit:
+        pass  # scene/spawn already selected above
+    elif explicit:
         scene, spawn = Path(explicit), (None, None, None, None)
     elif full_field in ("1", "true", "yes"):
         if robot != "blackW":
@@ -163,17 +171,18 @@ def _route_node(context, *args, **kwargs):
     route = context.perform_substitution(LaunchConfiguration("route")).strip()
     if not route:
         return []
-    if route != "part1":
-        raise RuntimeError(f"unknown route {route!r}; supported: 'part1'")
-    if not ROUTE_SCRIPT.is_file():
-        raise RuntimeError(f"route script missing: {ROUTE_SCRIPT}")
+    if route not in ("part1", "part2"):
+        raise RuntimeError(f"unknown route {route!r}; supported: 'part1', 'part2'")
+    script = PART2_ROUTE_SCRIPT if route == "part2" else ROUTE_SCRIPT
+    if not script.is_file():
+        raise RuntimeError(f"route script missing: {script}")
     transfer = context.perform_substitution(LaunchConfiguration("transfer_policy")).strip() or "vt_pose_v1"
     stop_on_fail = context.perform_substitution(LaunchConfiguration("stop_on_fail")).strip().lower() \
         not in ("0", "false", "no", "off")
     route_proc = ExecuteProcess(
-        cmd=[sys.executable, str(ROUTE_SCRIPT)],
+        cmd=[sys.executable, str(script)],
         output="screen",
-        name="part1_auto_route",
+        name="part2_auto_route" if route == "part2" else "part1_auto_route",
         env={**os.environ,
              "PART1_TRANSFER_POLICY": transfer,
              "PART1_ROUTE_STOP_ON_FAIL": "1" if stop_on_fail else "0"},
@@ -216,7 +225,7 @@ def generate_launch_description() -> LaunchDescription:
                                               "per 2 ms physics frame (judged trace); 10 = 50 Hz for "
                                               "interactive runs; 0 = off"),
             DeclareLaunchArgument("route", default_value="",
-                                  description="auto route: 'part1' starts the closed-loop course demo "
+                                  description="auto route: 'part1'/'part2' starts the closed-loop course demo "
                                               "(if eval_state_every:=0 is passed it is raised to 10)"),
             DeclareLaunchArgument("transfer_policy", default_value="vt_pose_v1",
                                   description="policy used for route transfers/alignment: "
