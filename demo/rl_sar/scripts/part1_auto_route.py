@@ -1386,27 +1386,16 @@ class RouteNode(Node):
             log.warning("bridge A east centre recentre failed; spin will report")
         self._cli = "center correction"
         self._emit_plan()
-        # Spin FIRST (burst+dwell, drift <=0.04 m in 5 consecutive runs), then
-        # drive SOUTH along the x=5.65 lane with the adaptive formula — the old
-        # diagonal pose_move_to relied on lateral correction, which is the
-        # zero-authority axis for every model (edge29/30 wedged at the west
-        # lip, 0.7 m off-centre).  x=5.65 is the centre of the three 0.2 m
-        # narrow bands (5.35/5.65/5.95); x=5.70+ put the wheels on the gaps.
-        ok_spin = self.spin_fixed(-math.pi / 2.0, tol=0.10, timeout_s=40.0,
-                                  max_drift=0.60, rate=0.70)
+        # Turn with the 12-DoF locked policy, not the fixed-action differential
+        # skid.  The fixed spin is momentum/friction sensitive: in the 12-DoF
+        # full-course run it stalled twice (33.5 deg, 31.6 deg) on the 1 m
+        # platform and then wedged in FixedBridgeDrive.  rotate_hold is the
+        # position-loop turn that passed the position harness (drift 0.067 m).
+        self.ensure_transfer()
+        ok_spin = self.rotate_hold(-math.pi / 2.0, timeout_s=35.0)
         if not ok_spin:
-            log.warning("east centre spin retry")
-            ok_spin = self.spin_fixed(-math.pi / 2.0, tol=0.12, timeout_s=40.0,
-                                      max_drift=0.70, rate=0.70)
-        if not ok_spin:
-            # The fixed differential spin is friction/camber sensitive and can
-            # stall part-way on the 1 m platform.  Fall back to the RL transfer
-            # primitive's closed-loop rotate_hold (vt_track_v1 keeps the base
-            # within ~0.05 m in the position harness), then continue on the lane.
-            log.warning("east centre spin: fixed-drive failed; "
-                        "using transfer rotate_hold")
-            self.ensure_transfer()
-            ok_spin = self.rotate_hold(-math.pi / 2.0, timeout_s=25.0)
+            log.warning("east centre spin retry with locked policy")
+            ok_spin = self.rotate_hold(-math.pi / 2.0, timeout_s=35.0)
         self.report("bridge A east centre spin", ok_spin,
                     f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         # Lane-south to the bridge B entry.  Exit only when both y and the
