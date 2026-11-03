@@ -1286,13 +1286,27 @@ class RouteNode(Node):
         # (probe_turn_footprint + spin_probe evidence; edge8-11 failures).
         # The floor mount is the legacy-harness choreography (5/6 legs).
         self.set_leg("bridge_A_west")
-        # Two-step approach (legacy harness parity): straight to (0.8, 0.0)
-        # from the t_stairs exit cuts across the ramp edge and slides off west
-        # (edge14 ended at x=-0.26); go west in the south corridor first, then
-        # north up the clear column.
-        self.require((0.8, -2.0), tol=0.18, timeout_s=25.0, speed=0.30)
-        self.require((0.8, 0.0), tol=0.18, timeout_s=20.0, speed=0.20)
-        self.face(0.0)
+        # Direct NW ramp approach (T-stairs top / ramp_blocks_l /
+        # bridge_blocks_platform_l are all aligned at x=1.8): after descending
+        # the T stairs, face +y and climb the ramp straight onto the NW
+        # platform, then turn clockwise (yaw +90 -> 0) to face +x.  The old
+        # west detour via (0.8,-2.0)->(0.8,0) was for the weak-rotation pose
+        # model; the 12-DoF/row2p model no longer needs it.
+        # T-stairs exits at y~-1.8; do not drive back south to -2.0.
+        self.require((1.8, -1.75), tol=0.15, timeout_s=8.0, speed=0.15)
+        self.face(math.pi / 2.0)
+        ok_ramp = self.drive_expert_heading(
+            "row2p_p40w40_v1", 0.40, math.pi / 2.0,
+            lambda p: p.y > -0.10, 15.0,
+            x_hold=1.8, kp=0.8, max_wz=0.20)
+        self.stop(0.4)
+        p = self.pose()
+        log.info("NW ramp: %s at (%.2f,%.2f,z=%.2f,yaw=%.1fdeg)" %
+                 ("PASS" if ok_ramp else "FAIL", p.x, p.y, p.z,
+                  math.degrees(p.yaw)))
+        # Clockwise turn on the platform: +y heading (pi/2) -> +x (0).
+        self.rotate_hold(0.0, timeout_s=15.0)
+        self.stop(0.3)
         ok = False
         for vx in (0.45, 0.50, 0.40):
             self.goto((1.8, 0.0), tol=0.22, timeout_s=10.0, speed=0.15)
