@@ -1512,13 +1512,24 @@ class RouteNode(Node):
         self.report("long slope straight S", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer()
         self.set_leg("height_bar")
-        self.require((5.7, -8.2), tol=0.16, timeout_s=18.0, speed=0.25)
+        # Position alignment in front of the height bar, not just heading:
+        # the long-slope exit can be a few cm off x, and the fixed action is
+        # yaw-open-loop after entry.
+        self.require((5.70, -8.20), tol=0.10, timeout_s=15.0, speed=0.20)
         self.face(-math.pi / 2.0)
         self.enter_fixed("low_bar")
         ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -10.2, 15.0)
         self.exit_fixed()
         self.report("height_bar", ok)
         self.ensure_transfer()
+
+        # Position alignment at the gravel entrance face.  The east column is
+        # commanded straight south; without a planar correction the expert
+        # enters off-centre and the first climb drifts to an arm edge.
+        self.require((5.70, -10.20), tol=0.10, timeout_s=10.0, speed=0.15)
+        p = self.pose()
+        log.info("gravel entrance align: x=%.2f y=%.2f yaw=%.1fdeg" %
+                 (p.x, p.y, math.degrees(p.yaw)))
 
         # 7) gravel L: expert climbs into the EAST arm, switch to 12-DoF at
         # its middle; the 12-DoF connector then drives to the SE corner, turns
