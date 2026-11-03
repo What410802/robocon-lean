@@ -528,7 +528,7 @@ class RouteNode(Node):
         """In-place yaw turn with position feedback to stay on a small platform."""
         self._cmd = f"rotate_hold({target_yaw:.2f})"
         self._corr = {}
-        self._set_turn_cli(target_yaw)
+        self._set_turn_hold_cli(target_yaw)
         self._emit_plan()
         self.ensure_transfer()
         p0 = self.pose()
@@ -625,7 +625,12 @@ class RouteNode(Node):
         tx, ty = float(target[0]), float(target[1])
         self._cmd = f"goto(({tx:.2f},{ty:.2f}))"
         self._corr = {}
-        self._set_move_cli(tx, ty)
+        p_cli = self.pose()
+        # goto also turns toward the target while translating; include the
+        # target heading in the relative CLI so the operator command matches
+        # the full motion.
+        target_yaw = math.atan2(ty - p_cli.y, tx - p_cli.x)
+        self._set_move_cli(tx, ty, target_yaw)
         self._emit_plan()
         t0 = self._now()
         while self._now() - t0 < timeout_s:
@@ -708,6 +713,11 @@ class RouteNode(Node):
     def _set_turn_cli(self, target_yaw: float) -> None:
         dyaw = wrap(float(target_yaw) - self.pose().yaw)
         self._cli = f"turn({math.degrees(dyaw):+.0f}deg)"
+
+    def _set_turn_hold_cli(self, target_yaw: float) -> None:
+        """rotate_hold also commands body-frame vx to hold (x0,y0)."""
+        dyaw = wrap(float(target_yaw) - self.pose().yaw)
+        self._cli = f"turn_hold({math.degrees(dyaw):+.0f}deg)"
 
     def _emit_plan(self) -> None:
         if self._plan_fh is None:
@@ -1535,6 +1545,12 @@ class RouteNode(Node):
         # sign is inverted: the ideal-model run drove x from 5.72 to 8.71
         # before entering bridge B.  World x = +vy_body at yaw=-90, so the
         # correction is vy = -k*(x-5.65).
+        # This is a real southward translation after the turn; give it its own
+        # CLI instead of leaving turn_hold(...) on screen.
+        self._cmd = "lane_south(x_hold=5.65, y_stop=-0.90)"
+        self._corr = {}
+        self._set_move_cli(5.65, -0.90, -math.pi / 2.0)
+        self._emit_plan()
         t0s = self._now()
         while self._now() - t0s < 15.0:
             p = self.pose()
@@ -1555,6 +1571,11 @@ class RouteNode(Node):
         # lateral error (it only commands forward + yaw); the fake model exposed
         # exactly that: the robot faced south, x stayed at 5.79 and the goto
         # timed out.  Do a dedicated lateral lane hold instead.
+        p_lat = self.pose()
+        self._cmd = "lane_hold_x(5.65)"
+        self._corr = {}
+        self._set_move_cli(5.65, p_lat.y, -math.pi / 2.0)
+        self._emit_plan()
         for _ in range(150):
             p = self.pose()
             if abs(p.x - 5.65) < 0.035:
