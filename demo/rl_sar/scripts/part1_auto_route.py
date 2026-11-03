@@ -426,16 +426,18 @@ class RouteNode(Node):
             self._hold(0.6)
             self.stop(0.3)
             self.switch(TRANSFER_POLICY)
-            # Let the connector settle in its own stance before route commands
-            # resume; an immediate goto after the expert handover rolled the
-            # locked policy over in the first route run.
-            self.command(0.0, 0.0, 0.0)
-            self._hold(1.2)
+            # Show the connector switch during the settle, not only for one
+            # frame before the next goto overwrites it.
             if announce:
                 self._cmd = "ensure_transfer"
                 self._cli = f"switch {TRANSFER_POLICY}"
                 self._corr = {}
                 self._emit_plan()
+            # Let the connector settle in its own stance before route commands
+            # resume; an immediate goto after the expert handover rolled the
+            # locked policy over in the first route run.
+            self.command(0.0, 0.0, 0.0)
+            self._hold(1.2)
             return
         self.switch(TRANSFER_POLICY)
         if announce:
