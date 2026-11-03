@@ -109,7 +109,7 @@ enum class Intent : std::uint8_t
     PolicyEdge,         // Back+D-pad up           (vt_edge_v1: wheel-off-edge recovery specialist)
     PolicyTrack,        // LB+D-pad right          (vt_track_v1: velocity-tracking Part1 handover primitive)
     PolicyTrackV2,      // LB+D-pad up             (vt_track_v2: contact-plane v2 recipe)
-    PolicyNwwolf,       // LB+D-pad down           (nwwolf_locked16: N-W-wolf locked-wheel teacher)
+    PolicyNwwolf,       // LB+D-pad down           (vt_locked12: 12-DoF locked-wheel connector)
     LowBarDrive,        // Back+D-pad down / 5
     BridgeDrive,        // Back+D-pad right / 6
     CarDrive,           // Back+D-pad left / 7

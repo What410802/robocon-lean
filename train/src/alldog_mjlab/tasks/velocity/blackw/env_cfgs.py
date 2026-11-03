@@ -14,6 +14,7 @@ from dataclasses import replace
 
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.envs import mdp as envs_mdp
+from mjlab.envs.mdp.actions import JointPositionActionCfg
 from mjlab.envs.mdp.events import reset_joints_by_offset
 from mjlab.managers import EventTermCfg, ObservationTermCfg, RewardTermCfg, TerminationTermCfg
 from mjlab.managers.scene_entity_config import SceneEntityCfg
@@ -38,10 +39,7 @@ from alldog_mjlab.tasks.velocity.common.velocity_env import (
     BLACK_COMMAND_NAME,
     build_velocity_env_cfg,
 )
-from alldog_mjlab.tasks.velocity.blackw.actions import (
-    LockedWheelLegActionCfg,
-    WheelLegActionCfg,
-)
+from alldog_mjlab.tasks.velocity.blackw.actions import WheelLegActionCfg
 from alldog_mjlab.utils import knobs
 from alldog_mjlab.tasks.velocity.profiles.part2.adaptive_command import (
     make_adaptive_command_cfg,
@@ -609,31 +607,84 @@ def blackw_vt_edge_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     return cfg
 
 
+BLACKW_LOCKED_LEG_JOINTS = tuple(
+    f"{leg}_{joint}_joint"
+    for leg in BLACKW_FOOT_NAMES
+    for joint in ("hip", "thigh", "calf")
+)
+BLACKW_LOCKED_ACTION_TERM_ORDER = tuple(
+    f"joint_pos_{leg.lower()}" for leg in BLACKW_FOOT_NAMES
+)
+
+
+def _configure_locked_actions(cfg: ManagerBasedRlEnvCfg) -> None:
+    """12-DoF locked-wheel action contract: hip/thigh/calf, no wheel output.
+
+    One term per leg in ``BLACKW_FOOT_NAMES`` order keeps the deployed action
+    order FL -> FR -> RL -> RR and avoids the MjLab joint-transmission natural
+    order (FL -> FR -> RR -> RL).  Wheel hinges are not in the action vector;
+    their actuator PD target stays at the locked default q=0.
+    """
+    leg_joint_names = {
+        leg: tuple(f"{leg}_{joint}_joint" for joint in ("hip", "thigh", "calf"))
+        for leg in BLACKW_FOOT_NAMES
+    }
+    cfg.actions = {
+        term: JointPositionActionCfg(
+            entity_name="robot",
+            actuator_names=leg_joint_names[leg],
+            scale=0.25,
+            use_default_offset=True,
+        )
+        for term, leg in zip(BLACKW_LOCKED_ACTION_TERM_ORDER, BLACKW_FOOT_NAMES)
+    }
+
+
+def _configure_locked_actor_observations(cfg: ManagerBasedRlEnvCfg) -> None:
+    """12-DoF actor: leg joint q/dq only; no wheel q/dq/action columns."""
+    actor = cfg.observations["actor"]
+    terms = actor.terms
+    terms["joint_pos"] = replace(
+        terms["joint_pos"],
+        func=envs_mdp.joint_pos_rel,
+        params={
+            **terms["joint_pos"].params,
+            "asset_cfg": SceneEntityCfg(
+                "robot", joint_names=BLACKW_LOCKED_LEG_JOINTS, preserve_order=True
+            ),
+        },
+    )
+    terms["joint_vel"] = replace(
+        terms["joint_vel"],
+        func=envs_mdp.joint_vel_rel,
+        params={
+            **terms["joint_vel"].params,
+            "asset_cfg": SceneEntityCfg(
+                "robot", joint_names=BLACKW_LOCKED_LEG_JOINTS, preserve_order=True
+            ),
+        },
+    )
+    # ``actions`` is the action manager's raw output; with 12 dims it is
+    # automatically wheel-free.  Keep the six-frame history layout.
+    actor.history_length = BLACKW_ACTOR_HISTORY_LENGTH
+    actor.flatten_history_dim = True
+
+
 def blackw_vt_locked_env_cfg(
     play: bool = False, stage: int | str = 4
 ) -> ManagerBasedRlEnvCfg:
     """Velocity-tracking primitive on the 12-DoF locked-wheel (point-foot) robot.
 
-    Wheel hinges are PD-held at 0 (``get_blackw_locked_robot_cfg``); the policy
-    walks on hip/thigh/calf with a RecoveryLoco-style contact/gait reward set.
-    The 16-action deployment contract is kept: the policy's 4 wheel outputs are
-    ignored, so export/PolicyRunner only need a ``lock_wheels`` mode.
+    Wheel hinges are PD-held at 0 by their actuators (``get_blackw_locked_robot_cfg``);
+    the policy acts on the 12 hip/thigh/calf joints only, and its observations
+    contain no wheel terms (45 x 6 history, 12 actions).  A deployment adapter
+    can strip the 16-DoF wheel columns from the C++ IO while the policy itself
+    is true 12-DoF.
     """
     cfg = _apply_blackw_overrides(build_velocity_env_cfg(play=play, rough=False))
     cfg.scene.entities = {"robot": get_blackw_locked_robot_cfg()}
-    cfg.actions = {
-        f"wheel_leg_{leg.lower()}": LockedWheelLegActionCfg(
-            entity_name="robot",
-            actuator_names=tuple(
-                f"{leg}_{joint}_joint" for joint in ("hip", "thigh", "calf", "wheel")
-            ),
-            # The 4th (wheel) output is ignored by LockedWheelLegAction; a
-            # single float is required here (tuple scales are unsupported).
-            scale=0.25,
-            preserve_order=True,
-        )
-        for leg in BLACKW_FOOT_NAMES
-    }
+    _configure_locked_actions(cfg)
+    _configure_locked_actor_observations(cfg)
     apply_vt_contract(cfg, play=play, edges=False)
     # The rolling-wheel contact-plane terms do not apply to the locked-wheel
     # point-foot gait: ``wheel_plane_level`` sharply rewards a flat four-wheel

@@ -68,7 +68,7 @@ tests/                       # Part 2 wall predicate 单测（CPU）
 | `blackw-flat` | 平地速度跟踪 |
 | `blackw-vt` | **速度跟随衔接（Part 1 位置环）**：pose 包络 + 纯 yaw/纯平移模式 + stance/转弯漂移奖励 + 推扰/随机初态/轮摩擦 DR（配方与验收见 `docs/VT-RECIPE.md`） |
 | `blackw-vt-edge` | `blackw-vt` + 0.05–0.20 m 平台边缘地形（桥台/台阶唇交接边缘鲁棒） |
-| `blackw-vt-locked` | **锁轮点足原型**：轮关节 PD 锁在 0、12 腿 DoF 步行；RecoveryLoco 式接触/步态奖励 + 四轮共面/防滑（尚未达到交付精度，见 `docs/VT-RECIPE.md` §4.3） |
+| `blackw-vt-locked` | **真 12-DoF 锁轮衔接**：45×6 obs / 12 act，轮关节不属于策略 IO、由轮锁 PD 保持；RecoveryLoco 式接触/步态 + 动态支撑框（见 `docs/VT-RECIPE.md` §4.3/§8） |
 | `blackw-official` | Part 1/2 官方难度混合地形（主力任务） |
 | `blackw-plum` | Part 2 plum（owner 确认的 no-ramp 3-pile 布局） |
 | `blackw-{stairs,platform,slope,trench,wall}-exact` | 单障碍官方地形专项 |

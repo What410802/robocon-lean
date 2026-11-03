@@ -361,9 +361,9 @@ void RL_Sim::RobotControl()
         {
             // Default keeps the N-W-wolf teacher; the Part1 route can point the
             // same button at a locally trained locked-wheel connector without a
-            // second gamepad binding (e.g. PART1_LOCKED_POLICY=vt_locked_s2).
+            // second gamepad binding (e.g. PART1_LOCKED_POLICY=vt_locked12).
             const char* locked = std::getenv("PART1_LOCKED_POLICY");
-            this->SwitchPolicy(locked != nullptr && *locked != '\0' ? locked : "nwwolf_locked16");
+            this->SwitchPolicy(locked != nullptr && *locked != '\0' ? locked : "vt_locked12");
         }
         if (in.has(input_map::Intent::ToggleNavigation))
         {

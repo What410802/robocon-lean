@@ -6,7 +6,7 @@
 
 1. **理想速度假模型**：一个按指令精确积分体速度的 kinematic 假 sim，跑现有
    `part1_auto_route.py` 全场路线，用来暴露路线本身的排序/超时/几何问题。
-2. **当前锁轮衔接模型**：导出 S2 checkpoint（`vt_locked_s2`）到部署目录，跑同一条
+2. **当前锁轮衔接模型**：导出真 12-DoF S2 checkpoint（`vt_locked12`，含 16 维 adapter）到部署目录，跑同一条
    路线，观察实际 handover 表现。
 3. 两个过程都生成视频。
 
@@ -139,35 +139,22 @@ route 启动后策略不前进，已回退，需要单独调通后再接路线�
 导出：
 
 ```bash
+# 真 12-DoF policy + 16-in/16-out deployment adapter
 PYTHONPATH=train/src .pixi/envs/train/bin/python \
-  train/scripts/export/export_history_policy.py \
-  --task blackw-vt-locked-s2 \
-  --checkpoint logs/rsl_rl/black_velocity/2026-11-03_00-12-37_locked3_s2b/model_898.pt \
-  --out demo/rl_sar/policy/blackW/vt_locked_s2/policy.pt --robot blackW
+  train/scripts/export/export_locked12_policy.py \
+  --checkpoint logs/rsl_rl/black_velocity/<run>/model_199.pt \
+  --out artifacts/vt/export_locked12 \
+  --adapter-out demo/rl_sar/policy/blackW/vt_locked12
 ```
 
-部署配置从 `nwwolf_locked16/config.yaml` 复制，只改 top key 和模型名；保留
-`lock_wheels: true` + wheel rl_kp=80/rl_kd=3，leg rl_kp=50/rl_kd=1.2。
+部署目录 `vt_locked12/` 的 `policy.pt` 是 adapter；C++ 仍按 16 维接口运行，`lock_wheels`
+忽略 adapter 补的 4 个零轮动作并保持轮 q。配置从旧 S2 复制后保留
+`lock_wheels: true`、wheel kp=80/kd=3、leg kp=50/kd=1.2；C++ 默认
+`PART1_LOCKED_POLICY=vt_locked12`。
 
-PolicyRunner sim2sim（导出后）：
-
-| cmd | 实测 |
-|---|---|
-| vx 0 / 0.1 / 0.2 / 0.3 | 0.022 / 0.100 / 0.191 / 0.289 |
-| vy 0.2 | 0.119 |
-| wz ±0.3 | +0.160 / −0.145 |
-
-位置环 `position_harness.py --policies vt_locked_s1,vt_locked_s2`：
-
-```
-vt_locked_s2: forward_ok=True turns_ok=True turn_drift_max=0.0594
-              l_shape_ok=False stop_and_go_ok=True accepted=True
-vt_locked_s1: forward_ok=True turns_ok=False turn_drift_max=0.2791 accepted=False
-```
-
-整场路线（`stop_on_fail:=false` 以便看 handover 之后的行为）：高墙段本身通过，
-切回锁定策略后 5 s 内倒下；`bridge A east` 之后无法继续。视频
-`artifacts/route/locked_s2_route.mp4`（48.2 s，记录到高墙/stairs 附近失败）。
+高墙 handover 实测（`locked12_route.log`）：切换后 t40 (2.23,-5.92,0.53)、
+t45 (1.88,-3.32,z=0.93)，无侧倒；该次 high_wall 专家自身 2/4 supports 失败，
+与锁轮无关。
 
 ### 3.1 已试 handover 修复
 

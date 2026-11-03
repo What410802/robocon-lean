@@ -66,8 +66,12 @@ class TestVTCommand(unittest.TestCase):
 
     def test_locked_variant(self) -> None:
         cfg = blackw_vt_locked_env_cfg()
-        self.assertEqual(cfg.actions["wheel_leg_fl"].__class__.__name__,
-                         "LockedWheelLegActionCfg")
+        self.assertEqual(list(cfg.actions),
+                         ["joint_pos_fl", "joint_pos_fr", "joint_pos_rl", "joint_pos_rr"])
+        self.assertEqual(cfg.observations["actor"].terms["joint_pos"].params[
+                             "asset_cfg"].joint_names[-1], "RR_calf_joint")
+        self.assertEqual(len(cfg.observations["actor"].terms["joint_pos"].params[
+                                 "asset_cfg"].joint_names), 12)
         self.assertIn("wheel_lock", cfg.rewards)
         self.assertIn("feet_air_time", cfg.rewards)
         self.assertIn("gait_phase", cfg.rewards)

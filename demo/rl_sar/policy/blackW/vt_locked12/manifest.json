@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
   "robot": "blackW",
-  "policy": "vt_locked_s2",
+  "policy": "vt_locked12",
   "weight_file": "policy.pt",
-  "policy_sha256": "83d99e8c664e6e2b7fb3b99edf714150dc497600ef15940fa9fb77fbb539646c",
-  "checkpoint": "logs/rsl_rl/black_velocity/2026-11-03_00-12-37_locked3_s2b/model_898.pt",
-  "checkpoint_sha256": "85fc7772719b7525fa08156bd1a56a156e63e8bcb70fdd5878c3411a8b75801c",
+  "policy_sha256": "0492bc0e8bf02575437fc9e60015a355e759b02c95e05efa7de6e2ea9a11456a",
+  "checkpoint": "logs/rsl_rl/black_velocity/2026-11-03_15-12-35_locked12_s2ft/model_0.pt",
+  "checkpoint_sha256": "f71c6009c889a58cc96f9e4912ad10b178649f1dd958767c2d7633364fb9066e",
   "contract": {
     "num_dofs": 16,
     "num_observations": 342,
     "history": 6,
     "support_kind": "wheel",
-    "action_contract": "signed"
+    "action_contract": "locked12"
   },
   "export": {
     "schema_version": 1,
@@ -24,16 +24,16 @@
       "sim_decimation": 10,
       "deployment_decimation": 4
     },
-    "checkpoint_sha256": "85fc7772719b7525fa08156bd1a56a156e63e8bcb70fdd5878c3411a8b75801c",
-    "checkpoint": "logs/rsl_rl/black_velocity/2026-11-03_00-12-37_locked3_s2b/model_898.pt",
-    "policy": "demo/rl_sar/policy/blackW/vt_locked_s2/policy.pt",
-    "sha256": "83d99e8c664e6e2b7fb3b99edf714150dc497600ef15940fa9fb77fbb539646c",
+    "checkpoint": "logs/rsl_rl/black_velocity/2026-11-03_15-12-35_locked12_s2ft/model_0.pt",
+    "checkpoint_sha256": "f71c6009c889a58cc96f9e4912ad10b178649f1dd958767c2d7633364fb9066e",
+    "policy": "demo/rl_sar/policy/blackW/vt_locked12/policy.pt",
+    "sha256": "0492bc0e8bf02575437fc9e60015a355e759b02c95e05efa7de6e2ea9a11456a",
     "layout": "frame-major newest->oldest (HIM deployment)",
     "history_length": 6,
     "actor_dim": 342,
     "cnn_latent_dim": 0,
     "camera_shape": null,
-    "action_contract": "signed",
+    "action_contract": "locked12",
     "observation_layout": {
       "terms": [
         "command",
@@ -83,6 +83,13 @@
     "action_shape": [
       1,
       16
-    ]
+    ],
+    "adapter": {
+      "policy": "demo/rl_sar/policy/blackW/vt_locked12/policy.pt",
+      "sha256": "0492bc0e8bf02575437fc9e60015a355e759b02c95e05efa7de6e2ea9a11456a",
+      "input_dim": 342,
+      "output_dim": 16,
+      "input_layout": "16-DoF frame-major newest->oldest"
+    }
   }
 }

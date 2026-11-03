@@ -32,27 +32,21 @@ from alldog_mjlab.tasks.velocity.profiles.vt.locked import (
 )
 
 
-class ActorMLP(torch.nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.mlp = torch.nn.Sequential(
-            torch.nn.Linear(342, 512), torch.nn.ELU(),
-            torch.nn.Linear(512, 256), torch.nn.ELU(),
-            torch.nn.Linear(256, 128), torch.nn.ELU(),
-            torch.nn.Linear(128, 16),
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.mlp(x)
-
-
-def load_actor(path: str, device: str) -> ActorMLP:
+def load_actor(path: str, device: str) -> torch.nn.Module:
+    """Load the MLP body from a checkpoint without hard-coding 16-DoF dims."""
     ckpt = torch.load(path, map_location="cpu", weights_only=False)
-    model = ActorMLP()
-    model.load_state_dict(
-        {k: v for k, v in ckpt["actor_state_dict"].items() if k.startswith("mlp.")},
-        strict=True,
-    )
+    sd = {k.removeprefix("mlp."): v
+          for k, v in ckpt["actor_state_dict"].items() if k.startswith("mlp.")}
+    layers: list[torch.nn.Module] = []
+    i = 0
+    while f"{i}.weight" in sd:
+        weight = sd[f"{i}.weight"]
+        layers.append(torch.nn.Linear(weight.shape[1], weight.shape[0]))
+        layers.append(torch.nn.ELU())
+        i += 2
+    layers.pop()  # no activation after the output layer
+    model = torch.nn.Sequential(*layers)
+    model.load_state_dict(sd, strict=True)
     return model.to(device).eval()
 
 
@@ -89,6 +83,7 @@ def main() -> int:
     body_names = list(robot.body_names)
     foot_ids = [body_names.index(f"{leg}_foot") for leg in BLACKW_FOOT_NAMES]
     actor = load_actor(args.checkpoint, args.device)
+    action_dim = int(env.action_manager.total_action_dim)
     dev = torch.device(args.device)
 
     print(f"{'cmd':>18s} {'vx':>7s} {'vy':>7s} {'wz':>7s} {'z':>6s} "
@@ -98,7 +93,7 @@ def main() -> int:
         cmd = torch.tensor([c], dtype=torch.float32, device=dev)
         for _ in range(args.warmup):
             cterm.vel_command_b[:] = cmd
-            obs, *_ = env.step(torch.zeros(1, 16, device=dev))
+            obs, *_ = env.step(torch.zeros(1, action_dim, device=dev))
         vs, ws, zs, contacts, viol, radii = [], [], [], [], [], []
         for _ in range(args.steps):
             cterm.vel_command_b[:] = cmd
