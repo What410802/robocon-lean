@@ -1041,6 +1041,11 @@ class RouteNode(Node):
             log.error("no /eval_state; launch with route:=part1 (route raises eval_state_every:=0 to 10)")
             return
         log.info("sim detected; standing up")
+        # The sim loads policy_name:=vt_pose_v1 at process start.  If EnterRL is
+        # pressed without preselecting, InitRL loads that previous model; select
+        # the locked connector first so the very first RL entry is locked.
+        locked_policy = os.environ.get("PART1_LOCKED_POLICY", "vt_locked12").strip() or "vt_locked12"
+        self.switch(locked_policy)
         self._press(buttons=[BTN_A], hold_s=0.15)
         if not self.wait_stable_z(0.46, tilt_max=8.0, hold_s=0.5, timeout_s=15.0):
             log.warning("stand-up not stable (z/tilt); continuing")
@@ -1626,10 +1631,14 @@ class RouteNode(Node):
         self.report("long slope straight S", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer(announce=True)
         self.set_leg("height_bar")
-        # Position alignment in front of the height bar, not just heading:
-        # the long-slope exit can be a few cm off x, and the fixed action is
-        # yaw-open-loop after entry.
-        self.require((5.70, -8.20), tol=0.10, timeout_s=15.0, speed=0.20)
+        # The old single require((5.70,-8.20)) picked a diagonal target
+        # heading; the video showed >90 deg of yaw during the move, then
+        # face(-pi/2) pulled back ~110 deg and left a lateral error that hit
+        # the east post.  Face south first, then the goto to (5.70,-8.20) has
+        # almost the same heading and only a small lateral correction.
+        self.face(-math.pi / 2.0)
+        self.require((5.70, -8.20), tol=0.08, timeout_s=12.0,
+                     recover=False, speed=0.15)
         self.face(-math.pi / 2.0)
         self.enter_fixed("low_bar")
         ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -10.2, 15.0)
