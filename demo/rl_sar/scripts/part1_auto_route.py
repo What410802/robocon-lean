@@ -1358,7 +1358,7 @@ class RouteNode(Node):
         # 2) T stairs: south arm up, north arm down (different arms), exit north
         self.set_leg("t_stairs")
         self.require((1.8, -5.55), tol=0.16, timeout_s=18.0, speed=0.25)
-        self.face(math.pi / 2.0)
+        self.rotate_hold(math.pi / 2.0, timeout_s=12.0)
         # Adaptive lane crossing (user feedback: the left-front wheel dropped
         # off the T-top's SE corner — the x_hold blend was too weak; the repo
         # adaptive formula is what st30 was trained with).  Lane x=1.8 along
@@ -1408,7 +1408,7 @@ class RouteNode(Node):
         p_stair = self.pose()
         p_stair_y = max(-1.60, min(-1.10, p_stair.y))
         self.goto((1.8, p_stair_y), tol=0.10, timeout_s=8.0, speed=0.12)
-        self.face(math.pi / 2.0)
+        self.rotate_hold(math.pi / 2.0, timeout_s=12.0)
         ok_ramp = self.drive_expert_heading(
             "row2p_p40w40_v1", 0.40, math.pi / 2.0,
             lambda p: p.y > -0.10, 15.0,
@@ -1619,7 +1619,7 @@ class RouteNode(Node):
 
         # 6) straight south through the long slope, then height bar fixed action
         self.set_leg("long_slope")
-        self.face(-math.pi / 2.0)
+        self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)
         # Exit only on flat ground south of the ramp: a y-only condition can
         # leave the robot on the slope lip where the flat pose policy and the
         # edge-recovery logic both operate on an incline (legacy final3:
@@ -1636,10 +1636,10 @@ class RouteNode(Node):
         # face(-pi/2) pulled back ~110 deg and left a lateral error that hit
         # the east post.  Face south first, then the goto to (5.70,-8.20) has
         # almost the same heading and only a small lateral correction.
-        self.face(-math.pi / 2.0)
+        self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)
         self.require((5.70, -8.20), tol=0.08, timeout_s=12.0,
                      recover=False, speed=0.15)
-        self.face(-math.pi / 2.0)
+        self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)
         self.enter_fixed("low_bar")
         ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -10.2, 15.0)
         self.exit_fixed()
@@ -1660,7 +1660,7 @@ class RouteNode(Node):
         # used the gravel expert for the whole L and put the left wheels
         # outside the pit at the south-east corner.
         self.set_leg("gravel")
-        self.face(-math.pi / 2.0)
+        self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)
         # Best run so far (full12): 0.5 m/s expert to y<-12.15 with x_hold
         # 5.95; then the 12-DoF goto to the bottom-row centre.  Slower or
         # pre-biased entries over/under-shot (full14-17); revert to this preset.
