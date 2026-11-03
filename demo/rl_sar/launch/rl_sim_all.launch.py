@@ -220,7 +220,7 @@ def generate_launch_description() -> LaunchDescription:
                                               "(if eval_state_every:=0 is passed it is raised to 10)"),
             DeclareLaunchArgument("transfer_policy", default_value="vt_pose_v1",
                                   description="policy used for route transfers/alignment: "
-                                              "vt_pose_v1|vt_track_v1|flat|stair|obstacle|row2p_p40w40_v1"),
+                                              "vt_pose_v1|vt_track_v1|vt_locked12|flat|stair|obstacle|row2p_p40w40_v1"),
             DeclareLaunchArgument("stop_on_fail", default_value="true",
                                   description="stop the auto route (and this launch) at the first "
                                               "segment FAIL; pass false to keep going like an operator"),
