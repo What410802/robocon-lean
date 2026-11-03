@@ -183,6 +183,16 @@ class RouteNode(Node):
         vy_body = vy_lat * math.cos(h)
         return (vx, vy_body, wz)
 
+    def _now(self) -> float:
+        """Route clock: simulation time in step-lock, wall-clock otherwise.
+
+        All control-loop deadlines use this clock so timeout decisions are tied
+        to /eval_state frames (deterministic) rather than Python scheduling.
+        """
+        if self._steplock and self._sim_t > 0.0:
+            return self._sim_t
+        return time.monotonic()
+
     def _hold(self, seconds: float) -> None:
         """Hold the current output for `seconds`: frame-counted in step-lock
         (deterministic), wall-clock sleep otherwise (never recurse: the old
@@ -241,9 +251,9 @@ class RouteNode(Node):
         if self._record_fh is not None:
             self._record_fh.write(msg.data + "\n")
         with self._lock:
-            self._pose = _Pose(x, y, z, yaw, tilt, time.monotonic())
+            self._pose = _Pose(x, y, z, yaw, tilt, self._now())
             self._have_pose = True
-            self._last_pose_wall = time.monotonic()
+            self._last_pose_wall = self._now()
         if self._steplock:
             self._frame_evt.set()
 
@@ -292,9 +302,9 @@ class RouteNode(Node):
             self.wheel_level_spread())
         self.switch("vt_edge_v1")
         self._recoveries += 1
-        t_end = time.monotonic() + timeout_s
+        t_end = self._now() + timeout_s
         try:
-            while time.monotonic() < t_end:
+            while self._now() < t_end:
                 if self.wheel_level_spread() < spread_tol or self.fallen():
                     break
                 feet = self.feet()
@@ -422,16 +432,16 @@ class RouteNode(Node):
         self._hold(settle_s)
 
     def wait_pose(self, timeout_s: float = 20.0) -> bool:
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < timeout_s:
-            if self._have_pose and time.monotonic() - self._last_pose_wall < 1.0:
+        t0 = self._now()
+        while self._now() - t0 < timeout_s:
+            if self._have_pose and self._now() - self._last_pose_wall < 1.0:
                 return True
             self._hold(0.05)
         return False
 
     def wait_z(self, z_min: float, timeout_s: float) -> bool:
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < timeout_s:
+        t0 = self._now()
+        while self._now() - t0 < timeout_s:
             if self.pose().z > z_min:
                 return True
             self._hold(0.05)
@@ -440,11 +450,11 @@ class RouteNode(Node):
     def wait_stable_z(self, z_min: float, tilt_max: float = 10.0,
                       hold_s: float = 0.4, timeout_s: float = 10.0) -> bool:
         """Wait for a settled upright standing pose (z high, tilt small)."""
-        t0 = time.monotonic()
+        t0 = self._now()
         above_since = None
-        while time.monotonic() - t0 < timeout_s:
+        while self._now() - t0 < timeout_s:
             p = self.pose()
-            now = time.monotonic()
+            now = self._now()
             if p.z > z_min and p.tilt < tilt_max:
                 if above_since is None:
                     above_since = now
@@ -457,7 +467,7 @@ class RouteNode(Node):
 
     def fallen(self) -> bool:
         p = self.pose()
-        return p.z < 0.15 or p.tilt > 60.0 or time.monotonic() - p.t > 1.5
+        return p.z < 0.15 or p.tilt > 60.0 or self._now() - p.t > 1.5
 
     def _transfer_yaw_gains(self) -> tuple[float, float, float]:
         """Return (min_wz, max_wz, gain) for the active transfer model.
@@ -476,8 +486,8 @@ class RouteNode(Node):
     def rotate_by(self, delta: float, tol: float = 0.10, timeout_s: float = 10.0) -> bool:
         self.ensure_transfer()
         target = wrap(self.pose().yaw + delta)
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < timeout_s:
+        t0 = self._now()
+        while self._now() - t0 < timeout_s:
             err = wrap(target - self.pose().yaw)
             if abs(err) < tol:
                 break
@@ -495,8 +505,8 @@ class RouteNode(Node):
         self.ensure_transfer()
         p0 = self.pose()
         x0, y0 = p0.x, p0.y
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < timeout_s:
+        t0 = self._now()
+        while self._now() - t0 < timeout_s:
             p = self.pose()
             err = wrap(target_yaw - p.yaw)
             ex, ey = x0 - p.x, y0 - p.y
@@ -524,8 +534,8 @@ class RouteNode(Node):
         self._cmd = f"pose_move_to({tx:.2f},{ty:.2f})"
         self._emit_plan()
         self.ensure_transfer()
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < timeout_s:
+        t0 = self._now()
+        while self._now() - t0 < timeout_s:
             p = self.pose()
             dx, dy = tx - p.x, ty - p.y
             dyaw = wrap(target_yaw - p.yaw)
@@ -584,8 +594,8 @@ class RouteNode(Node):
         tx, ty = float(target[0]), float(target[1])
         self._cmd = f"goto(({tx:.2f},{ty:.2f}))"
         self._emit_plan()
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < timeout_s:
+        t0 = self._now()
+        while self._now() - t0 < timeout_s:
             p = self.pose()
             ex, ey = tx - p.x, ty - p.y
             dist = math.hypot(ex, ey)
@@ -686,7 +696,7 @@ class RouteNode(Node):
         p0 = self.pose()
         self.enter_fixed("bridge")
         ok = False
-        t0 = time.monotonic()
+        t0 = self._now()
         max_seen = 0.0
         # FSM channel is direct (edge11/12 evidence): commanded yaw sign ==
         # body rotation sign.  edge11: negative cmd -> -123 deg; edge12:
@@ -712,7 +722,7 @@ class RouteNode(Node):
             "spin cal: dyaw=%+.1fdeg -> cmd sign %+.0f" %
             (math.degrees(dyaw_cal), sign))
         try:
-            while time.monotonic() - t0 < timeout_s:
+            while self._now() - t0 < timeout_s:
                 p = self.pose()
                 err = wrap(target_yaw - p.yaw)
                 drift = math.hypot(p.x - p0.x, p.y - p0.y)
@@ -731,8 +741,8 @@ class RouteNode(Node):
                     break
                 burst = min(1.2, 0.8 + abs(err))
                 cmd = sign * math.copysign(min(rate, max(0.30, 0.8 * abs(err))), err)
-                t_b = time.monotonic()
-                while time.monotonic() - t_b < burst:
+                t_b = self._now()
+                while self._now() - t_b < burst:
                     self.fixed_command(0.0, cmd)
                     self._tick()
                     if self.fallen():
@@ -760,8 +770,8 @@ class RouteNode(Node):
         self.switch(policy)
         self._cmd = f"drive_expert({policy}, vx={vx:+.2f})"
         self._emit_plan()
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < timeout_s:
+        t0 = self._now()
+        while self._now() - t0 < timeout_s:
             self.command(vx, 0.0, 0.0)
             self._tick()
             if until(self.pose()):
@@ -776,8 +786,8 @@ class RouteNode(Node):
                     timeout_s: float = 6.0, max_wz: float = 0.40) -> bool:
         """Rotate in place while staying in an obstacle policy (platform turns)."""
         self.switch(policy)
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < timeout_s:
+        t0 = self._now()
+        while self._now() - t0 < timeout_s:
             p = self.pose()
             err = wrap(target_yaw - p.yaw)
             if abs(err) < 0.08:
@@ -800,8 +810,8 @@ class RouteNode(Node):
         the robot on the long axis without changing the policy's forward speed.
         """
         self.switch(policy)
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < timeout_s:
+        t0 = self._now()
+        while self._now() - t0 < timeout_s:
             p = self.pose()
             desired = target_yaw
             if x_hold is not None:
@@ -821,8 +831,8 @@ class RouteNode(Node):
     def drive_fixed(self, x_cmd: float, target_yaw: float, until, timeout_s: float) -> bool:
         self._cmd = f"fixed_drive(x={x_cmd:+.2f})"
         self._emit_plan()
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < timeout_s:
+        t0 = self._now()
+        while self._now() - t0 < timeout_s:
             p = self.pose()
             err = wrap(target_yaw - p.yaw)
             yaw_cmd = math.copysign(max(0.10, min(0.40, 1.5 * abs(err))), err) if abs(err) > 0.03 else 0.0
@@ -889,10 +899,10 @@ class RouteNode(Node):
         self._cmd = "follow_path"
         self._emit_plan()
         self.ensure_transfer()
-        t0 = time.monotonic()
+        t0 = self._now()
         idx = 0
         n = len(pts)
-        while time.monotonic() - t0 < timeout_s:
+        while self._now() - t0 < timeout_s:
             p = self.pose()
             if self.fallen():
                 return False
@@ -967,7 +977,7 @@ class RouteNode(Node):
             self.ensure_transfer()
             pts = [(2.5, -9.0), (2.5, -8.0), (4.0, -8.0), (4.0, -9.0), (3.0, -9.5)]
             errs = []
-            t0 = time.monotonic()
+            t0 = self._now()
             for pt in pts:
                 ok = self.goto(pt, tol=0.10, timeout_s=15.0, speed=0.22)
                 p = self.pose()
@@ -978,7 +988,7 @@ class RouteNode(Node):
                     break
             log.info(f"transfer_bench policy={TRANSFER_POLICY} errors={errs} "
                      f"mean={sum(errs)/max(1,len(errs)):.3f} max={max(errs) if errs else 0:.3f} "
-                     f"time={time.monotonic()-t0:.1f}s")
+                     f"time={self._now()-t0:.1f}s")
             return
         if only == "t_stairs_hold":
             policy = os.environ.get("PART1_T_POLICY", "st30_ppo_st30_s100_600")
@@ -1134,10 +1144,10 @@ class RouteNode(Node):
 
                 rest = to_start_frame(f0)
                 self.enter_fixed("bridge")
-                t0 = time.monotonic()
+                t0 = self._now()
                 samples = list(rest)
                 ok = False
-                while time.monotonic() - t0 < 25.0:
+                while self._now() - t0 < 25.0:
                     p = self.pose()
                     err = wrap(tgt - p.yaw)
                     samples.extend(to_start_frame(feet_xy()))
@@ -1160,7 +1170,7 @@ class RouteNode(Node):
                     "bbox=[%.2f,%.2f]x[%.2f,%.2f] radius=%.2f" %
                     (tgt_deg, "PASS" if ok else "FAIL",
                      math.degrees(wrap(p1.yaw - tgt)),
-                     time.monotonic() - t0, drift,
+                     self._now() - t0, drift,
                      bbox[0], bbox[1], bbox[2], bbox[3], radius))
             self.stop(0.5)
             return
@@ -1215,8 +1225,8 @@ class RouteNode(Node):
         crossed: set[str] = set()
         side_bypass = False
         ok = False
-        t_hw = time.monotonic()
-        while time.monotonic() - t_hw < 10.0:
+        t_hw = self._now()
+        while self._now() - t_hw < 10.0:
             # Keep the high-wall crossing open-loop: the adaptive lane command
             # (tried 2026-11-03) steered the support points out of the wall span
             # in full10 (3/4 supports + side_bypass), worse than the open-loop
@@ -1261,8 +1271,8 @@ class RouteNode(Node):
         self.switch("st30_ppo_st30_s100_600")
         prev_t = None
         ok = False
-        t0t = time.monotonic()
-        while time.monotonic() - t0t < 20.0:
+        t0t = self._now()
+        while self._now() - t0t < 20.0:
             p = self.pose()
             if p.y > -1.9 and abs(p.x - 1.8) < 0.45:
                 ok = True
@@ -1321,7 +1331,7 @@ class RouteNode(Node):
             # is not enough.  wz = heading error + lateral position term;
             # fail fast when the line is lost.
             self.switch("row2p_p40w40_v1")
-            t0c = time.monotonic()
+            t0c = self._now()
             # Adaptive lane command (user suggestion 2026-11-01): the repo's
             # AdaptiveCommand formula (eval policy_runner.py:243, gains =
             # the training-side adaptive lane the policy was trained with).
@@ -1330,7 +1340,7 @@ class RouteNode(Node):
             prev = None
             last_x = None
             stall_t = None
-            while time.monotonic() - t0c < 15.0:
+            while self._now() - t0c < 15.0:
                 p = self.pose()
                 # Exit at the platform centre, not the far edge, then brake:
                 # the earlier taper (0.55x before x=4.6) killed the momentum
@@ -1348,12 +1358,12 @@ class RouteNode(Node):
                     break
                 # Stall kick at the gap: momentum roll-through.
                 if last_x is not None and abs(p.x - last_x) < 0.01:
-                    stall_t = stall_t or time.monotonic()
+                    stall_t = stall_t or self._now()
                 else:
                     stall_t = None
                 last_x = p.x
                 vx_eff = vx
-                if stall_t is not None and time.monotonic() - stall_t > 1.5                         and 4.85 < p.x < 5.35:
+                if stall_t is not None and self._now() - stall_t > 1.5                         and 4.85 < p.x < 5.35:
                     vx_eff = 0.6
                 self.command(*self.adaptive_lane_cmd(
                     p, prev, 0.0, 0.0, "x", vx_eff))
@@ -1444,8 +1454,8 @@ class RouteNode(Node):
         # sign is inverted: the ideal-model run drove x from 5.72 to 8.71
         # before entering bridge B.  World x = +vy_body at yaw=-90, so the
         # correction is vy = -k*(x-5.65).
-        t0s = time.monotonic()
-        while time.monotonic() - t0s < 15.0:
+        t0s = self._now()
+        while self._now() - t0s < 15.0:
             p = self.pose()
             if p.y < -0.90:
                 break
