@@ -574,18 +574,9 @@ class RouteNode(Node):
         self._cmd = f"face({yaw:.2f})"
         self._emit_plan()
         if not self.rotate_by(wrap(yaw - self.pose().yaw), timeout_s=18.0):
-            # On a platform lip the pure-yaw command can stall before the
-            # heading error is nulled.  rotate_hold adds a small vx correction
-            # from the initial centroid, which is the primitive that passed the
-            # position harness; retry absolute yaw through it before aborting.
             p = self.pose()
-            self.get_logger().warning(
-                f"face {yaw:.2f} stall at yaw {p.yaw:.2f} ({p.x:.2f},{p.y:.2f}); "
-                "retry via rotate_hold")
-            if not self.rotate_hold(yaw, timeout_s=20.0):
-                p = self.pose()
-                raise RuntimeError(
-                    f"face {yaw:.2f} failed at yaw {p.yaw:.2f} ({p.x:.2f},{p.y:.2f})")
+            raise RuntimeError(
+                f"face {yaw:.2f} failed at yaw {p.yaw:.2f} ({p.x:.2f},{p.y:.2f})")
 
     def goto(self, target, tol: float = 0.12, timeout_s: float = 30.0,
              speed: float = 0.18) -> bool:
@@ -1226,6 +1217,11 @@ class RouteNode(Node):
         ok = False
         t_hw = time.monotonic()
         while time.monotonic() - t_hw < 10.0:
+            # Keep the high-wall crossing open-loop: the adaptive lane command
+            # (tried 2026-11-03) steered the support points out of the wall span
+            # in full10 (3/4 supports + side_bypass), worse than the open-loop
+            # 0.5 m/s expert.  Adaptive lane is used where the expert was
+            # trained with it (T stairs, bridge blocks, gravel/long-slope hold).
             self.command(0.5, 0.0, 0.0)
             self._tick()
             p = self.pose()
@@ -1480,8 +1476,10 @@ class RouteNode(Node):
         # leave the robot on the slope lip where the flat pose policy and the
         # edge-recovery logic both operate on an incline (legacy final3:
         # slid off sideways, tilt 173 deg).
-        ok = self.drive_expert("row2p_p40w40_v1", 0.50, -math.pi / 2.0,
-                               lambda p: p.y < -7.2 and p.z < 0.54, 12.0)
+        ok = self.drive_expert_heading(
+            "row2p_p40w40_v1", 0.50, -math.pi / 2.0,
+            lambda p: p.y < -7.2 and p.z < 0.54, 12.0,
+            x_hold=5.70, kp=0.8, max_wz=0.18)
         self.report("long slope straight S", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer()
         self.set_leg("height_bar")
@@ -1500,10 +1498,9 @@ class RouteNode(Node):
         # outside the pit at the south-east corner.
         self.set_leg("gravel")
         self.face(-math.pi / 2.0)
-        # The gravel expert drifts left while climbing: the previous real run
-        # entered at x=5.31 (west edge of the east arm) and the 12-DoF corner
-        # goto fell off the arm.  Keep x≈5.85 with a small yaw cross-track
-        # correction while the expert climbs.
+        # Best run so far (full12): 0.5 m/s expert to y<-12.15 with x_hold
+        # 5.95; then the 12-DoF goto to the bottom-row centre.  Slower or
+        # pre-biased entries over/under-shot (full14-17); revert to this preset.
         ok_entry = self.drive_expert_heading(
             "obstacle", 0.5, -math.pi / 2.0,
             lambda p: p.y < -12.15, 12.0,
@@ -1513,11 +1510,6 @@ class RouteNode(Node):
                  ("PASS" if ok_entry else "FAIL", p.x, p.y, math.degrees(p.yaw)))
         self.ensure_transfer()
 
-        # The expert switches at y~-12.15; the SE turn must happen deeper in
-        # the bottom row (y~-12.55), otherwise the rear wheel centres sit on
-        # the y=-12 notch boundary (full5 trace: RL/RR margin ~0.0004 m) and
-        # the left wheels can step out on the real robot.  Go straight to the
-        # bottom-row centre before turning west.
         ok_fwd = self.goto((5.72, -12.55), tol=0.10, timeout_s=10.0, speed=0.15)
         self.stop(0.4)
         p = self.pose()
@@ -1537,15 +1529,23 @@ class RouteNode(Node):
         # left wheel stays inside, then try the 12-DoF descent.
         ok_west = self.goto((4.70, -12.50), tol=0.12, timeout_s=15.0, speed=0.18)
         self.stop(0.4)
-        ok_exit = self.goto((4.05, -12.50), tol=0.12, timeout_s=12.0, speed=0.14)
-        if not ok_exit or self.fallen():
-            log.warning("gravel 12-DoF descent failed; fallback to obstacle expert")
-            self.switch("obstacle")
-            # Stop earlier than the old x<4.20: the expert open-loop drift can
-            # put the base at y~-13.3, from where the 12-DoF slalom entry has
-            # no room to recover.  x<4.50 keeps it near the pit's west lip.
-            ok_exit = self.drive_expert(
-                "obstacle", 0.5, math.pi, lambda p: p.x < 4.50, 10.0)
+        # full11: the expert was handed yaw≈159 deg (21 deg off west); its
+        # open-loop exit drifted north from y=-12.36 to y=-11.79 and fell off
+        # the pit's north edge.  Align to west with the position-loop policy
+        # before handing the descent to the expert.
+        self.face(math.pi)
+        self.stop(0.3)
+        # Per the full-course plan after bridge A: use the obstacle expert for
+        # the descent directly.  The 12-DoF descent was tried in full5 and
+        # failed; keeping the fallback branch only added a loss-of-position
+        # step, so the expert exit is now deterministic.
+        self.switch("obstacle")
+        # Continue past the pit edge: stopping at x=4.50 left the base
+        # straddling the 0.15 m lip (full12: FL/FR at z=0.10, RL/RR at z=0.25)
+        # and the 12-DoF recovery could not move.  Let the expert finish the
+        # descent to x<3.85 (clear floor) before switching.
+        ok_exit = self.drive_expert(
+            "obstacle", 0.5, math.pi, lambda p: p.x < 3.85, 12.0)
         self.stop(0.4)
         p = self.pose()
         log.info("gravel exit: %s at (%.2f,%.2f,%.1fdeg)" %
@@ -1554,10 +1554,6 @@ class RouteNode(Node):
         self.report("gravel_pit", ok,
                     f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer()
-        # After a fallback descent, stage at the west lip before the slalom
-        # require; the old direct require from (3.82,-13.26) could not recover.
-        if not self.goto((4.10, -12.50), tol=0.18, timeout_s=12.0, speed=0.16):
-            log.warning("gravel exit recovery goto failed; slalom require will report")
 
         # 8) slalom keyframes: B start -> north of post3 -> south of post2 ->
         # corner / west of post2 -> east of post1 -> west of post0 -> north of
