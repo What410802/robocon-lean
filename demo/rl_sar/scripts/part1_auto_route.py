@@ -1304,6 +1304,11 @@ class RouteNode(Node):
         log.info("NW ramp: %s at (%.2f,%.2f,z=%.2f,yaw=%.1fdeg)" %
                  ("PASS" if ok_ramp else "FAIL", p.x, p.y, p.z,
                   math.degrees(p.yaw)))
+        # The ramp expert can drift to the platform edge (full23 x=2.06);
+        # centre on platform_l at x=1.8 before the clockwise turn and expert
+        # handover, aligning with the first bridge block.
+        self.goto((1.8, 0.0), tol=0.10, timeout_s=8.0, speed=0.12)
+        self.stop(0.3)
         # Clockwise turn on the platform: +y heading (pi/2) -> +x (0).
         self.rotate_hold(0.0, timeout_s=15.0)
         self.stop(0.3)
@@ -1524,7 +1529,11 @@ class RouteNode(Node):
                  ("PASS" if ok_entry else "FAIL", p.x, p.y, math.degrees(p.yaw)))
         self.ensure_transfer()
 
-        ok_fwd = self.goto((5.72, -12.55), tol=0.10, timeout_s=10.0, speed=0.15)
+        # Go straight south from the expert's actual x: full22 entered at
+        # x=5.54 and the lateral goto to 5.72 turned the 12-DoF policy west off
+        # the arm.  Only the y waypoint needs to move.
+        p_sw = self.pose()
+        ok_fwd = self.goto((p_sw.x, -12.55), tol=0.10, timeout_s=10.0, speed=0.15)
         self.stop(0.4)
         p = self.pose()
         log.info("gravel east-arm corner: %s at (%.2f,%.2f,%.1fdeg)" %
