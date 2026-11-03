@@ -47,7 +47,7 @@ ROBOT_ROOT = ROOT / "robots"
 ROUTE_SCRIPT = ROOT / "rl_sar" / "scripts" / "part1_auto_route.py"
 PART2_ROUTE_SCRIPT = ROOT / "rl_sar" / "scripts" / "part2_auto_route.py"
 FULL_FIELD_SCENE = ROOT / "scenes" / "part2" / "full_field" / "part2_full_field.xml"
-PART2_ROUTE_SCENE = ROOT / "scenes" / "part2" / "full_field" / "part2_route_field.xml"
+PART2_ROUTE_SCENE = ROOT / "scenes" / "part2" / "full_field" / "part2_fixed_field.xml"
 
 
 def _unwrap_config(data):

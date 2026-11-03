@@ -132,20 +132,21 @@ class Part2Route(RouteNode):
         self.report("trench_20cm", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer(announce=True)
 
-        # 5) 3-pair plum at y=12,x=3.6..8.4 (modified route scene).
+        # 5) reduced long plum at y=12: entry 4.4, three pairs at 5.0/6.2,
+        #    exit platform 7.0; original side ramps removed.
         self.set_leg("plum_3pair")
         self.require((13.0, 10.5), tol=0.25, timeout_s=12.0, speed=0.30)
         self.require((2.5, 10.5), tol=0.30, timeout_s=30.0, speed=0.45)
         self.require((2.5, 12.0), tol=0.15, timeout_s=20.0, speed=0.28)
         self.rotate_hold(0.0, timeout_s=15.0)
         ok = self.cross_x("obstacle", 12.0, 0.40,
-                          lambda p: p.x > 9.5, 20.0, "plum3")
+                          lambda p: p.x > 7.6, 20.0, "plum3")
         self.report("plum_3pair", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer(announce=True)
 
         # 6) bridge_20cm at x=18.3..21.7,y=18, west approach.
         self.set_leg("bridge_20cm")
-        self.require((9.5, 13.5), tol=0.25, timeout_s=12.0, speed=0.30)
+        self.require((7.6, 13.5), tol=0.25, timeout_s=12.0, speed=0.30)
         self.require((16.8, 13.5), tol=0.30, timeout_s=20.0, speed=0.45)
         self.require((16.8, 18.0), tol=0.15, timeout_s=25.0, speed=0.30)
         self.rotate_hold(0.0, timeout_s=15.0)

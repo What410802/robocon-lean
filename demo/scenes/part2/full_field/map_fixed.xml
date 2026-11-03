@@ -1,4 +1,10 @@
 <mujoco model="terrain ability test">
+  <!-- Corrected Part2 terrain (reference: BiS.d/tmp/terrain.zip):
+       - slope east-side ramps are mirrored about the vertical plane at the
+         ground intersection line, so up/landing/down form one continuous body;
+       - trench exits use the same mirrored construction;
+       - long plum: side ramps removed, middle reduced to 3 pairs with the
+         original 0.6 m spacing and the exit platform moved closer. -->
   <!--运动能力测试场：长度单位 m，角度单位 rad；原点和 x=0 走廊保持平地。-->
   <!--默认相机与 dog26 对齐：贴近机器人出生点，而不是整场远景。-->
   <statistic center="0 0 0.4" extent="5.0" />
@@ -8,49 +14,49 @@
   </visual>
   <asset>
     <mesh name="slope_05deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 0.17497733 0 0.7 0 2 0.7 0 2 0.7 0.17497733" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="slope_05deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 0.17497733 0 0.7 0 2 0.7 0 2 0.7 0.17497733" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_05deg_down_mesh" vertex="2 -0.7 0 0 -0.7 0 0 -0.7 0.17497733 2 0.7 0 0 0.7 0 0 0.7 0.17497733" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="slope_10deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 0.35265396 0 0.7 0 2 0.7 0 2 0.7 0.35265396" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="slope_10deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 0.35265396 0 0.7 0 2 0.7 0 2 0.7 0.35265396" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_10deg_down_mesh" vertex="2 -0.7 0 0 -0.7 0 0 -0.7 0.35265396 2 0.7 0 0 0.7 0 0 0.7 0.35265396" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="slope_15deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 0.53589838 0 0.7 0 2 0.7 0 2 0.7 0.53589838" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="slope_15deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 0.53589838 0 0.7 0 2 0.7 0 2 0.7 0.53589838" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_15deg_down_mesh" vertex="2 -0.7 0 0 -0.7 0 0 -0.7 0.53589838 2 0.7 0 0 0.7 0 0 0.7 0.53589838" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="slope_20deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 0.72794047 0 0.7 0 2 0.7 0 2 0.7 0.72794047" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="slope_20deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 0.72794047 0 0.7 0 2 0.7 0 2 0.7 0.72794047" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_20deg_down_mesh" vertex="2 -0.7 0 0 -0.7 0 0 -0.7 0.72794047 2 0.7 0 0 0.7 0 0 0.7 0.72794047" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="slope_25deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 0.93261532 0 0.7 0 2 0.7 0 2 0.7 0.93261532" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="slope_25deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 0.93261532 0 0.7 0 2 0.7 0 2 0.7 0.93261532" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_25deg_down_mesh" vertex="2 -0.7 0 0 -0.7 0 0 -0.7 0.93261532 2 0.7 0 0 0.7 0 0 0.7 0.93261532" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="slope_30deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 1.1547005 0 0.7 0 2 0.7 0 2 0.7 1.1547005" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="slope_30deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 1.1547005 0 0.7 0 2 0.7 0 2 0.7 1.1547005" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_30deg_down_mesh" vertex="2 -0.7 0 0 -0.7 0 0 -0.7 1.1547005 2 0.7 0 0 0.7 0 0 0.7 1.1547005" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="slope_35deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 1.4004151 0 0.7 0 2 0.7 0 2 0.7 1.4004151" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="slope_35deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 1.4004151 0 0.7 0 2 0.7 0 2 0.7 1.4004151" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_35deg_down_mesh" vertex="2 -0.7 0 0 -0.7 0 0 -0.7 1.4004151 2 0.7 0 0 0.7 0 0 0.7 1.4004151" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="slope_40deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 1.6781993 0 0.7 0 2 0.7 0 2 0.7 1.6781993" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="slope_40deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 1.6781993 0 0.7 0 2 0.7 0 2 0.7 1.6781993" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_40deg_down_mesh" vertex="2 -0.7 0 0 -0.7 0 0 -0.7 1.6781993 2 0.7 0 0 0.7 0 0 0.7 1.6781993" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="slope_45deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 2 0 0.7 0 2 0.7 0 2 0.7 2" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="slope_45deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 2 0 0.7 0 2 0.7 0 2 0.7 2" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_45deg_down_mesh" vertex="2 -0.7 0 0 -0.7 0 0 -0.7 2 2 0.7 0 0 0.7 0 0 0.7 2" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="slope_50deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 2.3835072 0 0.7 0 2 0.7 0 2 0.7 2.3835072" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="slope_50deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 2.3835072 0 0.7 0 2 0.7 0 2 0.7 2.3835072" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_50deg_down_mesh" vertex="2 -0.7 0 0 -0.7 0 0 -0.7 2.3835072 2 0.7 0 0 0.7 0 0 0.7 2.3835072" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="slope_60deg_up_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 3.4641016 0 0.7 0 2 0.7 0 2 0.7 3.4641016" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="slope_60deg_down_mesh" vertex="0 -0.7 0 2 -0.7 0 2 -0.7 3.4641016 0 0.7 0 2 0.7 0 2 0.7 3.4641016" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="slope_60deg_down_mesh" vertex="2 -0.7 0 0 -0.7 0 0 -0.7 3.4641016 2 0.7 0 0 0.7 0 0 0.7 3.4641016" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="trench_10cm_entry_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="trench_10cm_exit_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="trench_10cm_exit_mesh" vertex="1 -0.7 0 0 -0.7 0 0 -0.7 0.3 1 0.7 0 0 0.7 0 0 0.7 0.3" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="trench_20cm_entry_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="trench_20cm_exit_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="trench_20cm_exit_mesh" vertex="1 -0.7 0 0 -0.7 0 0 -0.7 0.3 1 0.7 0 0 0.7 0 0 0.7 0.3" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="trench_30cm_entry_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="trench_30cm_exit_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="trench_30cm_exit_mesh" vertex="1 -0.7 0 0 -0.7 0 0 -0.7 0.3 1 0.7 0 0 0.7 0 0 0.7 0.3" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="trench_40cm_entry_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="trench_40cm_exit_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="trench_40cm_exit_mesh" vertex="1 -0.7 0 0 -0.7 0 0 -0.7 0.3 1 0.7 0 0 0.7 0 0 0.7 0.3" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="trench_50cm_entry_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="trench_50cm_exit_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="trench_50cm_exit_mesh" vertex="1 -0.7 0 0 -0.7 0 0 -0.7 0.3 1 0.7 0 0 0.7 0 0 0.7 0.3" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="trench_60cm_entry_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="trench_60cm_exit_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="trench_60cm_exit_mesh" vertex="1 -0.7 0 0 -0.7 0 0 -0.7 0.3 1 0.7 0 0 0.7 0 0 0.7 0.3" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="trench_80cm_entry_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="trench_80cm_exit_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="trench_80cm_exit_mesh" vertex="1 -0.7 0 0 -0.7 0 0 -0.7 0.3 1 0.7 0 0 0.7 0 0 0.7 0.3" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="trench_100cm_entry_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="trench_100cm_exit_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="trench_100cm_exit_mesh" vertex="1 -0.7 0 0 -0.7 0 0 -0.7 0.3 1 0.7 0 0 0.7 0 0 0.7 0.3" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="trench_120cm_entry_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="trench_120cm_exit_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="trench_120cm_exit_mesh" vertex="1 -0.7 0 0 -0.7 0 0 -0.7 0.3 1 0.7 0 0 0.7 0 0 0.7 0.3" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="trench_150cm_entry_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="trench_150cm_exit_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="trench_150cm_exit_mesh" vertex="1 -0.7 0 0 -0.7 0 0 -0.7 0.3 1 0.7 0 0 0.7 0 0 0.7 0.3" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="trench_180cm_entry_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
-    <mesh name="trench_180cm_exit_mesh" vertex="0 -0.7 0 1 -0.7 0 1 -0.7 0.3 0 0.7 0 1 0.7 0 1 0.7 0.3" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
+    <mesh name="trench_180cm_exit_mesh" vertex="1 -0.7 0 0 -0.7 0 0 -0.7 0.3 1 0.7 0 0 0.7 0 0 0.7 0.3" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5" />
     <mesh name="plum_entry_ramp_mesh" vertex="0 -0.4 0 1.2 -0.4 0 1.2 -0.4 0.2 0 0.4 0 1.2 0.4 0 1.2 0.4 0.2" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
     <mesh name="plum_exit_ramp_mesh" vertex="0 -0.4 0 1.2 -0.4 0 1.2 -0.4 0.2 0 0.4 0 1.2 0.4 0 1.2 0.4 0.2" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
     <mesh name="bridge_40cm_entry_mesh" vertex="0 -0.2 0 0.5 -0.2 0 0.5 -0.2 0.1 0 0.2 0 0.5 0.2 0 0.5 0.2 0.1" face="1 2 0 5 4 3 4 1 0 3 4 0 5 2 1 4 5 1 3 0 2 5 3 2" />
@@ -419,111 +425,91 @@
     <!--第 3 区 y=6：2 m 水平投影的上、下坡，中间 80 cm 平台。-->
     <geom name="slope_05deg_up" type="mesh" mesh="slope_05deg_up_mesh" pos="3 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_05deg_landing" type="box" pos="5.4 6 0.087488664" size="0.4 0.7 0.087488664" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope_05deg_down" type="mesh" mesh="slope_05deg_down_mesh" pos="7.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    <geom name="slope_05deg_down" type="mesh" mesh="slope_05deg_down_mesh" pos="5.8 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_10deg_up" type="mesh" mesh="slope_10deg_up_mesh" pos="9 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_10deg_landing" type="box" pos="11.4 6 0.17632698" size="0.4 0.7 0.17632698" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope_10deg_down" type="mesh" mesh="slope_10deg_down_mesh" pos="13.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    <geom name="slope_10deg_down" type="mesh" mesh="slope_10deg_down_mesh" pos="11.8 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_15deg_up" type="mesh" mesh="slope_15deg_up_mesh" pos="15 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_15deg_landing" type="box" pos="17.4 6 0.26794919" size="0.4 0.7 0.26794919" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope_15deg_down" type="mesh" mesh="slope_15deg_down_mesh" pos="19.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    <geom name="slope_15deg_down" type="mesh" mesh="slope_15deg_down_mesh" pos="17.8 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_20deg_up" type="mesh" mesh="slope_20deg_up_mesh" pos="21 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_20deg_landing" type="box" pos="23.4 6 0.36397023" size="0.4 0.7 0.36397023" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope_20deg_down" type="mesh" mesh="slope_20deg_down_mesh" pos="25.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    <geom name="slope_20deg_down" type="mesh" mesh="slope_20deg_down_mesh" pos="23.8 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_25deg_up" type="mesh" mesh="slope_25deg_up_mesh" pos="27 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_25deg_landing" type="box" pos="29.4 6 0.46630766" size="0.4 0.7 0.46630766" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope_25deg_down" type="mesh" mesh="slope_25deg_down_mesh" pos="31.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    <geom name="slope_25deg_down" type="mesh" mesh="slope_25deg_down_mesh" pos="29.8 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_30deg_up" type="mesh" mesh="slope_30deg_up_mesh" pos="33 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_30deg_landing" type="box" pos="35.4 6 0.57735027" size="0.4 0.7 0.57735027" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope_30deg_down" type="mesh" mesh="slope_30deg_down_mesh" pos="37.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    <geom name="slope_30deg_down" type="mesh" mesh="slope_30deg_down_mesh" pos="35.8 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_35deg_up" type="mesh" mesh="slope_35deg_up_mesh" pos="39 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_35deg_landing" type="box" pos="41.4 6 0.70020754" size="0.4 0.7 0.70020754" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope_35deg_down" type="mesh" mesh="slope_35deg_down_mesh" pos="43.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    <geom name="slope_35deg_down" type="mesh" mesh="slope_35deg_down_mesh" pos="41.8 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_40deg_up" type="mesh" mesh="slope_40deg_up_mesh" pos="45 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_40deg_landing" type="box" pos="47.4 6 0.83909963" size="0.4 0.7 0.83909963" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope_40deg_down" type="mesh" mesh="slope_40deg_down_mesh" pos="49.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    <geom name="slope_40deg_down" type="mesh" mesh="slope_40deg_down_mesh" pos="47.8 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_45deg_up" type="mesh" mesh="slope_45deg_up_mesh" pos="51 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_45deg_landing" type="box" pos="53.4 6 1" size="0.4 0.7 1" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope_45deg_down" type="mesh" mesh="slope_45deg_down_mesh" pos="55.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    <geom name="slope_45deg_down" type="mesh" mesh="slope_45deg_down_mesh" pos="53.8 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_50deg_up" type="mesh" mesh="slope_50deg_up_mesh" pos="57 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_50deg_landing" type="box" pos="59.4 6 1.1917536" size="0.4 0.7 1.1917536" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope_50deg_down" type="mesh" mesh="slope_50deg_down_mesh" pos="61.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    <geom name="slope_50deg_down" type="mesh" mesh="slope_50deg_down_mesh" pos="59.8 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_60deg_up" type="mesh" mesh="slope_60deg_up_mesh" pos="63 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <geom name="slope_60deg_landing" type="box" pos="65.4 6 1.7320508" size="0.4 0.7 1.7320508" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope_60deg_down" type="mesh" mesh="slope_60deg_down_mesh" pos="67.8 6 0" euler="0 0 3.1415927" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
+    <geom name="slope_60deg_down" type="mesh" mesh="slope_60deg_down_mesh" pos="65.8 6 0" euler="0 0 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
     <!--第 4 区 y=9：30 cm 高通道中的实际缺口，净宽 10 至 180 cm，底面为 z=0；缺口净宽递增。-->
     <geom name="trench_10cm_entry" type="mesh" mesh="trench_10cm_entry_mesh" pos="3 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_10cm_near" type="box" pos="4.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_10cm_far" type="box" pos="5.6 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
-    <geom name="trench_10cm_exit" type="mesh" mesh="trench_10cm_exit_mesh" pos="7.1 9 0" euler="0 0 3.1415927" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
+    <geom name="trench_10cm_exit" type="mesh" mesh="trench_10cm_exit_mesh" pos="6.1 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_20cm_entry" type="mesh" mesh="trench_20cm_entry_mesh" pos="9 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_20cm_near" type="box" pos="10.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_20cm_far" type="box" pos="11.7 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
-    <geom name="trench_20cm_exit" type="mesh" mesh="trench_20cm_exit_mesh" pos="13.2 9 0" euler="0 0 3.1415927" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
+    <geom name="trench_20cm_exit" type="mesh" mesh="trench_20cm_exit_mesh" pos="12.2 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_30cm_entry" type="mesh" mesh="trench_30cm_entry_mesh" pos="15 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_30cm_near" type="box" pos="16.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_30cm_far" type="box" pos="17.8 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
-    <geom name="trench_30cm_exit" type="mesh" mesh="trench_30cm_exit_mesh" pos="19.3 9 0" euler="0 0 3.1415927" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
+    <geom name="trench_30cm_exit" type="mesh" mesh="trench_30cm_exit_mesh" pos="18.3 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_40cm_entry" type="mesh" mesh="trench_40cm_entry_mesh" pos="21 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_40cm_near" type="box" pos="22.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_40cm_far" type="box" pos="23.9 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
-    <geom name="trench_40cm_exit" type="mesh" mesh="trench_40cm_exit_mesh" pos="25.4 9 0" euler="0 0 3.1415927" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
+    <geom name="trench_40cm_exit" type="mesh" mesh="trench_40cm_exit_mesh" pos="24.4 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_50cm_entry" type="mesh" mesh="trench_50cm_entry_mesh" pos="27 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_50cm_near" type="box" pos="28.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_50cm_far" type="box" pos="30 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
-    <geom name="trench_50cm_exit" type="mesh" mesh="trench_50cm_exit_mesh" pos="31.5 9 0" euler="0 0 3.1415927" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
+    <geom name="trench_50cm_exit" type="mesh" mesh="trench_50cm_exit_mesh" pos="30.5 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_60cm_entry" type="mesh" mesh="trench_60cm_entry_mesh" pos="33 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_60cm_near" type="box" pos="34.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_60cm_far" type="box" pos="36.1 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
-    <geom name="trench_60cm_exit" type="mesh" mesh="trench_60cm_exit_mesh" pos="37.6 9 0" euler="0 0 3.1415927" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
+    <geom name="trench_60cm_exit" type="mesh" mesh="trench_60cm_exit_mesh" pos="36.6 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_80cm_entry" type="mesh" mesh="trench_80cm_entry_mesh" pos="39 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_80cm_near" type="box" pos="40.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_80cm_far" type="box" pos="42.3 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
-    <geom name="trench_80cm_exit" type="mesh" mesh="trench_80cm_exit_mesh" pos="43.8 9 0" euler="0 0 3.1415927" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
+    <geom name="trench_80cm_exit" type="mesh" mesh="trench_80cm_exit_mesh" pos="42.8 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_100cm_entry" type="mesh" mesh="trench_100cm_entry_mesh" pos="45 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_100cm_near" type="box" pos="46.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_100cm_far" type="box" pos="48.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
-    <geom name="trench_100cm_exit" type="mesh" mesh="trench_100cm_exit_mesh" pos="50 9 0" euler="0 0 3.1415927" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
+    <geom name="trench_100cm_exit" type="mesh" mesh="trench_100cm_exit_mesh" pos="49 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_120cm_entry" type="mesh" mesh="trench_120cm_entry_mesh" pos="51 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_120cm_near" type="box" pos="52.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_120cm_far" type="box" pos="54.7 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
-    <geom name="trench_120cm_exit" type="mesh" mesh="trench_120cm_exit_mesh" pos="56.2 9 0" euler="0 0 3.1415927" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
+    <geom name="trench_120cm_exit" type="mesh" mesh="trench_120cm_exit_mesh" pos="55.2 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_150cm_entry" type="mesh" mesh="trench_150cm_entry_mesh" pos="57 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_150cm_near" type="box" pos="58.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_150cm_far" type="box" pos="61 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
-    <geom name="trench_150cm_exit" type="mesh" mesh="trench_150cm_exit_mesh" pos="62.5 9 0" euler="0 0 3.1415927" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
+    <geom name="trench_150cm_exit" type="mesh" mesh="trench_150cm_exit_mesh" pos="61.5 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_180cm_entry" type="mesh" mesh="trench_180cm_entry_mesh" pos="63 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_180cm_near" type="box" pos="64.5 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <geom name="trench_180cm_far" type="box" pos="67.3 9 0.15" size="0.5 0.7 0.15" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
-    <geom name="trench_180cm_exit" type="mesh" mesh="trench_180cm_exit_mesh" pos="68.8 9 0" euler="0 0 3.1415927" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
+    <geom name="trench_180cm_exit" type="mesh" mesh="trench_180cm_exit_mesh" pos="67.8 9 0" euler="0 0 0" rgba=".9 .35 .35 1" friction="1 .005 .0001" condim="3" />
     <!--第 5 区 y=12：规则 PDF 第 6 页梅花桩，24 桩；净间距而非中心距。-->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    <geom name="plum_entry" type="box" pos="4.4 12 0.1" size="0.4 0.4 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
+    <geom name="plum_r1_01" type="box" pos="5 12.2 0.1" size="0.1 0.1 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
+    <geom name="plum_r1_02" type="box" pos="5.6 12.2 0.1" size="0.1 0.1 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
+    <geom name="plum_r1_03" type="box" pos="6.2 12.2 0.1" size="0.1 0.1 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
+    <geom name="plum_r2_01" type="box" pos="5.3 11.8 0.1" size="0.1 0.1 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
+    <geom name="plum_r2_02" type="box" pos="5.9 11.8 0.1" size="0.1 0.1 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
+    <geom name="plum_r2_03" type="box" pos="6.5 11.8 0.1" size="0.1 0.1 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
+    <geom name="plum_exit" type="box" pos="7.0 12 0.1" size="0.4 0.4 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
     <!--第 6 区 y=15：固定种子七档崎岖地面，块高上限 4 至 50 cm。-->
     <geom name="rough_t1_00_0" type="box" pos="3.15 14.3 0.0066249977" size="0.15 0.15 0.0066249977" rgba=".65 .55 .4 1" friction="1 .005 .0001" condim="3" euler="0 0 -0.0086275093" />
     <geom name="rough_t1_00_1" type="box" pos="3.15 14.65 0.0052034671" size="0.15 0.15 0.0052034671" rgba=".65 .55 .4 1" friction="1 .005 .0001" condim="3" euler="0 0 -0.042604421" />
@@ -1185,21 +1171,5 @@
     <geom name="terrain_label_rough_t5" type="box" pos="28.65 13.75 .012" size="1.2 .375 .006" material="terrain_label_rough_t5" group="1" contype="0" conaffinity="0" />
     <geom name="terrain_label_rough_t6" type="box" pos="34.65 13.75 .012" size="1.2 .375 .006" material="terrain_label_rough_t6" group="1" contype="0" conaffinity="0" />
     <geom name="terrain_label_rough_t7" type="box" pos="40.65 13.75 .012" size="1.2 .375 .006" material="terrain_label_rough_t7" group="1" contype="0" conaffinity="0" />
-
-    <!-- Part2 route-field modifications: 3-pair plum instead of the long row -->
-    <geom name="plum3_entry" type="box" pos="3.6 12 0.1" size="0.4 0.4 0.1" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="plum3_entry_ramp" type="box" pos="2.8 12 0.05" size="0.1 0.4 0.8" quat="0.7071068 0 -0.7071068 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="plum3_r1_01" type="box" pos="4.8 11.55 0.1" size="0.1 0.1 0.1" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="plum3_r1_02" type="box" pos="4.8 12.45 0.1" size="0.1 0.1 0.1" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="plum3_r2_01" type="box" pos="6.0 11.55 0.1" size="0.1 0.1 0.1" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="plum3_r2_02" type="box" pos="6.0 12.45 0.1" size="0.1 0.1 0.1" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="plum3_r3_01" type="box" pos="7.2 11.55 0.1" size="0.1 0.1 0.1" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="plum3_r3_02" type="box" pos="7.2 12.45 0.1" size="0.1 0.1 0.1" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="plum3_exit" type="box" pos="8.4 12 0.1" size="0.4 0.4 0.1" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <geom name="plum3_exit_ramp" type="box" pos="9.2 12 0.05" size="0.1 0.4 0.8" quat="0.7071068 0 -0.7071068 0" rgba=".7 .45 .85 1" friction="1 .005 .0001" condim="3" />
-    <!-- slope 20deg takeoff/top platform/runout (down slope already exists) -->
-    <geom name="slope20_takeoff_platform" type="box" pos="20.0 6 0.02" size="0.7 1.0 0.02" rgba=".35 .65 .95 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope20_top_platform" type="box" pos="23.4 6 0.36397" size="0.7 1.0 0.36397" rgba=".35 .65 .95 1" friction="1 .005 .0001" condim="3" />
-    <geom name="slope20_runout_platform" type="box" pos="26.2 6 0.02" size="0.7 1.0 0.02" rgba=".35 .65 .95 1" friction="1 .005 .0001" condim="3" />
   </worldbody>
 </mujoco>

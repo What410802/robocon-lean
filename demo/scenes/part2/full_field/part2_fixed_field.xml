@@ -1,0 +1,7 @@
+<mujoco model="part2_fixed_field">
+  <!-- Corrected Part2 ability field.  Only the required fixes are applied:
+       mirrored east-side slope/trench surfaces and the 3-pair plum with no
+       side ramps.  All other official obstacles are unchanged. -->
+  <include file="../../../robots/blackW/blackW_description.xml"/>
+  <include file="map_fixed.xml"/>
+</mujoco>

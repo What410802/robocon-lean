@@ -1,8 +1,0 @@
-<mujoco model="part2_route_field">
-  <!-- Separately saved Part2 route scene: official ability field with the long
-       plum row replaced by a 3-pair plum layout and explicit takeoff/top/runout
-       platforms around the 20 deg slope.  Robot body and labels are shared with
-       the official full-field scene. -->
-  <include file="../../../robots/blackW/blackW_description.xml"/>
-  <include file="map_route.xml"/>
-</mujoco>
