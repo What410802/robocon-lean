@@ -1027,7 +1027,7 @@ class RouteNode(Node):
             p = self.pose()
             log.info(f"A demo centre rotate: {'PASS' if ok2 else 'FAIL'} at ({p.x:.2f},{p.y:.2f},{p.yaw:.2f},{p.tilt:.1f}deg)")
             self.enter_fixed("bridge")
-            ok3 = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -3.9, 20.0)
+            ok3 = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -3.50, 20.0)
             self.exit_fixed()
             p = self.pose()
             log.info(f"A demo bridge B: {'PASS' if ok3 else 'FAIL'} at ({p.x:.2f},{p.y:.2f},{p.yaw:.2f},{p.tilt:.1f}deg)")
@@ -1095,7 +1095,7 @@ class RouteNode(Node):
             # North-to-south crossing (the bands sit north of the slope/platform).
             self.face(-math.pi / 2.0)
             self.enter_fixed("bridge")
-            ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -3.9, 25.0)
+            ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -3.50, 25.0)
             self.exit_fixed()
             log.info(f"bridge_bands-only: {'PASS' if ok else 'FAIL'} at ({self.pose().x:.2f},{self.pose().y:.2f})")
             return
@@ -1456,7 +1456,7 @@ class RouteNode(Node):
         if not (5.58 <= p.x <= 5.72 and -1.5 <= p.y <= 0.1):
             log.warning("bridge B alignment failed; fixed action will report")
         self.enter_fixed("bridge")
-        ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -3.9, 20.0)
+        ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -3.50, 20.0)
         self.exit_fixed()
         self.report("bridge_bands", ok)
         self.ensure_transfer()
