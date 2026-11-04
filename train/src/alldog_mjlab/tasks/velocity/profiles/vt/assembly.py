@@ -2,7 +2,7 @@
 
 Explicit recipe (no env-var knobs: the task id ``blackw-vt`` is reproducible by
 construction).  Values/negative results are documented in
-``docs/TRAINING.md`` and ``docs/VT-RECIPE.md`` at the repo root.
+``train/README.md`` and ``docs/training/VT-RECIPE.md``.
 
 Built on top of ``build_velocity_env_cfg(rough=False)`` + the blackW overrides,
 so the actor/critic contract, sensors, actions and physics stay identical to

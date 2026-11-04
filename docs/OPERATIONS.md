@@ -52,7 +52,7 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
   **`realtime:=true` 必须显式传**（否则仿真全速跑，路线控制器会被甩开）。
 - 路线依赖策略：`vt_pose_v1`、`vt_edge_v1`、`row2p_p40w40_v1`、`st30_ppo_st30_s100_600`、
   `obstacle` + `behaviors/{low_bar_drive,bridge_drive}.yaml`。
-- 速度衔接模型推荐 `vt_track_v2`（四轮共面/跟随奖励；训练/验收见 `docs/VT-RECIPE.md` §4.2）：
+- 速度衔接模型推荐 `vt_track_v2`（四轮共面/跟随奖励；训练/验收见 `docs/training/VT-RECIPE.md` §4.2）：
   `ros2 launch ... transfer_policy:=vt_track_v2`（直接跑脚本时用环境变量
   `PART1_TRANSFER_POLICY=vt_track_v2`）；`vt_track_v1` 保留作对照。v2 平移偏保守（支撑矩形
   比 0.63），首次使用先跑 `tools/tracking/position_harness.py` 并在 controller 里把速度指令

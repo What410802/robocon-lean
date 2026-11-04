@@ -269,7 +269,7 @@ def run_policy(policy: str, scene: Path = SCENE) -> dict:
     results["accepted"] = bool(
         results["summary"]["forward_ok"]
         and results["summary"]["turns_ok"]
-        and results["summary"]["turn_drift_max_m"] <= 0.40  # target 0.15; see docs/VT-RECIPE.md
+        and results["summary"]["turn_drift_max_m"] <= 0.40  # target 0.15; see docs/training/VT-RECIPE.md
         and results["summary"]["stop_and_go_ok"]
         and not results["summary"]["any_fall"]
     )

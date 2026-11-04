@@ -1,7 +1,7 @@
 # Part2 越障专家选型（blackW，2026-11-04）
 
 本文回答“Part2 比赛要求走过的地形，各用哪个专家权重、证据是什么、对入场对齐有什么要求”。
-路线编排/衔接模型见 [`PART2-ROUTE.md`](PART2-ROUTE.md)；判分规范见 [`../eval/SPEC.md`](../eval/SPEC.md)。
+路线编排/衔接模型见 [`ROUTE.md`](ROUTE.md)；判分规范见 [`../../eval/SPEC.md`](../../eval/SPEC.md)。
 
 - 场地：`demo/scenes/part2/full_field/part2_fixed_field.xml`（`map_fixed.xml`，梅花桩已按竞赛 PDF 修正）。
 - 专家来源分两层：**旧仓 `~/RoboCon` 的证据**（`success-videos.md` + `artifacts/vtaudit-20261031/`
@@ -29,7 +29,7 @@
 - **全场 1× 真跑最终档（`real_v22`，保守档）**：路线 5/5 段集成门限 PASS；再用
   `tools/route/replay_field_part2.py` 把每段投影回单关跑 eval judge：高台 20（50）+ 楼梯 20（100，
   st30@0.45）+ 斜坡 30（50）+ 沟壑 20（150）+ 梅花桩绕行（0）= **350 / 1300**（高墙默认关）。
-  这是“演示可靠性优先”的档位，不是判分侧能力上限；更高档位仍可 env 切换（见 `PART2-ROUTE.md` §8）。
+  这是“演示可靠性优先”的档位，不是判分侧能力上限；更高档位仍可 env 切换（见 `ROUTE.md` §8）。
   全场连续跑不是官方计分单元，350 是逐段 eval 复核的合计，不是整场官方分数。
 - 旧的 `real_v21`（高墙 20 打开、斜坡 35、沟壑 30）路线 6/6 段集成门限 PASS；eval 投影复核
   6/6 段 success，合计 600/1300，保留作高难回退证据。
@@ -102,7 +102,7 @@ pixi run -e eval robocon-eval replay-part2 --trace artifacts/traces/trial.jsonl
 ### 2.4 真场整场试跑（1× `realtime:=true`，逐步收敛）
 
 部署栈单关能过 ≠ 整场能过：整场还叠加了转场、对齐、恢复。本轮真场试跑记录（详细表格见
-`PART2-ROUTE.md` §7.3）：
+`ROUTE.md` §7.3）：
 
 | 试跑 | 档位 | 结果 |
 |---|---|---|
@@ -129,7 +129,7 @@ pixi run -e eval robocon-eval replay-part2 --trace artifacts/traces/trial.jsonl
 （相邻 1 cm / 1° 就可能翻转，属接触混沌，不是容差盒）；**vx=0.70** 时通过率 65%（93/143），
 其中 `dy=−0.030 m` 一行对 `dyaw∈[−5°,+5°]` **11/11 全过**；细扫另给出 `dy∈[−0.050,−0.040] m`、
 `dyaw∈[−1°,0°]` 的 3×3 全过区。路线因此采用 **vx=0.70 + 预对齐 y=3.000−0.045
-（保守取 −0.045，容差 ±0.02 m / ±1.5°）**，见 `PART2-ROUTE.md` §5。
+（保守取 −0.045，容差 ±0.02 m / ±1.5°）**，见 `ROUTE.md` §5。
 
 ## 3. 专家权重与接入
 
@@ -222,7 +222,7 @@ pixi run -e eval robocon-eval score \
 ADAPTIVE=1 VX=0.5 SECONDS_REC=34 LEVEL=high_platform_20cm POLICY=row2p_p40w40_v1 \
   OUT=$PWD/artifacts/traces/trial.jsonl bash demo/tests/run_joy_trial.sh
 pixi run -e eval robocon-eval replay-part2 --trace artifacts/traces/trial.jsonl
-# 5) 整场 1×（默认档 = 最终验证档，见 PART2-ROUTE.md §8）
+# 5) 整场 1×（默认档 = 最终验证档，见 ROUTE.md §8）
 PART1_ROUTE_JUDGE=0 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
   route:=part2 policy_name:=vt_locked12 transfer_policy:=vt_locked12 viewer:=false \
   realtime:=true eval_state_every:=10 stop_on_fail:=true

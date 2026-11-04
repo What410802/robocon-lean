@@ -245,7 +245,7 @@ timeout 1150 .pixi/envs/demo/bin/python demo/rl_sar/scripts/part2_auto_route.py
 （官方单关把障碍放在 1.8 m 处），部署栈在 0.54 m 内起不来；`cross_bar_5`（20 cm）在同款
 0.54 m 槽内被早前 real8 用 row2p 验证过（本路线默认 `vt_band_v1@0.50`，可用
 `PART2_EXPERT_WALL=row2p_p40w40_v1` 切回）。官方单关的 40 cm 声明仍由 eval 证据支撑
-（`docs/PART2-EXPERTS.md`），但**不计入 field 路线**。
+（`docs/part2/EXPERTS.md`），但**不计入 field 路线**。
 
 **部署变异性**：platform_30cm 与 wall 是 2/3 级，不是 100%。真跑若某腿失败，最便宜的处理是：
 platform → `PART2_PLATFORM_LEVEL=20`；wall → `PART2_ROUTE_WALL=0`；stairs → 保 vx=0.50 重跑
@@ -384,5 +384,5 @@ timeout 2800 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route
 | `tools/route/summarize_part2_fake.py` | 假模型 plan/log → PASS/FAIL 表 |
 | `tools/route/run_bench_official.sh` + `bench_expert_cross.py` | 真实部署栈单关基准（自适应车道命令，domain 87） |
 | `demo/tests/run_joy_trial.sh` + `tools/trial/adaptive_joy.py` | 真实部署栈单关 trial harness（固定/自适应命令 + 判分 trace） |
-| `docs/PART2-ROUTE.md` §7.2/§7.3 | 部署实测档位证据 + 1× 真场整场试跑记录（trace 文件名 + 复放命令） |
+| `docs/part2/ROUTE.md` §7.2/§7.3 | 部署实测档位证据 + 1× 真场整场试跑记录（trace 文件名 + 复放命令） |
 | `artifacts/part2_route3/` | 审计输出 + 假模型 `v6_*/v7_*/v8_*/v10_*` + 部署单关/整场 `real_v8_*`…`real_v22_*`；默认交付证据 = `real_v22_{route.mp4,overview.png,states.jsonl,plan.jsonl}` |

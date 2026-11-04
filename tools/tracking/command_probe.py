@@ -868,7 +868,7 @@ def print_gate(gate: dict[str, Any]) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="blackW three-axis velocity-command probe + F1-F7 gate "
-                    "(docs/VT-RECIPE.md)",
+                    "(docs/training/VT-RECIPE.md)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--policy", required=True,

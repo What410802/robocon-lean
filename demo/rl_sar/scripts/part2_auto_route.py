@@ -97,7 +97,7 @@ PART2_ROUTE_WALL=0/1 + PART2_ROUTE_WALL_VARIANT=bar5|bar6|bar7; the platform
 leg always crosses S->N from the y=-4.5 corridor (3.1 m runway).
 
 Expert map (data-driven, env-overridable; the vx/mode follow the deployment
-traces in docs/PART2-ROUTE.md §7.2/§7.3, not the eval-only matrix):
+traces in docs/part2/ROUTE.md §7.2/§7.3, not the eval-only matrix):
   platform row2p adaptive 0.50, stairs st30 adaptive 0.45 by default
   (stairs_30cm best tier: PART2_STAIRS_LEVEL=30 PART2_EXPERT_STAIRS=vt_band_v1
   PART2_VX_STAIRS=0.60),
@@ -106,7 +106,7 @@ traces in docs/PART2-ROUTE.md §7.2/§7.3, not the eval-only matrix):
   Env overrides: PART2_EXPERT_PLATFORM / _STAIRS / _SLOPE / _TRENCH /
   _WALL, PART2_VX_<LEG>, PART2_PLUM_MODE=bypass|cross.
 
-Run with the fake kinematic sim (see docs/PART2-ROUTE.md):
+Run with the fake kinematic sim (see docs/part2/ROUTE.md):
   source demo/install/setup.bash
   PART1_ROUTE_STEPLOCK=1 PART1_ROUTE_JUDGE=0 PART1_TRANSFER_POLICY=vt_locked12 \
   PART1_RECORD_PATH=... PART1_RECORD_PLAN_PATH=... \

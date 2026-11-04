@@ -510,7 +510,7 @@ class RouteNode(Node):
         """Return (min_wz, max_wz, gain) for the active transfer model.
 
         vt_track_v1 was trained for velocity accuracy; its low-wz response has a
-        dead zone (see docs/VT-RECIPE.md §7).  The route therefore uses a higher
+        dead zone (see docs/training/VT-RECIPE.md §7).  The route therefore uses a higher
         floor and a bang-bang-ish gain for this model.  vt_pose_v1 keeps the
         historical gains that the route was tuned with.
         """

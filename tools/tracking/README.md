@@ -39,6 +39,6 @@ export PYTHONPATH=$PWD/eval MUJOCO_GL=egl
 
 ## 验收口径
 
-见 `docs/VT-RECIPE.md` §5。要点：F1/F2/F3/F5/F6/F7 必须过；F4（vy）只作诊断（本方向不投 vy）；
+见 `docs/training/VT-RECIPE.md` §5。要点：F1/F2/F3/F5/F6/F7 必须过；F4（vy）只作诊断（本方向不投 vy）；
 原地转支撑矩形漂移 ≤0.08 m/90°、位置环原地转 base 漂移 ≤0.10 m；转弯足迹相对静止矩形的额外占用
 如实报告，目标是把额外占用压到最小（轮腿滚动原地转的物理下限由 `probe_turn_footprint.py` 记录）。

@@ -28,7 +28,7 @@ terrain/  ──►  demo/scenes/  ──►  demo/ (MuJoCo + ROS 2)  ──► 
 | `terrain/` | **唯一地形来源**：官方 `map.xml`、Part1 `scene_terrain.xml`、场景/关卡生成器 | `terrain/README.md` |
 | `assets/` | 第三方资产清单/恢复脚本（不入库大文件） | `assets/manifest.json` |
 | `tools/` | 构建、录视频、状态检查、Part1 MPC（规划中） | `tools/README.md` |
-| `docs/` | 规则依据、架构、操作手册 | `docs/RULES-BASIS.md` |
+| `docs/` | 规则依据、架构、操作手册；`part2/` 专家与全场路线；`training/` 训练配方 | `docs/RULES-BASIS.md` |
 
 ## 快速开始
 
@@ -86,15 +86,14 @@ pixi run -e eval robocon-eval replay-part2 --trace <trace.jsonl>
 
 ## 文档索引
 
-- `docs/RULES-BASIS.md` — 规则原文要点、官方 vs 本仓库更严约束、资产哈希、版本结论
-- `docs/ARCHITECTURE.md` — 数据流、坐标系/契约、判分链路
-- `docs/OPERATIONS.md` — 手柄/自动路线/录制/判分操作手册
-- `docs/VT-RECIPE.md` — 速度跟随衔接模型（Part 1 位置环）的配方、训练记录与验收
-- `docs/PART2-EXPERTS.md` — Part 2 各地形专家选型（权重、证据、入场对齐容差、梅花桩缺口）
-- `docs/PART2-ROUTE.md` — Part 2 修正版全场自动路线（专家 + `vt_locked12` 衔接、转场/对齐/审计）
-- `eval/SPEC.md` — 判分规范（人读版单一标准）
-- `docs/TRAINING.md` — 训练与导出流程（`train/README.md` 的上层说明）
-- `MIGRATION_NOTES.md` — 迁移取舍、已废弃内容、未决事项
+- **通用**：`docs/RULES-BASIS.md`（规则原文/实现约定/资产哈希）、`docs/ARCHITECTURE.md`
+  （数据流/坐标系/判分链路）、`docs/OPERATIONS.md`（手柄/自动路线/录制/判分操作手册）
+- **Part 2**：`docs/part2/EXPERTS.md`（各地形专家选型、证据、入场对齐容差、梅花桩缺口）、
+  `docs/part2/ROUTE.md`（修正版全场自动路线：专家 + `vt_locked12` 衔接、转场/对齐/审计）
+- **训练**：`docs/training/VT-RECIPE.md`（速度跟随衔接模型配方/训练记录/验收）、
+  `train/README.md`（训练任务、导出、改造入口、权重管理）
+- **判分**：`eval/SPEC.md`（人读版单一标准）
+- **迁移**：`MIGRATION_NOTES.md`（迁移取舍、已废弃内容、未决事项）
 
 ## 许可与来源
 

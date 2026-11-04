@@ -110,13 +110,13 @@
 
 - **训练任务**：`blackw-vt`（平地）与 `blackw-vt-edge`（0.05–0.20 m 平台边缘）；
   recipe 在 `train/src/alldog_mjlab/tasks/velocity/profiles/vt/`，命令/奖励/事件全部显式写在代码里，
-  不受 env knob 影响，可复现。RecoveryLoco（点式足）鲁棒性配方的轮足适配见 `docs/VT-RECIPE.md`。
+  不受 env knob 影响，可复现。RecoveryLoco（点式足）鲁棒性配方的轮足适配见 `docs/training/VT-RECIPE.md`。
 - **验收工具**：`tools/tracking/` — F1–F7 命令门禁、支撑矩形、转弯足迹、闭环位置环 Harness、
   RecoveryLoco 式鲁棒性探针、checkpoint 一键评估脚本。
 - **功能完整性证据**：新仓代码直接跑通 `train → checkpoint → export（写 manifest）→
   PolicyRunner → 全部探针`；`train/scripts/checks/check_vt_env.py` 配置/构建冒烟；
   `train/tests/test_vt_command.py` 4 项契约测试；训练 XML 只给轮碰撞 geom 补 name（无物理改动）。
-- **结果与已知限制**：见 `docs/VT-RECIPE.md` §4.1/§7。结论：F1/F2/F3/F5/F6/F7 全过（F4 vy 按方向
+- **结果与已知限制**：见 `docs/training/VT-RECIPE.md` §4.1/§7。结论：F1/F2/F3/F5/F6/F7 全过（F4 vy 按方向
   仅诊断）；原地转漂移压到 0.05–0.09 m（目标 0.15）；90° 扫掠半径 ~0.57 m（静止 ~0.34 m）；
   负向低速转向仍有死区，彻底“零额外占地”需要 stepping-turn 步态（已列为后续项）。
 

@@ -66,9 +66,9 @@ tests/                       # Part 2 wall predicate 单测（CPU）
 | Task ID | 内容 |
 |---|---|
 | `blackw-flat` | 平地速度跟踪 |
-| `blackw-vt` | **速度跟随衔接（Part 1 位置环）**：pose 包络 + 纯 yaw/纯平移模式 + stance/转弯漂移奖励 + 推扰/随机初态/轮摩擦 DR（配方与验收见 `docs/VT-RECIPE.md`） |
+| `blackw-vt` | **速度跟随衔接（Part 1 位置环）**：pose 包络 + 纯 yaw/纯平移模式 + stance/转弯漂移奖励 + 推扰/随机初态/轮摩擦 DR（配方与验收见 `docs/training/VT-RECIPE.md`） |
 | `blackw-vt-edge` | `blackw-vt` + 0.05–0.20 m 平台边缘地形（桥台/台阶唇交接边缘鲁棒） |
-| `blackw-vt-locked` | **真 12-DoF 锁轮衔接**：45×6 obs / 12 act，轮关节不属于策略 IO、由轮锁 PD 保持；RecoveryLoco 式接触/步态 + 动态支撑框（见 `docs/VT-RECIPE.md` §4.3/§8） |
+| `blackw-vt-locked` | **真 12-DoF 锁轮衔接**：45×6 obs / 12 act，轮关节不属于策略 IO、由轮锁 PD 保持；RecoveryLoco 式接触/步态 + 动态支撑框（见 `docs/training/VT-RECIPE.md` §4.3/§8） |
 | `blackw-official` | Part 1/2 官方难度混合地形（主力任务） |
 | `blackw-plum` | Part 2 plum（按规则 PDF 图的 6 桩两排、无坡道布局） |
 | `blackw-{stairs,platform,slope,trench,wall}-exact` | 单障碍官方地形专项 |
@@ -255,3 +255,13 @@ joint order / observation layout / term 顺序属于**部署契约**；改动前
 | `play` 弹不出窗口 | 无桌面会话时用 `--viewer viser`，用浏览器打开显示的地址 |
 | 任务没注册 / 找不到 task id | 确认在仓库根执行、`pixi install -e train` 已装好；`pixi run -e train train --help` 查看可用 task |
 | Part 2 地形尺寸与 judge 不一致 | 不要手改 `terrain.py` 常量；重新跑 `python terrain/gen_part2_spec.py` / `terrain/gen_part2_levels.py` |
+
+## 11. 改造入口与权重管理
+
+- **算法**：`train/src/alldog_mjlab/algorithms/`（只保留核心 PPO/HIM；研究分支未迁移）。
+- **奖励/终止**：`tasks/velocity/profiles/{part1,part2}/`；成功谓词必须与 `eval/` 判分口径同步
+  （改判分时先改 `eval/robocon_eval/rules.py` / judge 与 SPEC，再改训练侧）。
+- **地形/课程**：`terrain/gen_*.py` 是唯一来源；训练只读 spec，不再各自维护地形副本。
+- **域随机化**：`utils/knobs.py` + task 配置；保持“仿真参数在 `train/`、判分只看状态”的边界。
+- **权重**：所有 `*.pt`/`onnx` 都被 `.gitignore` 忽略，本仓不带历史权重；策略目录只提交
+  `config.yaml` + `manifest.json`，`policy.pt` 本地放置。
