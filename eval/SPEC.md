@@ -122,7 +122,20 @@
 几何单一来源：`terrain/gen_plum.py`（生成 `terrain/plum/plum_spec.json`、
 `terrain/official/part2_terrain_spec.json` 的 plum 段、判决 manifest 和训练地形）。
 
-### 3.5 计分与采样
+### 3.5 全场连续跑不是计分单元
+
+官方 Part 2 按单个障碍计分，不要求一次启动连续跑完全部障碍。本仓库的全场路线只作集成演示：
+路线自己的 `PASS` 门限是**集成门限**，不是第二条判据。需要复核全场轨迹时，用手写的投影工具把
+每段场地轨迹映射回对应单关坐标，再喂同一个 `Part2OfficialJudge`：
+
+```bash
+pixi run -e eval python tools/route/replay_field_part2.py --tag real_v22 --out /tmp/eval.json
+```
+
+输出逐段 `success/fail/bypass` 与合计分；`--require-all` 可让任何穿越段非 success 时返回非零。
+全场投影是复核/诊断，正式分数仍以单关 eval 运行为准（场地实例的朝向/助跑与单关不完全相同）。
+
+### 3.6 计分与采样
 
 | 项 | 值 |
 |---|---|

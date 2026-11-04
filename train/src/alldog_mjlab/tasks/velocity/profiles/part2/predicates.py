@@ -26,7 +26,10 @@ PART2_WHEEL_SURFACE_TOL_M = 0.06
 PART2_WALL_BACK_CLEARANCE_M = 0.16
 PART2_GROUND_WHEEL_TOL_M = 0.08
 PART2_STEP_DESCEND_CLEARANCE_M = 0.10
-# v7 traversal: platform success requires leaving the far edge, not stopping on top.
+# Training termination for the platform deliberately stays "leave the far edge and
+# get down to normal ground" even though the eval judge now follows the official
+# rule ("up onto the top surface scores"): the user asked for descend-to-target
+# training termination, and a traverse-trained policy is also valid on top.
 PART2_PLATFORM_EXIT_CLEARANCE_M = 0.10
 PART2_SLOPE_EXIT_X = 6.50
 PART2_GAP_MAX_DROP_M = 0.103  # fallback only; per-gap uses min(0.5*width, radius)

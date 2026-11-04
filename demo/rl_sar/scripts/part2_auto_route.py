@@ -25,6 +25,10 @@ all variants clearance-audited).  Default route levels are deliberately below th
 highest eval-side levels we have seen succeed: platform 20 / stairs 20 /
 slope 30 / trench 20; max tiers stay available via PART2_*_LEVEL env vars.
 
+Route leg "PASS" lines are **integration gates** (did the segment finish); they
+are not an official second criterion.  For eval-judge verdicts per leg use
+``tools/route/replay_field_part2.py --tag <run>``.
+
 Transits are chains of ``goto()`` waypoints <= 10 m (the locked-wheel connector
 has almost no vy authority: a pure lane hold drifts ~0.008 m/m, while goto's
 turn-drive-turn loop is what actually corrects cross-track).  Each corridor is
@@ -1232,9 +1236,12 @@ class Part2Route(RouteNode):
 
         if PLUM_MODE == "bypass":
             log.info("Part2 route finished: %d/%d legs PASS (plum bypassed: "
-                     "no deployable expert)" % (len(LEGS), len(LEGS)))
+                     "no deployable expert; PASS = integration gate only, "
+                     "judge verdicts: tools/route/replay_field_part2.py)"
+                     % (len(LEGS), len(LEGS)))
         else:
-            log.info("Part2 route finished: %d/%d legs PASS"
+            log.info("Part2 route finished: %d/%d legs PASS (integration gates "
+                     "only; judge verdicts: tools/route/replay_field_part2.py)"
                      % (len(LEGS), len(LEGS)))
         self.stop(0.5)
 

@@ -6,8 +6,8 @@
 
 ## 1. 结论（本轮）
 
-**1× 真场整场已完成：`real_v22` = 5/5 段 PASS（plum bypassed，高墙默认关）**，1224.8 s 仿真，
-command 见 §8。逐段：平台 20 → 楼梯 20（st30@0.45）→ 斜坡 30 → 沟壑 20 → 梅花桩绕行。
+**1× 真场整场已完成：`real_v22` = 5/5 段集成门限 PASS（plum bypassed，高墙默认关），
+eval 判据投影复核 4/4 穿越段 success、合计 350/1300**，1224.8 s 仿真，command 见 §8。逐段：平台 20 → 楼梯 20（st30@0.45）→ 斜坡 30 → 沟壑 20 → 梅花桩绕行。
 默认档刻意低于 eval 侧已成功过的最高档（平台 20<40、楼梯 20<30、斜坡 30<35、沟壑 20<30），
 用可靠性换演示稳定性；更高档位仍可用 env 切回（§8）。
 
@@ -27,6 +27,10 @@ command 见 §8。逐段：平台 20 → 楼梯 20（st30@0.45）→ 斜坡 30 �
   （默认保守档、各切档变体、wall-off、plum-cross 全部 PASS）。
 - 部署单关补测（2026-11-04，用于默认档）：`slope_30deg` row2p@0.50 → success（50 分）；
   `trench_20cm` s1d@0.80 → success（150 分）；trace 在 `artifacts/traces/lower_*.jsonl`。
+- **eval 判据逐段复核**（不再把路线自己的 PASS 门限当第二条判据）：工具
+  `tools/route/replay_field_part2.py` 把每段场地轨迹投影回单关坐标后调用同一个
+  `Part2OfficialJudge`。`real_v22`：4/4 穿越段 success、梅花桩 bypass、合计 350；
+  `real_v21`：6/6 段（含高墙）success、合计 600。路线门限仅作集成检查。
 - 假运动学整场验证（旧 6 段档）见 §7.1；真场整场 1× 结果见 §7.3。
 
 ## 2. 几何（MuJoCo `MjModel.from_xml_path` 实测，非估算）
@@ -65,11 +69,11 @@ command 见 §8。逐段：平台 20 → 楼梯 20（st30@0.45）→ 斜坡 30 �
 
 ## 3. 路线表（专家 / 速度 / 对齐位 / 穿越门）
 
-默认档 = **1× 真场 `real_v22` 5/5 段验证档**（平台 20 / 楼梯 20 / 斜坡 30 / 沟壑 20 / 梅花绕行；
+默认档 = **1× 真场 `real_v22` 5/5 段集成门限验证档**（平台 20 / 楼梯 20 / 斜坡 30 / 沟壑 20 / 梅花绕行；
 高墙默认关；更高档位见 §8 的 env 说明，门槛与速度都可切换）。
 `vx` 是专家 AdaptiveCommand 的目标体速（`/joy` 轴值 = vx/1.5，部署端再乘 `joy_command_scale=1.5`）。
 
-| # | leg | 方向 | 专家（env 覆盖） | vx | 入场对齐位 (x,y,yaw) | 穿越门 | 转场（goto 折线） |
+| # | leg | 方向 | 专家（env 覆盖） | vx | 入场对齐位 (x,y,yaw) | 集成门限 | 转场（goto 折线） |
 |---|---|---|---|---|---|---|---|
 | 1 | `high_platform_20cm` | **S→N** | `row2p_p40w40_v1` | 0.50 | (12.75, **−3.90**, +90°) | y>1.35 | (0,0)→(0,−4.5)→(10,−4.5)→(12.75,−4.5) |
 | 2 | `stairs_20cm` | W→E | `st30_ppo_st30_s100_600` | 0.45 | (46.00, 3.000, 0°) | x>52.80 | 平台 exit→(14.25,1.5)→(14.25,−2.5)→y=−2.5 东行→(46.45,−2.5)→(46.45,−0.5)→(46.45,2.97)→(46.00,2.97) |
@@ -286,18 +290,22 @@ steplock 只用于假模型/逻辑验证**。`tools/route/run_bench_official.sh`
 | `real_v19` | **安全档 + 西端绕行（y=4.5 走廊 → x=20.5 列 → y=7.5 走廊）+ plum bypass** | **leg1–5 全部 PASS**（platform20 / stairs20 st30@0.45 / slope35 / trench30 / high_plum_bypass）；leg6 wall20 对齐失败（e=+0.183/yaw−5.8°，bar5/bar6 1.08 m 走廊内无空间）→ wall 改用 bar5 专用宽容门限 + row2p@0.40 |
 | `real_v20` | 安全档 + **PART2_ROUTE_WALL=0** | **PASS：`Part2 route finished: plum bypassed`**（leg1–5 全 PASS，1182 s 仿真） |
 | `real_v21` | 安全档 + wall bar5（row2p@0.40 + 0.20 m/6° 门限） | **6/6 PASS**（含 wall20）；旧的高墙-included 验证 |
-| `real_v22` | **保守档**：platform20/stairs20/slope30/trench20/plum bypass，wall 默认关 | **5/5 段 PASS**（1224.8 s 仿真）：platform20（y=1.35 门）、stairs20、slope30（x>38.20）、trench20（x>13.60）、plum bypass 到 (2.60,13.20) 后结束；无 FAIL/stall 日志；**最终交付档** |
+| `real_v22` | **保守档**：platform20/stairs20/slope30/trench20/plum bypass，wall 默认关 | **路线 5/5 段集成门限 PASS，eval 判据复核 4/4 穿越段 success（合计 350）**（1224.8 s 仿真）：platform20（y=1.35 门）、stairs20、slope30（x>38.20）、trench20（x>13.60）、plum bypass 到 (2.60,13.20) 后结束；**最终交付档** |
 
 部署栈整场结论：**所需五段地形（平台/楼梯/斜坡/沟壑/梅花桩）在 1× 真场可以连续走完**：平台 20cm、
 楼梯 20cm（st30@0.45；200 分档 stairs_30 用 vt_band@0.60 可过但 run-to-run 不稳）、斜坡 30°（默认；
 35° 仍可切且部署 3/3）、沟壑 20°（默认；30° 仍可切且部署 3/3）、梅花桩**不穿行**（无部署专家，
 绕行且不报分）。高墙 20cm 为可选段，默认关（bar5 专用宽容对齐，`PART2_ROUTE_WALL=1` 打开）。
+
+**判据口径**：路线门限只保证“这一段走过去了”，不对外代表官方判分；对外复核用上面的
+eval 投影工具，正式分数仍来自单关 eval 运行。
 每个失败点都定位到转场几何/对齐/恢复实现并修复，不是专家能力缺失。
 
-**与 eval 判据的一致性复核**：把 `real_v22` 每段场地轨迹按几何锚点投影回对应单关坐标，喂
-`Part2OfficialJudge`（v9）：platform20 / stairs20 / slope30 / trench20 四段均 **success**
-（plum 绕行段不计分）。这是一次性原型验证（脚本未入库），说明路线门限与 eval 判据在本次
-运行上不矛盾；正式报分仍以单关 eval 运行为准。
+**与 eval 判据的一致性复核**：用 `tools/route/replay_field_part2.py`（已入库）把每段场地轨迹
+投影回对应单关坐标，喂 `Part2OfficialJudge`（v9）：`real_v22` 的 platform20 / stairs20 /
+slope30 / trench20 四段均 **success**（plum 绕行段不计分），合计 350；`real_v21`（含高墙）
+6/6 段 success，合计 600。这确认了路线门限与 eval 判据在已跑过的运行上不矛盾；正式报分仍
+以单关 eval 运行为准，路线 PASS 不再作为对外判据。
 
 ## 8. 真实运行命令（最终档）
 
@@ -327,6 +335,8 @@ timeout 2800 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route
 - `stop_on_fail:=true` 在第一个 FAIL 处关掉整个 launch；先看第一条 FAIL 再改。
 - **时长**：`real_v22` 1224.8 s 仿真（约 20 min 墙钟）；建议外层 `timeout 2800`。路线跑完自己退出。
 - 单段调试：`PART2_ROUTE_ONLY=<leg名或序号>`。
+- eval 判据复核：`pixi run -e eval python tools/route/replay_field_part2.py --tag real_v22
+  --out artifacts/part2_route3/real_v22_eval.json`（`--require-all` 可让非 success 段返回非零）。
 - 录像/复核：`real_v22_route.mp4`（10× 快放，122 s；`MUJOCO_GL=egl tools/video/replay_route_video.py`）、
   `real_v22_overview.png`（俯视轨迹+切换点）、`real_v22_states.jsonl`/`_plan.jsonl`。
 
@@ -369,6 +379,7 @@ timeout 2800 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route
 | `demo/rl_sar/src/rl_sim.cpp` | `PolicyBand` → `vt_band_v1`；键盘 B 映射 |
 | `demo/docs/joystick.md` | 名册/键表更新 |
 | `tools/route/audit_part2_route.py` | MuJoCo AABB 净空审计（`--dump` 可打印全场障碍） |
+| `tools/route/replay_field_part2.py` | 全场轨迹逐段投影回单关，跑 eval Part2 judge（对外判据复核；`--require-all` 可作集成门禁） |
 | `tools/route/run_part2_fake.sh` | 假模型整场验证启动脚本 |
 | `tools/route/summarize_part2_fake.py` | 假模型 plan/log → PASS/FAIL 表 |
 | `tools/route/run_bench_official.sh` + `bench_expert_cross.py` | 真实部署栈单关基准（自适应车道命令，domain 87） |

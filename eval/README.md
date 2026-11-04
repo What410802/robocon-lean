@@ -40,6 +40,18 @@ pixi run -e eval robocon-eval run --robot blackW --part 2 \
 权重未入库：需把 `policy.pt`（或 `best.pt`）+ `config.yaml` 放到
 `demo/rl_sar/policy/<robot>/<name>/`；缺资源时相关测试自动 skip。
 
+## 全场路线复核
+
+全场连续跑不是官方计分单元；若要检查路线每段是否真的被 judge 接受：
+
+```bash
+pixi run -e eval python tools/route/replay_field_part2.py --tag real_v22 \
+    --out artifacts/part2_route3/real_v22_eval.json
+```
+
+工具把每段场地轨迹投影回单关坐标后调用同一个 `Part2OfficialJudge`；路线自己的 PASS
+门限只是集成门限。
+
 ## trace 格式
 
 一行 meta + 每帧一行 JSON（判分跑 2 ms/帧，`eval_state_every:=1`；旧 20 ms 录制也可回放）。
