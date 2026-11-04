@@ -90,6 +90,8 @@ pixi run -e eval robocon-eval replay-part2 --trace <trace.jsonl>
 - `docs/ARCHITECTURE.md` — 数据流、坐标系/契约、判分链路
 - `docs/OPERATIONS.md` — 手柄/自动路线/录制/判分操作手册
 - `docs/VT-RECIPE.md` — 速度跟随衔接模型（Part 1 位置环）的配方、训练记录与验收
+- `docs/PART2-EXPERTS.md` — Part 2 各地形专家选型（权重、证据、入场对齐容差、梅花桩缺口）
+- `docs/PART2-ROUTE.md` — Part 2 修正版全场自动路线（专家 + `vt_locked12` 衔接、转场/对齐/审计）
 - `eval/SPEC.md` — 判分规范（人读版单一标准）
 - `docs/TRAINING.md` — 训练与导出流程（`train/README.md` 的上层说明）
 - `MIGRATION_NOTES.md` — 迁移取舍、已废弃内容、未决事项

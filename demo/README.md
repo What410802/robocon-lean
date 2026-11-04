@@ -95,7 +95,7 @@ pixi run -e eval robocon-eval replay-part2 --trace artifacts/traces/trench_30cm.
 本地权重（`policy.pt`，不提交）。选中保留的 blackW 策略：
 
 `flat`、`stair`、`obstacle`、`row2p_p40w40_v1`、`st30_ppo_st30_s100_600`、
-`s1d_trench_reward_v75_m100`、`vt_pose_v1`、`vt_edge_v1`；
+`s1d_trench_reward_v75_m100`、`vt_band_v1`、`vt_pose_v1`、`vt_edge_v1`；
 black：`himloco`（`best.pt`）。固定动作姿态在 `policy/blackW/behaviors/`。
 训练导出一个新策略 = 把 `config.yaml`/`manifest.json`/`policy.pt` 拷进对应目录（见 `docs/TRAINING.md`）。
 

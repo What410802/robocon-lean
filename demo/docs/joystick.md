@@ -60,6 +60,7 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 joy:=true device:=
 | **Start + 十字下** | **`8`** | **PolicyMain** | **`row2p_p40w40_v1`** | **Part2 主策略；Part1 高墙 / 积木桥 / 斜坡** |
 | **RB + 十字下** | **`F`** | **PolicyTStairs** | **`st30_ppo_st30_s100_600`** | **Part1 T 型楼梯专用** |
 | **RB + 十字右** | **`T`** | **PolicyTrench30** | **`s1d_trench_reward_v75_m100`** | **Part2 沟壑 10/20/30cm 专用（LY≈0.8–1.0 m/s）** |
+| **RB + 十字左** | **`b`** | **PolicyBand** | **`vt_band_v1`** | **Part2 楼梯 30cm 专用（自适应速度；路线实测 vx=0.60 通过；`RB+十字上` 仍是 EnterRL）** |
 | LB + 十字左 | — | PolicyPose | `vt_pose_v1` | 低速闭环对线 / 落位（自动路线用；手动排障） |
 | LB + 十字右 | — | PolicyTrack | `vt_track_v1` | 速度跟随衔接 v1（Part1 位置环；自动路线用；训练/验收见 `docs/VT-RECIPE.md`） |
 | LB + 十字下 | — | PolicyNwwolf | `vt_locked12` | 12-DoF 锁轮衔接模型（45×6 obs / 12 act；部署端 16 维适配器）；Part 1 连接段用 |
@@ -101,9 +102,13 @@ signed（FR、RR 为 `-10`），与 `robots/blackW/robot.yaml` 一致；运行�
 | `vt_track_v1` | 速度跟随衔接 v1（Part1 位置环；`LB+→`；训练/验收见 `docs/VT-RECIPE.md`） |
 | `vt_track_v2` | 速度跟随衔接 v2（四轮共面/跟随奖励，推荐；`LB+↑`；见 §4.2） |
 | `vt_edge_v1` | 轮子掉边恢复专家（自动路线排障，手柄 Back+↑） |
+| `vt_band_v1` | Part2 `stairs_30cm` 专用自适应楼梯专家（`RB+←` / 键盘 `b`；自适应命令，路线实测 vx=0.60） |
 
 Part2 覆盖（2026-10-31 评审）：`row2p_p40w40_v1` 单独 16/20，加上 `s1d_trench_reward_v75_m100`
-后为 **17/20**；仍无前沿模型覆盖的关卡：`stairs_30cm`、`slope_45deg`、`plum_1`。
+后为 **17/20**；`vt_band_v1`（2026-11-04 接入，`RB+←` / 键盘 `b`）补上 `stairs_30cm`；
+仍无前沿模型覆盖的关卡：`slope_45deg`、`plum`（盲走专家 0/200，路线已改为绕行；
+见 `docs/PART2-EXPERTS.md` §4）。
+`RB+十字上` 保持 EnterRL，因此楼梯专家改用 `RB+十字左`（原空键位），不冲突。
 `vt_pose_v1` / `vt_edge_v1` / `vt_track_v1` / `vt_track_v2` 是操作辅助模型（**不是障碍策略**），只在 launch 或自动路线里使用。
 `vt_track_v2` 是推荐的速度衔接（`transfer_policy:=vt_track_v2`；v1 保留作对照）；首次使用先用
 `tools/tracking/position_harness.py` 复核落位增益。

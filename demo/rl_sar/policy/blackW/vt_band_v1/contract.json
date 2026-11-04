@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "robot": "blackW",
+  "task": "blackw-official",
+  "frequency": {
+    "physics_dt": 0.002,
+    "control_period": 0.005,
+    "policy_period": 0.02,
+    "sim_decimation": 10,
+    "deployment_decimation": 4
+  },
+  "checkpoint_sha256": "3a45c1ecb89ef45609e0b3fb412e630e9366eca0e761cf8183b0b783705d8dba",
+  "checkpoint": "artifacts/velocity-tracking/bc/model_mixture_band_v1.pt",
+  "policy": "artifacts/velocity-tracking/policies/vt_band_v1/policy.pt",
+  "sha256": "5f5a07f532b9f556a7e1aa43635513ec712a1b77f833569b23417d70d5ce2372",
+  "layout": "frame-major newest->oldest (HIM deployment)",
+  "history_length": 6,
+  "actor_dim": 342,
+  "cnn_latent_dim": 0,
+  "camera_shape": null,
+  "action_contract": "signed",
+  "observation_layout": {
+    "terms": [
+      "command",
+      "base_ang_vel",
+      "projected_gravity",
+      "joint_pos",
+      "joint_vel",
+      "actions"
+    ],
+    "term_dims": [
+      3,
+      3,
+      3,
+      16,
+      16,
+      16
+    ],
+    "frame_dim": 57,
+    "history": 6,
+    "deploy_layout": [
+      [
+        3,
+        0
+      ],
+      [
+        3,
+        3
+      ],
+      [
+        3,
+        6
+      ],
+      [
+        16,
+        9
+      ],
+      [
+        16,
+        25
+      ],
+      [
+        16,
+        41
+      ]
+    ]
+  },
+  "action_shape": [
+    1,
+    16
+  ]
+}

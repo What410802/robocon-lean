@@ -292,6 +292,7 @@ std::uint32_t RL_Sim::KeyboardMask() const
     case Input::Keyboard::E: return input_map::Bit(input_map::KbKey::E);
     case Input::Keyboard::F: return input_map::Bit(input_map::KbKey::F);
     case Input::Keyboard::T: return input_map::Bit(input_map::KbKey::T);
+    case Input::Keyboard::B: return input_map::Bit(input_map::KbKey::B);
     case Input::Keyboard::P: return input_map::Bit(input_map::KbKey::P);
     case Input::Keyboard::R: return input_map::Bit(input_map::KbKey::R);
     case Input::Keyboard::N: return input_map::Bit(input_map::KbKey::N);
@@ -353,6 +354,8 @@ void RL_Sim::RobotControl()
         if (in.has(input_map::Intent::PolicyMain)) this->SwitchPolicy("row2p_p40w40_v1");
         if (in.has(input_map::Intent::PolicyTStairs)) this->SwitchPolicy("st30_ppo_st30_s100_600");
         if (in.has(input_map::Intent::PolicyTrench30)) this->SwitchPolicy("s1d_trench_reward_v75_m100");
+        // Part2 stairs_30cm specialist (only known 30 cm stair passer on the field); RB+left / B.
+        if (in.has(input_map::Intent::PolicyBand)) this->SwitchPolicy("vt_band_v1");
         if (in.has(input_map::Intent::PolicyPose)) this->SwitchPolicy("vt_pose_v1");
         if (in.has(input_map::Intent::PolicyEdge)) this->SwitchPolicy("vt_edge_v1");
         if (in.has(input_map::Intent::PolicyTrack)) this->SwitchPolicy("vt_track_v1");
@@ -553,7 +556,11 @@ torch::Tensor RL_Sim::Forward()
     // Debug hook: dump the first RL observations/actions for contract comparison
     // against the MuJoCo evaluator (enabled only with RL_DEBUG_OBS=1).
     static int debug_count = 0;
-    if (std::getenv("RL_DEBUG_OBS") != nullptr && debug_count < 60)
+    static const int debug_max = []() {
+        const char *m = std::getenv("RL_DEBUG_OBS_MAX");
+        return (m != nullptr) ? std::max(1, std::atoi(m)) : 60;
+    }();
+    if (std::getenv("RL_DEBUG_OBS") != nullptr && debug_count < debug_max)
     {
         static std::ofstream debug_csv("/tmp/rl_obs_debug.csv", std::ios::app);
         if (debug_count == 0) debug_csv << "# obs57,act16\n";

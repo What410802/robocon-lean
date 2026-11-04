@@ -52,7 +52,7 @@ enum class PadKey : std::uint8_t
 enum class KbKey : std::uint8_t
 {
     Num0, Num1, Num2, Num3, Num4, Num5, Num6, Num7, Num8, Num9,
-    W, A, S, D, Q, E, F, T, P, R, N, Space,
+    W, A, S, D, Q, E, F, T, P, R, N, Space, B,
     COUNT
 };
 
@@ -105,6 +105,7 @@ enum class Intent : std::uint8_t
     PolicyMain,         // Start+D-pad down / 8   (row2p_p40w40_v1: Part2 main, Part1 wall/bridge/slope)
     PolicyTStairs,      // RB+D-pad down / F      (st30_ppo_st30_s100_600: Part1 T-stairs specialist)
     PolicyTrench30,     // RB+D-pad right / T     (s1d_trench_reward_v75_m100: Part2 trench_30cm specialist)
+    PolicyBand,         // RB+D-pad left / B      (vt_band_v1: Part2 stairs_30cm specialist)
     PolicyPose,         // LB+D-pad left           (vt_pose_v1: low-speed closed-loop pose/alignment)
     PolicyEdge,         // Back+D-pad up           (vt_edge_v1: wheel-off-edge recovery specialist)
     PolicyTrack,        // LB+D-pad right          (vt_track_v1: velocity-tracking Part1 handover primitive)
@@ -164,6 +165,7 @@ inline constexpr Binding kBindings[] =
     { Bit(PadKey::Start) | Bit(PadKey::DPadDown), 0,          Intent::PolicyMain },
     { Bit(PadKey::RB) | Bit(PadKey::DPadDown), 0,           Intent::PolicyTStairs },
     { Bit(PadKey::RB) | Bit(PadKey::DPadRight), 0,          Intent::PolicyTrench30 },
+    { Bit(PadKey::RB) | Bit(PadKey::DPadLeft), 0,           Intent::PolicyBand },
     { Bit(PadKey::LB) | Bit(PadKey::DPadLeft), 0,           Intent::PolicyPose },
     { Bit(PadKey::LB) | Bit(PadKey::DPadRight), 0,          Intent::PolicyTrack },
     { Bit(PadKey::LB) | Bit(PadKey::DPadUp), 0,             Intent::PolicyTrackV2 },
@@ -175,6 +177,7 @@ inline constexpr Binding kBindings[] =
     { 0,                             Bit(KbKey::Num8),          Intent::PolicyMain },
     { 0,                             Bit(KbKey::F),             Intent::PolicyTStairs },
     { 0,                             Bit(KbKey::T),             Intent::PolicyTrench30 },
+    { 0,                             Bit(KbKey::B),             Intent::PolicyBand },
     { Bit(PadKey::Back) | Bit(PadKey::DPadDown), 0,           Intent::LowBarDrive },
     { Bit(PadKey::Back) | Bit(PadKey::DPadRight), 0,          Intent::BridgeDrive },
     { Bit(PadKey::Back) | Bit(PadKey::DPadLeft), 0,           Intent::CarDrive },
@@ -313,6 +316,7 @@ inline const char *Name(Intent i)
     case Intent::PolicyMain: return "PolicyMain";
     case Intent::PolicyTStairs: return "PolicyTStairs";
     case Intent::PolicyTrench30: return "PolicyTrench30";
+    case Intent::PolicyBand: return "PolicyBand";
     case Intent::PolicyPose: return "PolicyPose";
     case Intent::PolicyNwwolf: return "PolicyNwwolf";
     case Intent::LowBarDrive: return "LowBarDrive";

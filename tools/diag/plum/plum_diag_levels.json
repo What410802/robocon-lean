@@ -1,0 +1,187 @@
+{
+  "schema_version": 2,
+  "source_map": "demo/scenes/part2/full_field/map_fixed.xml (plum row y=12)",
+  "diagnostic": true,
+  "levels": [
+    {
+      "key": "plum_comp_judge_1",
+      "category": "plum",
+      "level": 1,
+      "unit": "bool",
+      "scene": "plum_comp_diag.xml",
+      "source": "competition PDF p4 plum (梅花桩): 6 x 200 mm cubes, two staggered rows (row A y=+0.2 x=2.8/3.4/4.0, row B y=-0.2 x=3.1/3.7/4.3), 800x800x200 mm entry/exit platforms, no ramps; geometry derived from demo/scenes/part2/full_field/map_fixed.xml row y=12 by dx=-2.2 dy=-12 (tools/diag/plum/build_scene.py). EXTRA diagnostic level, not official. Spawn ON the entry platform (judge-style).",
+      "official": false,
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.4,
+          0.0
+        ],
+        "max": [
+          5.3,
+          0.4,
+          0.2
+        ]
+      },
+      "spawn": [
+        2.2,
+        0.0,
+        0.875,
+        0.0
+      ],
+      "spawn_raw": [
+        2.2,
+        0.0,
+        0.875,
+        0.0
+      ],
+      "spawn_default_pose": [
+        2.2,
+        0.0,
+        0.75,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 60.0,
+      "judge": {
+        "kind": "plum",
+        "top_z": 0.2,
+        "cube_x_range": [
+          2.55,
+          4.55
+        ],
+        "goal_x_min": 4.5,
+        "z_margin": 0.35,
+        "z_cross_min": 0.05,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2,
+        "exit_ramp_end": 5.3,
+        "exit_ground_tol": 0.08
+      }
+    },
+    {
+      "key": "plum_comp_field_1",
+      "category": "plum",
+      "level": 1,
+      "unit": "bool",
+      "scene": "plum_comp_diag.xml",
+      "source": "competition PDF p4 plum (梅花桩): 6 x 200 mm cubes, two staggered rows (row A y=+0.2 x=2.8/3.4/4.0, row B y=-0.2 x=3.1/3.7/4.3), 800x800x200 mm entry/exit platforms, no ramps; geometry derived from demo/scenes/part2/full_field/map_fixed.xml row y=12 by dx=-2.2 dy=-12 (tools/diag/plum/build_scene.py). EXTRA diagnostic level, not official. Spawn on the ground 1.8 m before the entry platform (full-field route-style; must step up 0.2 m).",
+      "official": false,
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.4,
+          0.0
+        ],
+        "max": [
+          5.3,
+          0.4,
+          0.2
+        ]
+      },
+      "spawn": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 60.0,
+      "judge": {
+        "kind": "plum",
+        "top_z": 0.2,
+        "cube_x_range": [
+          2.55,
+          4.55
+        ],
+        "goal_x_min": 4.5,
+        "z_margin": 0.35,
+        "z_cross_min": 0.05,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2,
+        "exit_ramp_end": 5.3,
+        "exit_ground_tol": 0.08
+      }
+    },
+    {
+      "key": "plum_comp_judge_mirror_1",
+      "category": "plum",
+      "level": 1,
+      "unit": "bool",
+      "scene": "plum_comp_diag_mirror.xml",
+      "source": "competition PDF p4 plum (梅花桩): 6 x 200 mm cubes, two staggered rows (row A y=+0.2 x=2.8/3.4/4.0, row B y=-0.2 x=3.1/3.7/4.3), 800x800x200 mm entry/exit platforms, no ramps; geometry derived from demo/scenes/part2/full_field/map_fixed.xml row y=12 by dx=-2.2 dy=-12 (tools/diag/plum/build_scene.py). EXTRA diagnostic level, not official. MIRROR in y (row A y=-0.2): equals the old-repo plum_reg_1 relative geometry. NOT the competition oracle; depth-student reproduction probe only.",
+      "official": false,
+      "obstacle_bbox": {
+        "min": [
+          1.8,
+          -0.4,
+          0.0
+        ],
+        "max": [
+          5.3,
+          0.4,
+          0.2
+        ]
+      },
+      "spawn": [
+        2.2,
+        0.0,
+        0.875,
+        0.0
+      ],
+      "spawn_raw": [
+        2.2,
+        0.0,
+        0.875,
+        0.0
+      ],
+      "spawn_default_pose": [
+        2.2,
+        0.0,
+        0.75,
+        0.0
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 60.0,
+      "judge": {
+        "kind": "plum",
+        "top_z": 0.2,
+        "cube_x_range": [
+          2.55,
+          4.55
+        ],
+        "goal_x_min": 4.5,
+        "z_margin": 0.35,
+        "z_cross_min": 0.05,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2,
+        "exit_ramp_end": 5.3,
+        "exit_ground_tol": 0.08
+      }
+    }
+  ]
+}

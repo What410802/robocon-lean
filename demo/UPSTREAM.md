@@ -51,7 +51,9 @@ FL_wheel_collision   FR_wheel_collision   RL_wheel_collision   RR_wheel_collisio
 - **策略权重不入库**：`policy.pt` / `best.pt`（以及 onnx/trt/engine）被根 `.gitignore` 排除，
   需按 `config.yaml` + `manifest.json` 在本地补齐。选中保留的配置：
   - blackW：`flat`、`stair`、`obstacle`、`row2p_p40w40_v1`、`st30_ppo_st30_s100_600`、
-    `s1d_trench_reward_v75_m100`、`vt_pose_v1`、`vt_edge_v1`（+ `behaviors/*.yaml` 固定动作）；
+    `s1d_trench_reward_v75_m100`、`vt_band_v1`、`vt_pose_v1`、`vt_edge_v1`
+    （+ `behaviors/*.yaml` 固定动作）；`vt_band_v1` 为 2026-11-04 新增的 Part2 楼梯 30cm 专家
+    （来源 `~/RoboCon/deployment/ws/src/rl_sar/policy/blackW/vt_band_v1`）；
   - black：`himloco`。
 - **机器人 mesh 入库**：`robots/blackW/assets/`（18 个 STL，约 40 MB）是唯一一份；场景通过
   `scenes/…/assets -> ../../../robots/blackW/assets` 软链接引用（MuJoCo 的 `compiler meshdir`

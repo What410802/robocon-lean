@@ -13,7 +13,8 @@ ROS 相关脚本需要在 demo 环境里先构建并 `source demo/install/setup.
 | `record_state_command.py` | 录 `/motor_state` + 最近 `/mit_command`（状态/指令归因） | ROS 运行时 |
 | `compare_motor_traces.py` | 逐 sim_time 对比两份 motor_state CSV | `python compare_motor_traces.py a.csv b.csv` |
 | `smoke_policy_load.sh` | 无头仿真：A 站立 → RB+↑ 进 RL，断言策略加载成功 | 需构建 + 本地权重 |
-| `smoke_policy_switch.sh` | 无头仿真：注入 `/joy` 热切换 row2p / st30 / s1d（Part1 含固定动作） | 需构建 + 本地权重 |
+| `smoke_policy_switch.sh` | 无头仿真：注入 `/joy` 热切换 row2p / st30 / s1d / vt_band（Part1 含固定动作） | 需构建 + 本地权重 |
+| `run_joy_trial.sh` | **部署栈单关试验**：真实 launch 里 FSM A→EnterRL，按固定置杆或训练侧自适应命令跑一关，录判分 trace（配合 `robocon-eval replay-part2`）；`ADAPTIVE=0/1`、`VX=`/`AXIS_VX=`、`LEVEL=`、`POLICY=`、`OUT=` | 需构建 + 本地权重；判分前先 build 后 source（见文件头示例） |
 
 判分 trace 录制示例（终端 A 起 launch，终端 B 录）：
 
