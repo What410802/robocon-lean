@@ -12,12 +12,10 @@ official field, not the score), but every score/curve/attempt constant must come
 from this file.
 
 Sources (see ``docs/RULES-BASIS.md`` for the evidence trail):
-  * team-race rules PDF ``队内赛.pdf`` (2026-10-20), which embeds the official
+  * competition rules PDF ``队内赛.pdf`` (2026-10-20), which embeds the official
     25th V1.0 table 2/table 3 obstacle definitions and score columns;
-  * organiser confirmations 2026-10-22 (``Q1``-``Q6``) and 2026-10-27 (T-stairs
-    50/50, floor rounding);
-  * owner-confirmed team constraints (marked TEAM below; these are *stricter
-    reasonability rules*, not official text).
+  * local implementation choices (marked IMPL below; these are *stricter or
+    operationalisation choices*, not official text and not externally confirmed).
 """
 
 from __future__ import annotations
@@ -65,7 +63,7 @@ PART1_T_STAIRS_PARTIAL_UP = 50      # one complete up traversal
 PART1_T_STAIRS_PARTIAL_DOWN = 50    # one complete down traversal
 PART1_T_STAIRS_SAME_ARM = 50        # up and down the same arm
 
-# Recovery pose slack (TEAM measurement slack; see SPEC P1-ATTEMPT-02).
+# Recovery pose slack (implementation measurement slack; see SPEC Part 1).
 PART1_RECOVERY_POS_TOL_M = 0.30
 PART1_RECOVERY_YAW_TOL_RAD = 0.52
 

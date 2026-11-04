@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "source_map": "/home/bis/BiS.d/Code.d/RoboCon/MyMonoRepo.d/@20261019_locomotion/assets/terrain/part2/ability_field/map.xml",
+  "source_map": "terrain/official/map.xml",
   "levels": [
     {
       "key": "high_platform_10cm",
@@ -27,25 +27,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 15.0,
-      "judge": {
-        "kind": "platform",
-        "top_z": 0.1,
-        "x_range": [
-          2.0,
-          3.25
-        ],
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "exit_x_min": 3.35,
-        "exit_ground_tol": 0.08
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -57,7 +38,24 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "platform",
+        "top_z": 0.1,
+        "x_range": [
+          2.0,
+          3.25
+        ],
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "high_platform_20cm",
@@ -84,25 +82,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 15.0,
-      "judge": {
-        "kind": "platform",
-        "top_z": 0.2,
-        "x_range": [
-          2.0,
-          3.25
-        ],
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "exit_x_min": 3.35,
-        "exit_ground_tol": 0.08
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -114,7 +93,24 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "platform",
+        "top_z": 0.2,
+        "x_range": [
+          2.0,
+          3.25
+        ],
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "high_platform_30cm",
@@ -141,25 +137,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 15.0,
-      "judge": {
-        "kind": "platform",
-        "top_z": 0.3,
-        "x_range": [
-          2.0,
-          3.25
-        ],
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "exit_x_min": 3.35,
-        "exit_ground_tol": 0.08
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -171,7 +148,24 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "platform",
+        "top_z": 0.3,
+        "x_range": [
+          2.0,
+          3.25
+        ],
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "high_platform_40cm",
@@ -198,25 +192,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 15.0,
-      "judge": {
-        "kind": "platform",
-        "top_z": 0.4,
-        "x_range": [
-          2.0,
-          3.25
-        ],
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "exit_x_min": 3.35,
-        "exit_ground_tol": 0.08
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -228,7 +203,24 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "platform",
+        "top_z": 0.4,
+        "x_range": [
+          2.0,
+          3.25
+        ],
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "stairs_10cm",
@@ -255,23 +247,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 30.0,
-      "judge": {
-        "kind": "stairs",
-        "top_z": 0.6,
-        "goal_x_min": 3.7,
-        "descend_end_x": 6.2,
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "normal_z_min": 0.3,
-        "normal_z_max": 0.8
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -283,7 +258,24 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "stairs",
+        "top_z": 0.6,
+        "goal_x_min": 3.7,
+        "descend_end_x": 6.2,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "stairs_15cm",
@@ -310,23 +302,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 30.0,
-      "judge": {
-        "kind": "stairs",
-        "top_z": 0.9,
-        "goal_x_min": 3.7,
-        "descend_end_x": 6.2,
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "normal_z_min": 0.3,
-        "normal_z_max": 0.8
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -338,7 +313,24 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "stairs",
+        "top_z": 0.9,
+        "goal_x_min": 3.7,
+        "descend_end_x": 6.2,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "stairs_20cm",
@@ -365,23 +357,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 30.0,
-      "judge": {
-        "kind": "stairs",
-        "top_z": 1.2,
-        "goal_x_min": 3.7,
-        "descend_end_x": 6.2,
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "normal_z_min": 0.3,
-        "normal_z_max": 0.8
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -393,7 +368,24 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "stairs",
+        "top_z": 1.2,
+        "goal_x_min": 3.7,
+        "descend_end_x": 6.2,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "stairs_30cm",
@@ -420,23 +412,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 30.0,
-      "judge": {
-        "kind": "stairs",
-        "top_z": 1.8,
-        "goal_x_min": 3.7,
-        "descend_end_x": 6.2,
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "normal_z_min": 0.3,
-        "normal_z_max": 0.8
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -448,7 +423,24 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "stairs",
+        "top_z": 1.8,
+        "goal_x_min": 3.7,
+        "descend_end_x": 6.2,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "slope_20deg",
@@ -475,24 +467,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 18.0,
-      "judge": {
-        "kind": "slope",
-        "rise_z": 0.72794047,
-        "goal_x_min": 3.9,
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "exit_x_min": 6.5,
-        "exit_ground_tol": 0.08,
-        "normal_z_min": 0.3,
-        "normal_z_max": 0.8
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -504,7 +478,25 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "slope",
+        "rise_z": 0.72794047,
+        "goal_x_min": 3.9,
+        "exit_x_min": 6.5,
+        "exit_ground_tol": 0.08,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "slope_30deg",
@@ -531,24 +523,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 18.0,
-      "judge": {
-        "kind": "slope",
-        "rise_z": 1.15470054,
-        "goal_x_min": 3.9,
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "exit_x_min": 6.5,
-        "exit_ground_tol": 0.08,
-        "normal_z_min": 0.3,
-        "normal_z_max": 0.8
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -560,7 +534,25 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "slope",
+        "rise_z": 1.15470054,
+        "goal_x_min": 3.9,
+        "exit_x_min": 6.5,
+        "exit_ground_tol": 0.08,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "slope_35deg",
@@ -587,24 +579,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 18.0,
-      "judge": {
-        "kind": "slope",
-        "rise_z": 1.4004151,
-        "goal_x_min": 3.9,
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "exit_x_min": 6.5,
-        "exit_ground_tol": 0.08,
-        "normal_z_min": 0.3,
-        "normal_z_max": 0.8
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -616,7 +590,25 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "slope",
+        "rise_z": 1.4004151,
+        "goal_x_min": 3.9,
+        "exit_x_min": 6.5,
+        "exit_ground_tol": 0.08,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "slope_45deg",
@@ -643,24 +635,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 18.0,
-      "judge": {
-        "kind": "slope",
-        "rise_z": 2.0,
-        "goal_x_min": 3.9,
-        "z_margin": 0.35,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "exit_x_min": 6.5,
-        "exit_ground_tol": 0.08,
-        "normal_z_min": 0.3,
-        "normal_z_max": 0.8
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -672,7 +646,25 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "slope",
+        "rise_z": 2.0,
+        "goal_x_min": 3.9,
+        "exit_x_min": 6.5,
+        "exit_ground_tol": 0.08,
+        "normal_z_min": 0.3,
+        "normal_z_max": 0.8,
+        "z_margin": 0.35,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "high_wall_10cm",
@@ -699,21 +691,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 15.0,
-      "judge": {
-        "kind": "wall",
-        "wall_h": 0.1,
-        "wall_x": 1.86,
-        "goal_x_min": 2.27,
-        "climb_z_min": 0.52,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -725,7 +702,22 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "wall",
+        "wall_h": 0.1,
+        "wall_x": 1.86,
+        "goal_x_min": 2.27,
+        "climb_z_min": 0.52,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "high_wall_20cm",
@@ -752,21 +744,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 15.0,
-      "judge": {
-        "kind": "wall",
-        "wall_h": 0.2,
-        "wall_x": 1.86,
-        "goal_x_min": 2.27,
-        "climb_z_min": 0.54,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -778,7 +755,22 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "wall",
+        "wall_h": 0.2,
+        "wall_x": 1.86,
+        "goal_x_min": 2.27,
+        "climb_z_min": 0.54,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "high_wall_30cm",
@@ -805,21 +797,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 15.0,
-      "judge": {
-        "kind": "wall",
-        "wall_h": 0.3,
-        "wall_x": 1.86,
-        "goal_x_min": 2.27,
-        "climb_z_min": 0.56,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -831,7 +808,22 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "wall",
+        "wall_h": 0.3,
+        "wall_x": 1.86,
+        "goal_x_min": 2.27,
+        "climb_z_min": 0.56,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "high_wall_40cm",
@@ -858,21 +850,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 15.0,
-      "judge": {
-        "kind": "wall",
-        "wall_h": 0.4,
-        "wall_x": 1.86,
-        "goal_x_min": 2.27,
-        "climb_z_min": 0.58,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -884,7 +861,22 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "wall",
+        "wall_h": 0.4,
+        "wall_x": 1.86,
+        "goal_x_min": 2.27,
+        "climb_z_min": 0.58,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "trench_10cm",
@@ -911,26 +903,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 15.0,
-      "judge": {
-        "kind": "gap",
-        "gap_x": 3.85,
-        "width": 0.1,
-        "plateau_z": 0.3,
-        "near_x": 3.8,
-        "far_x": 3.9,
-        "z_cross_min": 0.58,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "gap_max_drop_m": 0.103,
-        "exit_ramp_end": 5.9,
-        "exit_ground_tol": 0.08
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -942,7 +914,27 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "gap",
+        "gap_x": 3.85,
+        "width": 0.1,
+        "plateau_z": 0.3,
+        "near_x": 3.8,
+        "far_x": 3.9,
+        "z_cross_min": 0.58,
+        "gap_max_drop_m": 0.103,
+        "exit_ramp_end": 5.9,
+        "exit_ground_tol": 0.08,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "trench_20cm",
@@ -969,26 +961,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 15.0,
-      "judge": {
-        "kind": "gap",
-        "gap_x": 3.9,
-        "width": 0.2,
-        "plateau_z": 0.3,
-        "near_x": 3.8,
-        "far_x": 4.0,
-        "z_cross_min": 0.58,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "gap_max_drop_m": 0.103,
-        "exit_ramp_end": 6.0,
-        "exit_ground_tol": 0.08
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -1000,7 +972,27 @@
         0.0,
         0.55,
         0.0
-      ]
+      ],
+      "command": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "seconds": 120.0,
+      "judge": {
+        "kind": "gap",
+        "gap_x": 3.9,
+        "width": 0.2,
+        "plateau_z": 0.3,
+        "near_x": 3.8,
+        "far_x": 4.0,
+        "z_cross_min": 0.58,
+        "gap_max_drop_m": 0.103,
+        "exit_ramp_end": 6.0,
+        "exit_ground_tol": 0.08,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "trench_30cm",
@@ -1027,12 +1019,24 @@
         0.675,
         0.0
       ],
+      "spawn_raw": [
+        0.0,
+        0.0,
+        0.675,
+        0.0
+      ],
+      "spawn_default_pose": [
+        0.0,
+        0.0,
+        0.55,
+        0.0
+      ],
       "command": [
         0.5,
         0.0,
         0.0
       ],
-      "seconds": 15.0,
+      "seconds": 120.0,
       "judge": {
         "kind": "gap",
         "gap_x": 3.95,
@@ -1041,24 +1045,12 @@
         "near_x": 3.8,
         "far_x": 4.1,
         "z_cross_min": 0.58,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
         "gap_max_drop_m": 0.103,
         "exit_ramp_end": 6.1,
-        "exit_ground_tol": 0.08
-      },
-      "spawn_raw": [
-        0.0,
-        0.0,
-        0.675,
-        0.0
-      ],
-      "spawn_default_pose": [
-        0.0,
-        0.0,
-        0.55,
-        0.0
-      ]
+        "exit_ground_tol": 0.08,
+        "lane_half_width": 0.7,
+        "hold_s": 0.2
+      }
     },
     {
       "key": "plum_1",
@@ -1066,7 +1058,7 @@
       "level": 1,
       "unit": "bool",
       "scene": "part2_off_plum_1.xml",
-      "source": "official terrain.zip map.xml: plum_entry, plum_entry_ramp, plum_r1_01...",
+      "source": "rules-PDF plum layout (terrain/gen_plum.py): plum_entry, plum_r1_01, plum_r1_02, plum_r1_03, plum_r2_01, plum_r2_02, plum_r2_03, plum_exit",
       "obstacle_bbox": {
         "min": [
           1.8,
@@ -1074,7 +1066,7 @@
           0.0
         ],
         "max": [
-          13.1,
+          5.3,
           0.4,
           0.2
         ]
@@ -1085,27 +1077,6 @@
         0.675,
         0.0
       ],
-      "command": [
-        0.5,
-        0.0,
-        0.0
-      ],
-      "seconds": 18.0,
-      "judge": {
-        "kind": "plum",
-        "top_z": 0.2,
-        "cube_x_range": [
-          3.75,
-          11.15
-        ],
-        "goal_x_min": 11.55,
-        "z_margin": 0.35,
-        "z_cross_min": 0.05,
-        "lane_half_width": 0.7,
-        "hold_s": 0.2,
-        "exit_ramp_end": 13.1,
-        "exit_ground_tol": 0.08
-      },
       "spawn_raw": [
         0.0,
         0.0,
@@ -1117,65 +1088,26 @@
         0.0,
         0.55,
         0.0
-      ]
-    },
-    {
-      "key": "plum_reg_1",
-      "category": "plum",
-      "level": 1,
-      "unit": "bool",
-      "scene": "part2_off_plum_reg_1.xml",
-      "source": "regulation PDF p4 / legacy part2_plum.xml (6 piles): legacy part2_plum_eval_scene.xml, obstacle translated dy=-0.4 to the lane-centred frame; EXTRA non-official matrix level; official has no time limit -> 60 s is only an eval safety cap",
-      "official": false,
-      "obstacle_bbox": {
-        "min": [
-          0.0,
-          -0.4,
-          0.0
-        ],
-        "max": [
-          3.5,
-          0.4,
-          0.2
-        ]
-      },
-      "spawn": [
-        0.4,
-        0.0,
-        0.875,
-        0.0
-      ],
-      "spawn_raw": [
-        0.4,
-        0.0,
-        0.875,
-        0.0
-      ],
-      "spawn_default_pose": [
-        0.4,
-        0.0,
-        0.75,
-        0.0
       ],
       "command": [
         0.5,
         0.0,
         0.0
       ],
-      "seconds": 60.0,
+      "seconds": 120.0,
       "judge": {
         "kind": "plum",
         "top_z": 0.2,
         "cube_x_range": [
-          0.75,
-          2.75
+          2.55,
+          4.55
         ],
-        "goal_x_min": 2.7,
+        "goal_x_min": 4.5,
         "z_margin": 0.35,
         "z_cross_min": 0.05,
         "lane_half_width": 0.7,
         "hold_s": 0.2,
-        "exit_ramp_end": 3.5,
+        "exit_ramp_end": 5.3,
         "exit_ground_tol": 0.08
       }
     }

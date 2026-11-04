@@ -1,13 +1,15 @@
 # Part2 越障专家选型（blackW，2026-11-04）
 
-本文回答“Part2 队内赛要求走过的地形，各用哪个专家权重、证据是什么、对入场对齐有什么要求”。
+本文回答“Part2 比赛要求走过的地形，各用哪个专家权重、证据是什么、对入场对齐有什么要求”。
 路线编排/衔接模型见 [`PART2-ROUTE.md`](PART2-ROUTE.md)；判分规范见 [`../eval/SPEC.md`](../eval/SPEC.md)。
 
 - 场地：`demo/scenes/part2/full_field/part2_fixed_field.xml`（`map_fixed.xml`，梅花桩已按竞赛 PDF 修正）。
 - 专家来源分两层：**旧仓 `~/RoboCon` 的证据**（`success-videos.md` + `artifacts/vtaudit-20261031/`
   + 全部 summary 扫描）与**本仓复测**（1640 次单关 eval-side 仿真，`artifacts/part2_experts/`）。
 - 预算：单关判分用 `eval/robocon_eval/policy_runner.py`（与部署同一观测/动作/PD 契约，
-  Part2 v5 judge），deterministic；鲁棒性用 spawn offset（dy/dyaw）而不是 seed。
+  Part2 判据），deterministic；鲁棒性用 spawn offset（dy/dyaw）而不是 seed。
+- 判据口径（v9）：高台按官方“上到上平面即得分”，不要求从远侧下去；楼梯/斜坡/沟壑/高墙/梅花桩
+  仍按“到达目标面 → 下到另一侧正常地面”的操作化终端态。
 
 ## 1. 结论表（每个地形一个部署专家）
 
@@ -21,13 +23,13 @@
 | 斜坡 | `slope_35deg`（100；45° 按用户要求暂不做） | **`slope_35deg` 3/3** | `row2p_p40w40_v1` | adaptive vx=0.5 | 100 / 100 |
 | 沟壑 | `trench_30cm`（300） | **`trench_30cm` 3/3** | `s1d_trench_reward_v75_m100` | **adaptive vx=0.8**（fixed 0.8 也可，但 +2° 偏航会失败） | 300 / 300 |
 | 梅花桩（竞赛 PDF 几何） | `plum` 0（盲走 0/200） | 不可判分（见 §4） | **无可部署专家（诚实缺口）** | 路线用 `obstacle` 仅做非计分贯通 | 0 / 0 |
-| 高墙（用户清单外、Part2 也计分） | `high_wall_40cm`（200） | **`high_wall_40cm` 2/3（官方单关 1.8 m 助跑）**；场地实例只有 0.54 m 助跑 → 路线用 20 cm `cross_bar_5`（旧 real8 已验证） | `vt_band_v1`（40cm）/ `row2p`（20cm） | adaptive vx=0.5 | 200 / 50（场地实例） |
+| 高墙（可选段，默认关） | `high_wall_40cm`（200） | **`high_wall_40cm` 2/3（官方单关 1.8 m 助跑）**；场地实例只有 0.54 m 助跑 → 路线可选 20 cm `cross_bar_5`（旧 real8 已验证） | `vt_band_v1`（40cm）/ `row2p`（20cm） | adaptive vx=0.5 | 200 / 50（场地实例） |
 
 - 判分侧（eval-side）可部署专家合计：**1000 / 1300**（高台 200 + 楼梯 200 + 斜坡 100 + 沟壑 300 + 高墙 200；缺 slope_45 的 200 与梅花桩的 200）。
-- **全场 1× 真跑最终档（`real_v21` 6/6 legs PASS）**：高台 20（50）+ 楼梯 20（100，st30@0.45）+
-  斜坡 35（100）+ 沟壑 30（300）+ 梅花桩绕行（0）+ 高墙 20 场地实例（50）= **600 / 1300**；
-  evaluate 用的 200 分楼梯 30 档（vt_band@0.60）在 v14/v17 整场走过、v15/v18 会在顶层平台 stall
-  （约 50%），可按 §2.4 的命令切换，不设为默认。
+- **全场 1× 真跑最终档（`real_v22` 5/5 段 PASS，保守档）**：高台 20（50）+ 楼梯 20（100，st30@0.45）+
+  斜坡 30（50）+ 沟壑 20（150）+ 梅花桩绕行（0）= **350 / 1300**（高墙默认关）。这是“演示可靠性
+  优先”的档位，不是判分侧能力上限；更高档位仍可 env 切换（见 `PART2-ROUTE.md` §8）。
+- 旧的 `real_v21`（高墙 20 打开、斜坡 35、沟壑 30）为 **6/6 段 PASS，600/1300**，保留作高难回退证据。
 - 若只按“除 45° 外的官方最高难度”计：判分侧 1000/1100；部署侧可复现 600/1100
   （楼梯 30 档运气好时 700/1100）。
 
@@ -112,10 +114,12 @@ pixi run -e eval robocon-eval replay-part2 --trace artifacts/traces/trial.jsonl
 | `real_v16`/`real_v17` | 安全/最佳档 + 斜坡东侧出口 | leg1–3 PASS，斜坡→沟壑东侧 1.2 m 缺口转场失败 → 改西端绕行 |
 | `real_v19` | 安全档 + 西端绕行 + plum bypass | **leg1–5 PASS**；wall20 对齐差 0.183 m 失败 → bar5 专用宽容差 + row2p@0.40 |
 | `real_v20` | 安全档 + wall off | **PASS：`route finished: plum bypassed`**（leg1–5） |
-| `real_v21` | 安全档 + wall bar5 修复 | **6/6 PASS：`route finished: 6/6 legs PASS (plum bypassed)`** = 最终交付档 |
+| `real_v21` | 安全档 + wall bar5 修复 | **6/6 PASS**（含 wall20）；高难回退证据 |
+| `real_v22` | **保守档**：platform20/stairs20/slope30/trench20/plum bypass，wall 默认关 | **5/5 段 PASS，1224.8 s**；默认交付档（可靠优先） |
 
-结论：部署栈整场可复现档 = **平台 20 + 楼梯 20（st30@0.45）或楼梯 30（vt_band@0.60）+ 斜坡 35 +
-沟壑 30 + 梅花贯通 + 高墙 20**；所有失败点都定位到几何/对齐/恢复实现，不是专家能力缺失
+结论：部署栈整场可复现档（默认）= **平台 20 + 楼梯 20（st30@0.45）+ 斜坡 30 + 沟壑 20 +
+梅花绕行**（高墙默认关）；更高档位仍可切换（平台 30/40、楼梯 30 vt_band@0.60、斜坡 35、沟壑 30、
+高墙 20/30/40）。所有失败点都定位到几何/对齐/恢复实现，不是专家能力缺失
 （单关 3/3、2/3 的证据在 §2.3）。
 
 **楼梯 30cm 通过盆（关键）**：`vt_band_v1` 在 vx=0.5 时“原点格单点”通过
@@ -163,10 +167,10 @@ pixi run -e eval robocon-eval replay-part2 --trace artifacts/traces/trial.jsonl
   （物理上能跨过桩阵，判分会 `dropped`），路线日志已标注 `TRANSIT_ONLY`。若后续要拿这 200 分：
   给 `demo/rl_sar` 补深度相机渲染/推理链路（工作量大），或重训一个盲/深度新专家并做判分门禁。
 
-> **一致性风险（需队内确认）**：`terrain/gen_plum.py` 与生成的单关 `part2_off_plum_1.xml`
-> 仍是 2026-11-02 的“3 桩单排”旧几何，与修正地图（6 桩两排）不一致；本轮只修了地图/路线，
-> 没有改判分关卡生成器。另：修正地图的桩阵列相对旧仓 `plum_reg_1` 是 **y 镜像**，
-> 复用任何旧梅花桩 checkpoint 前建议按 PDF 图核对左右手性。
+> **几何一致性（已修复）**：`terrain/gen_plum.py` 与生成的单关 `part2_off_plum_1.xml`
+> 已按 PDF 图重建为 6 桩两排、无坡道，与修正地图一致；旧的 3 桩 checkpoint/证据不再适用，
+> 梅花桩仍需新的盲走或深度专家（当前 0 分缺口不变）。另：修正地图的桩阵列相对旧仓
+> `plum_reg_1` 是 **y 镜像**，复用任何旧梅花桩 checkpoint 前建议按 PDF 图核对左右手性。
 
 ## 5. 入场对齐要求（衔接模型能否达到）
 
@@ -223,4 +227,4 @@ PART1_ROUTE_JUDGE=0 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=
 
 证据目录：`artifacts/part2_experts/`（`summary.md`、`summary.json`、`runs/` 1640 条、
 `stairs30_basin.json`、`plum/REPORT.md`、`plum/results/`）；部署栈 trace 在
-`artifacts/traces/`，整场 `artifacts/part2_route3/real_v21_*`（含 `real_v21_route.mp4`）。
+`artifacts/traces/`，整场 `artifacts/part2_route3/real_v22_*`（默认档，含 `real_v22_route.mp4`）。

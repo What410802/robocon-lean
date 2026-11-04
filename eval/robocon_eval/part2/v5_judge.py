@@ -1,50 +1,41 @@
 #!/usr/bin/env python3
-"""Part 2 terminal-state judge (v5 lineage, ``v8.0`` team-migration revision).
+"""Part 2 terminal-state judge (official-rule profile).
 
-The judge is a pure Python terminal-state predicate: the runner (MuJoCo /
-deployment trace) feeds it the trunk pose, the tilt and the four support-point
-(wheel-bottom) coordinates; it decides success, failure or running.
+Input: trunk pose, tilt and the four wheel-bottom support points from a MuJoCo
+or deployment trace.  Output: success / fail / running plus a reason.
 
-Success semantics (team operationalisation of the official "cross the
-obstacle" rule, see ``eval/SPEC.md`` §4): the attempt only counts once the
-robot has *traversed* the obstacle -- climbed / crossed, held, then left it and
-returned to normal ground -- not when the trunk merely crosses a line or stands
-on the obstacle.  Per obstacle:
+Official success definitions for Part 2 are sparse (the rules PDF only states the
+score curves, the "crossed" wording and "repeatable stable crossings"), so the
+judge operationalises them with measurable terminal states (see ``eval/SPEC.md``
+Part 2):
 
-* platform: four wheels on the platform top (tight top band), hold, then all
-  wheels off the far edge and back near the ground;
-* stairs / slope: reach the top landing, hold, then descend to the ground;
-* wall: every wheel crosses the wall plane inside the wall y span, then back on
-  the ground past the wall;
+* high_platform: four wheels on the platform top (tight top band), held.  The
+  rules PDF says "up onto the top surface scores", so exiting the far side is
+  **not** required here (the full-field route uses its own integration gate for
+  that);
+* stairs / slope: reach the top landing, hold, then descend to normal ground;
+* high_wall: every wheel crosses the wall plane inside the wall y span, then
+  back on the ground past the wall;
 * trench (gap): cross the slot, reach the far plateau, descend the exit ramp to
   the ground;
-* plum: cross the pile field without a wheel dropping below ``z_cross_min``,
-  reach the exit platform, then step off its far edge onto normal ground.
+* plum: cross the rules-PDF plum field (6 cubes, two staggered rows) without a
+  wheel dropping to the ground, reach the exit platform, then step down to
+  normal ground.
 
-Failure is a rule violation (fall, lane/forbidden footprint, wheel inside a
-trench slot, plum wheel on the ground) or the attempt ending without success; it
-is never a reward term.
+A fall always fails.  Support-evidence checks are fail-closed.  The lane / hold /
+wheel-band constants are operationalisation choices (documented in SPEC), not
+extra rules copied from the PDF.
 """
 from __future__ import annotations
 
 import numpy as np
 
 FALL_TILT_DEG = 75.0
-# A support point exactly on the y lane edge is not a side-ground contact; allow
-# a small geometric/contact-point tolerance, and give a short grace window so a
-# real fall can take reason priority over an earlier wall/edge grazing.
-SIDE_MARGIN_M = 0.02
-SIDE_GRACE_S = 0.6
 FALL_Z_M = 0.15
-# Judge version for score traceability (bumped whenever a predicate changes;
-# old result JSONs keep the version string they were produced with).
-#   v7.5 (2026-10-31): trench terminal state = descend the exit ramp to ground.
-#   v7.6 (2026-10-31): the same traverse semantics for the official plum field.
-#   v8.0 (2026-11-02, team migration): plum rebuilt to the owner-confirmed 3-pile
-#        geometry (no ramps; exit platform far edge is the terminal); the top
-#        "on surface" upper band for platform/plum tightened from +0.20 m to
-#        +0.05 m (a wheel hovering well above the top is not standing on it).
-JUDGE_VERSION = "v8.0-plum-3pile-2026-11-02"
+# Judge version for score traceability.  v9: official-rule semantics (platform
+# scores on the top surface; lane is no longer a hard failure) and the
+# rules-PDF plum geometry (six cubes, two staggered rows).
+JUDGE_VERSION = "v9-official-plum6-2026-11-04"
 # Wheel geometry / terminal-state tolerances (blackW wheel radius 0.103 m).
 WHEEL_RADIUS_M = 0.103
 # A wheel counts as "on a support surface" when its bottom is within this
@@ -80,9 +71,10 @@ class Part2OfficialJudge:
 
     Per obstacle:
       * platform: all four wheels on the platform top inside the platform
-        x-range and the *tightened* top band (bottom within
-        ``[-WHEEL_ON_SURFACE_TOL_M, +WHEEL_TOP_BAND_M]`` of the surface), stable
-        ``hold_s``, then off the far edge back near the ground;
+        x-range and the tightened top band (bottom within
+        ``[-WHEEL_ON_SURFACE_TOL_M, +WHEEL_TOP_BAND_M]`` of the surface), held
+        for ``hold_s`` -- success per the rules PDF ("up onto the top surface");
+        no far-side exit is required;
       * stairs / slope: all four wheels on the top landing, past the goal x,
         then descended back to the ground;
       * wall: crossed the wall plane, all four wheels back on the ground past
@@ -94,15 +86,13 @@ class Part2OfficialJudge:
         the slot deeper than ``min(0.5*depth, radius)`` invalidates the attempt
         (official trench depth = 0.30 m, wheel radius 0.103 m -> 0.103 m
         allowed drop);
-      * plum: cross the owner-confirmed 3-pile field (entry platform, three
-        0.2 m cubes in one row, exit platform; **no ramps**) without any wheel
-        bottom dropping below ``z_cross_min`` while over the field, reach the
-        exit platform (four wheels inside the tightened 0.2 m top band), then
-        step off its far edge and come back to normal ground (``exit_ramp_end``
-        is the exit-platform far edge in the new geometry, kept under its
-        historical manifest name); standing on the exit platform is evidence
-        only, not success.  Any wheel touching the ground while over the pile
-        field invalidates the attempt.
+      * plum: cross the rules-PDF plum field (entry platform, six 0.2 m cubes
+        in two staggered rows, exit platform; **no ramps**) without any wheel
+        bottom dropping to the ground while over the field, reach the exit
+        platform (four wheels inside the tightened 0.2 m top band), then step
+        off its far edge down to normal ground (``exit_ramp_end`` is the
+        exit-platform far edge, kept under its historical manifest name);
+        standing on the exit platform is evidence only, not success.
     """
 
     def __init__(self, level: dict) -> None:
@@ -153,7 +143,6 @@ class Part2OfficialJudge:
         self._prev_wx = None
         self._prev_wy = None
         self._wall_crossed_mask = None
-        self.side_since: float | None = None
 
     def _lateral_ok(self, y: float) -> bool:
         return abs(y) <= float(self.j["lane_half_width"])
@@ -187,26 +176,11 @@ class Part2OfficialJudge:
                 f"fell:tilt={tilt_deg:.1f}" if tilt_deg > FALL_TILT_DEG else f"fell:z={z:.2f}")
             return self.status
 
-        # Side corridor / forbidden footprint: before success, no support point
-        # or base may leave the y-bounded course.  This is the Part2 analogue of
-        # the high-wall y-span rule: all obstacles are bounded by two parallel
-        # y planes.  Wall is excluded because its terminal is crossing (and
-        # post-crossing drift is allowed by the v7.2 fix).
-        side_active = False
-        if self.kind in {"platform", "stairs", "slope", "gap", "plum"} and wheel_y is not None:
-            lane = float(self.j["lane_half_width"])
-            limit = lane + SIDE_MARGIN_M
-            side_active = (abs(y) > limit
-                           or bool(np.any(np.abs(wheel_y) > limit)))
-            if side_active:
-                if self.side_since is None:
-                    self.side_since = self.t
-                if self.t - self.side_since >= SIDE_GRACE_S:
-                    self.status, self.reason = "fail", "footprint_forbidden"
-                    return self.status
-            else:
-                self.side_since = None
-
+        # Lane / out-of-course is NOT an official failure reason.  Success
+        # conditions below already require obstacle-support evidence (e.g. four
+        # wheels on the platform/landing, wall-plane crossings), so walking
+        # around an obstacle cannot score.  Lateral position still enters some
+        # evidence checks via ``lateral_ok``.
         cond = False
         kind = self.kind
         if kind == "platform":
@@ -215,8 +189,7 @@ class Part2OfficialJudge:
             # "On the surface": bottom no more than WHEEL_ON_SURFACE_TOL_M below
             # the top and no more than WHEEL_TOP_BAND_M above it (a wheel
             # hovering high above the platform is not standing on it).
-            top_cond = (lo <= x <= hi and lateral_ok
-                        and wheel_z is not None
+            top_cond = (lo <= x <= hi and wheel_z is not None
                         and np.all((wheel_z >= top - WHEEL_ON_SURFACE_TOL_M)
                                    & (wheel_z <= top + WHEEL_TOP_BAND_M)))
             if top_cond:
@@ -226,17 +199,9 @@ class Part2OfficialJudge:
                     self.top_ok = True
             else:
                 self.top_held = 0.0
-            exit_x = float(self.j.get("exit_x_min", float(hi) + 0.10))
-            # Traverse semantics (v7): climb + hold, then all wheels must leave
-            # the platform far edge and be near/on the ground.  A walking robot
-            # may lift one wheel, so do not require four simultaneous contacts.
-            cond = (self.top_ok and lateral_ok and wheel_z is not None
-                    and wheel_x is not None and x >= exit_x
-                    and np.all(wheel_x >= float(hi) + 0.05)
-                    and np.all(wheel_z <= 0.20)
-                    and np.min(wheel_z) >= -0.10
-                    and 0.30 <= z <= 0.80)
-            self.exited = bool(self.exited or cond)
+            # The official rule scores on reaching the top surface; the far-side
+            # exit is intentionally not part of this predicate.
+            cond = self.top_ok
         elif kind == "stairs":
             top = float(self.j["top_z"])
             end_x = float(self.j["descend_end_x"])
@@ -375,10 +340,9 @@ class Part2OfficialJudge:
                         f"dropped:z={float(np.min(wheel_z)):.2f}@x={x:.2f}")
                     return self.status
                 self.top_seen = True
-            # New owner-confirmed geometry: entry platform + 3 cubes + exit
-            # platform, no ramps.  Reaching the exit platform is evidence only;
-            # the top band is the tightened one (the old +0.20 m accepted a
-            # robot perched above the platform as "on" it).
+            # Rules-PDF geometry: entry platform + 6 cubes (two staggered rows)
+            # + exit platform, no ramps.  Reaching the exit platform is evidence
+            # only; the top band is the tightened one.
             if (x >= float(self.j["goal_x_min"]) and lateral_ok
                     and wheel_z is not None
                     and np.all((wheel_z >= top_z - WHEEL_ON_SURFACE_TOL_M)
@@ -401,8 +365,6 @@ class Part2OfficialJudge:
 
         self.last_t = self.t
         self.prev = x
-        if side_active:
-            cond = False
         if cond:
             self.held += dt
             if self.held >= float(self.j["hold_s"]) + TERMINAL_HOLD_EXTRA_S:
@@ -421,11 +383,7 @@ class Part2OfficialJudge:
                 return "not_on_platform"
             if not self.top_ok:
                 return "top_not_stable"
-            if not self.exited:
-                return "not_exited_platform"
-            if base is not None and abs(base[1]) > float(self.j["lane_half_width"]) + 0.02:
-                return "out_of_bounds"
-            return "not_exited_platform"
+            return "not_on_platform"
         if kind == "wall":
             return "not_crossed" if not self.crossed else "not_stable_after_crossing"
         if kind == "gap":
@@ -462,9 +420,7 @@ class Part2OfficialJudge:
     def finalize(self, reason: str = "timeout") -> dict:
         if self.status == "running":
             self.status = "fail"
-            if self.side_since is not None:
-                self.reason = "footprint_forbidden"
-            elif not self.reason:
+            if not self.reason:
                 self.reason = self._terminal_reason(reason)
         detail = {k: v for k, v in self.detail.items() if not k.startswith("_")}
         detail["top_seen"] = bool(self.top_seen)

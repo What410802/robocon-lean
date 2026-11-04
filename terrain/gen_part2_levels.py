@@ -13,10 +13,10 @@ Only the official levels are generated (no ``plum_reg_*`` or other non-official
 entries):
 
     high_platform 10/20/30/40 cm, stairs 10/15/20/30 cm, slope 20/30/35/45 deg,
-    high_wall 10/20/30/40 cm, trench 10/20/30 cm, plum 1 (3-pile layout) = 20.
+    high_wall 10/20/30/40 cm, trench 10/20/30 cm, plum 1 = 20.
 
-The ``plum`` obstacle uses the team owner's no-ramp 3-pile geometry from
-``terrain/gen_plum.py`` (single source) instead of the old map plum field.
+The ``plum`` obstacle is the rules-PDF figure (6 cubes in two staggered rows,
+no ramps) from ``terrain/gen_plum.py`` (single source), not the old map field.
 
 Outputs (relative to the repository root)::
 
@@ -155,7 +155,7 @@ def _specs() -> list[dict]:
     for w in (10, 20, 30):
         specs.append({"category": "trench", "level": w, "unit": "cm",
                       "prefixes": (f"trench_{w:02d}cm_",), "kind": "gap"})
-    # Plum: owner-confirmed no-ramp 3-pile layout (terrain/gen_plum.py), not the
+    # Plum: rules-PDF plum layout (terrain/gen_plum.py), not the
     # map's old ramp/staggered-row field.
     specs.append({"category": "plum", "level": 1, "unit": "bool",
                   "prefixes": (), "kind": "plum"})
@@ -191,12 +191,11 @@ def _judge(kind: str, geoms: list[str], bmin: np.ndarray, bmax: np.ndarray,
            override_h: float | None) -> dict:
     lane = {"lane_half_width": 0.7, "hold_s": 0.20}
     if kind == "platform":
+        # Official rule: "up onto the top surface scores"; no far-side exit.
         return {"kind": "platform", "top_z": float(bmax[2]),
                 "x_range": [round(float(bmin[0] + 0.20), 4),
                             round(float(bmax[0] - 0.05), 4)],
-                "z_margin": 0.35,
-                "exit_x_min": round(float(bmax[0] - 0.05) + 0.10, 4),
-                "exit_ground_tol": 0.08, **lane}
+                "z_margin": 0.35, **lane}
     if kind == "stairs":
         # The official stairs obstacle is a full staircase: 6 up steps + 0.8 m
         # landing + 6 down steps.  The judge needs the far end of the down flight:
@@ -247,23 +246,21 @@ def _judge(kind: str, geoms: list[str], bmin: np.ndarray, bmax: np.ndarray,
 
 
 def _plum_judge() -> dict:
-    """Judge contract for the owner-confirmed no-ramp 3-pile plum layout.
+    """Judge contract for the rules-PDF plum layout (6 cubes, two staggered rows).
 
-    ``exit_ramp_end`` keeps its old key name (judge compatibility): with no ramp
-    it is simply the far edge of the 0.2 m exit platform (x=5.0 m); success
-    requires stepping down to normal ground past that edge.
+    ``exit_ramp_end`` keeps its historical key name: the layout has no ramp, so
+    it is the far edge of the 0.2 m exit platform; success requires stepping down
+    to normal ground past that edge.
     """
     spec = gen_plum.plum_section()
-    cube_half = spec["cube_half_m"]
-    centers = spec["cube_centers_x_m"]
-    first_left = float(centers[0]) - cube_half
-    last_right = float(centers[-1]) + cube_half
+    cube_x = spec["cube_x_range_m"]
     return {
         "kind": "plum",
         "top_z": float(spec["cube_top_m"]),
-        # x span covering the 3 cubes (+/- 0.15 m tolerance, same convention as
-        # the previous official plum level).
-        "cube_x_range": [round(first_left - 0.15, 4), round(last_right + 0.15, 4)],
+        # x span covering both cube rows (+/- 0.15 m tolerance, same convention
+        # as the other plum/obstacle windows in the judge).
+        "cube_x_range": [round(float(cube_x[0]) - 0.15, 4),
+                         round(float(cube_x[1]) + 0.15, 4)],
         # Exit platform near edge: reaching it is evidence of a full crossing.
         "goal_x_min": round(float(spec["exit_platform_x_range_m"][0]), 4),
         "z_margin": 0.35,
@@ -364,7 +361,7 @@ def build() -> dict:
             bmin = np.min([b[0] for b in boxes], axis=0)
             bmax = np.max([b[1] for b in boxes], axis=0)
             judge = _plum_judge()
-            source = ("owner-confirmed 3-pile plum layout (terrain/gen_plum.py): "
+            source = ("rules-PDF plum layout (terrain/gen_plum.py): "
                       + ", ".join(_parse_attrs(g)["name"] for g in geoms))
         else:
             geoms = _select_geoms(geom_lines, spec["prefixes"])

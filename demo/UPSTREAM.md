@@ -1,21 +1,21 @@
 # 上游来源与许可（demo/）
 
-`demo/` 是 RoboCon 2026 队内赛的 ROS 2 + MuJoCo 仿真运行时（`rl_sim` + `sim_node`），
-由下列上游派生并裁剪。浏览器/评审需要确认“哪些是上游、哪些是队内新增”时看本文件。
+`demo/` 是 RoboCon 2026 比赛的 ROS 2 + MuJoCo 仿真运行时（`rl_sim` + `sim_node`），
+由下列上游派生并裁剪。浏览器/评审需要确认“哪些是上游、哪些是本仓新增”时看本文件。
 
 ## 1. 上游与许可
 
 | 上游 | 版本 / commit | 许可 | 用途 |
 |---|---|---|---|
 | [`fan-ziqi/rl_sar`](https://github.com/fan-ziqi/rl_sar) | `e5c2f41`（2025-07-25） | **Apache-2.0** | 运行时框架层：`library/core/{rl_sdk,observation_buffer,fsm,loop}`、policy 配置结构（`base.yaml` / `config.yaml` / `manifest.json`）、`fsm.hpp` 上游骨架 |
-| 本队早期任务仓（`@20261005_ros2` / `@20261007_assignment` / `@20261024_blackw`） | 迁移时逐文件标注 | 同上游 / 队内自有 | MuJoCo `sim_node` + viewer、`joy_node`、`MitCommand`/`MotorState`/`ControlStatus` 消息、`rl_sim` 的 ROS 2 适配、命令安全限幅、FSM intent 改造 |
+| 上游来源仓（`@20261005_ros2` / `@20261007_assignment` / `@20261024_blackw`） | 迁移时逐文件标注 | 同上游 / 上游之外 | MuJoCo `sim_node` + viewer、`joy_node`、`MitCommand`/`MotorState`/`ControlStatus` 消息、`rl_sim` 的 ROS 2 适配、命令安全限幅、FSM intent 改造 |
 | 主办方材料（RoboCon 2026 赛事包） | `assets/{robots,policies,terrain}` / `terrain.zip` | **主办方赛事材料**（非开源许可；仅用于本赛事仿真复现） | blackW 机器人模型 `blackW_description.xml` + 18 个 mesh（入库 `robots/blackW/assets/`）、官方 `flat`/`stair`/`obstacle` 策略配置、Part1/Part2 官方地形（`scenes/part1/official/`、`scenes/part2/official/map.xml`、`scenes/part2/full_field/labels/`） |
 
 修改过的第三方文件保留原版权头，并按 Apache-2.0 §4 以
 `Modified for RoboCon 2026`（或迁移时的具体任务标签，如 `Modified for @20261007_assignment`）
 标注修改。框架层文件与上游 `e5c2f41` 的差异清单/等价性证明来自迁移记录（`MIGRATION_NOTES.md`）。
 
-## 2. 队内新增（相对上游 rl_sar）
+## 2. 本仓新增（相对上游 rl_sar）
 
 - **MuJoCo `sim_node`**（`quadruped_ros2/src/sim_node.cpp`）：上游没有仿真器；本仓用 MuJoCo 3.11
   跑 2 ms 物理、发布 `MotorState` / `/eval_state`（接触/轮地信息供判分）、可选 GLFW 窗口与跟随相机。

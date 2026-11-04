@@ -4,11 +4,12 @@ These tests drive ``Part2OfficialJudge`` directly with synthetic support states
 (wheel bottoms, body-frame offsets), which is exactly what the trace replay
 feeds it.  They pin:
 
-* traverse semantics: reaching/holding on the obstacle is evidence, success
-  additionally requires leaving it to normal ground;
+* official semantics: high_platform scores on reaching the top surface (no
+  far-side exit); stairs/slope/trench/wall/plum still require crossing to the far
+  side and returning to normal ground;
 * the tightened top band (``top + 0.05`` for platform/plum) -- a wheel hovering
   10 cm above the platform is not "on" it;
-* lane/forbidden-footprint, fall and fail-closed evidence handling;
+* fall and fail-closed evidence handling (lane is not a hard failure);
 * cadence independence: the same physical trajectory at 20 ms and 2 ms frames
   must give the same verdict.
 """
@@ -27,8 +28,7 @@ OFFSETS = ((0.2, -0.3), (0.2, 0.3), (-0.2, -0.3), (-0.2, 0.3))
 PLATFORM = {
     "key": "high_platform_20cm", "category": "high_platform", "level": 20, "unit": "cm",
     "judge": {"kind": "platform", "top_z": 0.2, "x_range": [2.0, 3.25],
-              "exit_x_min": 3.35, "exit_ground_tol": 0.08,
-              "lane_half_width": 0.7, "hold_s": 0.2},
+              "z_margin": 0.35, "lane_half_width": 0.7, "hold_s": 0.2},
 }
 
 GAP = {
@@ -66,7 +66,7 @@ def _feed(judge: Part2OfficialJudge, frames: list[dict]) -> Part2OfficialJudge:
     return judge
 
 
-def _platform_frames(dt: float = 0.02, top_steps: int = 20, exit_steps: int = 20,
+def _platform_frames(dt: float = 0.02, top_steps: int = 40, exit_steps: int = 20,
                      top_wz: float = 0.2) -> list[dict]:
     frames = []
     t = 0.0
@@ -80,17 +80,18 @@ def _platform_frames(dt: float = 0.02, top_steps: int = 20, exit_steps: int = 20
 
 
 class TestPlatform(unittest.TestCase):
-    def test_climb_hold_exit_success(self):
+    def test_climb_hold_success(self):
         report = _feed(Part2OfficialJudge(PLATFORM), _platform_frames()).finalize("end")
         self.assertEqual(report["status"], "success", report)
         self.assertTrue(report["detail"]["top_seen"])
-        self.assertTrue(report["detail"]["exited"])
 
-    def test_stopping_on_platform_is_not_success(self):
-        frames = _platform_frames()[:20]
+    def test_standing_on_platform_scores(self):
+        # Rules PDF: "up onto the top surface scores" -> the far-side exit is
+        # not required by the scoring predicate.
+        frames = _platform_frames()
         report = _feed(Part2OfficialJudge(PLATFORM), frames).finalize("end")
-        self.assertEqual(report["status"], "fail")
-        self.assertEqual(report["reason"], "not_exited_platform")
+        self.assertEqual(report["status"], "success", report)
+        self.assertTrue(report["detail"]["top_seen"])
 
     def test_hovering_above_platform_is_not_on_surface(self):
         # wheel bottoms 10 cm above the top: outside the tightened +0.05 m band
@@ -100,16 +101,18 @@ class TestPlatform(unittest.TestCase):
         self.assertFalse(report["detail"]["top_seen"])
         self.assertEqual(report["reason"], "not_on_platform")
 
-    def test_side_corridor_is_forbidden(self):
+    def test_off_lane_wheels_do_not_fail_official_semantics(self):
+        # The rules PDF does not make lane position a failure; support evidence
+        # on the obstacle is what matters.
         frames = []
         t = 0.0
-        for _ in range(40):   # > SIDE_GRACE_S (0.6 s)
+        for _ in range(40):
             frames.append({"t": t, "x": 2.45, "wheel_z": 0.2, "base_z": 0.55,
                            "wheel_y_offsets": [0.8, 0.3, -0.3, -0.3]})
             t += 0.02
         report = _feed(Part2OfficialJudge(PLATFORM), frames).finalize("end")
-        self.assertEqual(report["status"], "fail")
-        self.assertEqual(report["reason"], "footprint_forbidden")
+        self.assertEqual(report["status"], "success", report)
+        self.assertTrue(report["detail"]["top_seen"])
 
     def test_fall_fails(self):
         report = _update(Part2OfficialJudge(PLATFORM), 0.0, 2.45,
@@ -137,13 +140,13 @@ class TestPlatform(unittest.TestCase):
             Part2OfficialJudge(broken)
 
     def test_frame_cadence_independent(self):
-        slow = _feed(Part2OfficialJudge(PLATFORM), _platform_frames(0.02, 20, 20))
-        fast = _feed(Part2OfficialJudge(PLATFORM), _platform_frames(0.002, 200, 200))
+        slow = _feed(Part2OfficialJudge(PLATFORM), _platform_frames(0.02, 40, 20))
+        fast = _feed(Part2OfficialJudge(PLATFORM), _platform_frames(0.002, 400, 200))
         self.assertEqual(slow.finalize("end")["status"], "success")
         self.assertEqual(fast.finalize("end")["status"], "success")
 
-    def test_judge_version_is_bumped_for_plum_geometry(self):
-        self.assertTrue(JUDGE_VERSION.startswith("v8."))
+    def test_judge_version_tracks_official_semantics(self):
+        self.assertTrue(JUDGE_VERSION.startswith("v9-"))
 
 
 class TestTrench(unittest.TestCase):

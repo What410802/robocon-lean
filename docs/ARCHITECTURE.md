@@ -11,7 +11,7 @@ flowchart TB
         MAP["official/map.xml<br/>Part2 官方场地"]
         P1["official/scene_terrain.xml<br/>Part1 官方场地"]
         SPEC["official/part2_terrain_spec.json<br/>生成摘要"]
-        PLUM["plum/plum_spec.json<br/>3 桩参数"]
+        PLUM["plum/plum_spec.json<br/>PDF 6 桩参数"]
         GEN["gen_part2_levels.py"]
         MAP --> GEN
         PLUM --> GEN
@@ -102,7 +102,7 @@ sequenceDiagram
 - Part1：`record_eval_trace.py`（或 in-process `policy_runner`）→ `trace.replay_part1` →
   `Part1JudgeV2`（逐障碍证据 + AttemptManager）→ `scoring`。
 - Part2：v5 judge 输入 base/tilt/wheel_x/y/z；每关独立场景与 judge 参数（manifest 的 `judge`）；
-  成功 = 越障 + 退出/下障碍 + hold（队内更严，见 SPEC）。
+  成功 = 障碍支撑证据 + hold（官方口径，见 SPEC）。
 - 未来接口：judge 直接吃 `mjData`（接触对/几何位姿），用于"任何瞬间"检查与限高杆几何净空；
   当前先保持 trace 输入与现有逻辑。
 

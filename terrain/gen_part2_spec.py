@@ -15,11 +15,11 @@ The judge protocol constants (1.8 m runway between spawn and obstacle near face,
 organiser's evaluation scene generation, not of the map geometry; they are
 recorded in the spec as ``protocol``.
 
-The official ``map.xml`` still carries the *old* plum field (two staggered rows
-of 12 cubes + entry/exit ramps).  The team owner replaced the plum obstacle with
-a no-ramp 3-pile layout, so the ``plum`` section is **overridden** from
-``terrain/gen_plum.py`` (the single plum geometry source) instead of parsed from
-the map; every other category is copied from the official map geometry.
+The official ``map.xml`` carries the *old* plum field (two staggered rows of 12
+cubes + entry/exit ramps), which the rules PDF itself says is wrong.  The
+``plum`` section is therefore taken from ``terrain/gen_plum.py`` (the PDF-figure
+geometry, single source) instead of parsed from the map; every other category is
+copied from the official map geometry.
 
 Output: ``terrain/official/part2_terrain_spec.json`` (committed single source).
 
@@ -268,12 +268,12 @@ def build_spec(map_path: Path) -> dict:
         "start_x_m": RUNWAY_M,
     }
 
-    # ---- plum: owner-confirmed no-ramp 3-pile layout (NOT the official map) --
-    # The map's plum field (ramps + 24 cubes in two rows) was superseded by the
-    # team owner's 3-pile layout; ``gen_plum.py`` is the single geometry source.
+    # ---- plum: rebuilt from the rules-PDF figure (NOT the official map) ------
+    # The map's plum field (ramps + cubes in two rows) is the one the PDF says has
+    # wrong parameters; ``gen_plum.py`` is the PDF-figure geometry source.
     plum = gen_plum.plum_section()
     if not plum.get("no_ramps"):
-        raise ValueError("plum section must be the owner-confirmed no-ramp layout")
+        raise ValueError("plum section must be the no-ramp PDF layout")
     if abs(plum["start_x_m"] - RUNWAY_M) > 1e-9:
         raise ValueError(
             f"plum entry platform must start at the {RUNWAY_M} m runway, "

@@ -51,10 +51,11 @@ PART2_WALL_HALF_WIDTH = 0.7
 # the default 20 (or >=16) for teacher runs and evaluation.
 PART2_HOLD_STEPS = knobs.get_int("PART2_SUCCESS_HOLD_STEPS", 20)
 PART2_LANE_HALF_WIDTH = knobs.get_float("PART2_LANE_HALF_WIDTH", 0.7)
-# Plum field: team-owner no-ramp 3-pile layout (single source:
+# Plum field: rules-PDF layout (single source:
 # ``terrain/official/part2_terrain_spec.json`` -> ``categories.plum``, generated
 # by ``terrain/gen_plum.py``).  These mirror the generated plum level judge dict:
-# no ramps, entry/exit platforms 0.8x0.8x0.2 m, 3 cubes 0.2 m in one row.
+# no ramps, entry/exit platforms 0.8x0.8x0.2 m, six cubes 0.2 m in two
+# staggered rows.
 _PLUM_SPEC_PATH = (
     Path(__file__).resolve().parents[7]
     / "terrain" / "official" / "part2_terrain_spec.json"
@@ -66,11 +67,9 @@ if not _PLUM_SPEC_PATH.is_file():
 _PLUM_SPEC = json.loads(_PLUM_SPEC_PATH.read_text(encoding="utf-8"))["categories"]["plum"]
 PART2_PLUM_TOP_Z_M = float(_PLUM_SPEC["cube_top_m"])
 PART2_PLUM_Z_CROSS_MIN_M = 0.05
-# cube_x_range covering the 3 cubes, +/-0.15 m tolerance (judge convention).
-PART2_PLUM_CUBE_X_MIN_M = round(
-    float(_PLUM_SPEC["cube_centers_x_m"][0]) - float(_PLUM_SPEC["cube_half_m"]) - 0.15, 4)
-PART2_PLUM_CUBE_X_MAX_M = round(
-    float(_PLUM_SPEC["cube_centers_x_m"][-1]) + float(_PLUM_SPEC["cube_half_m"]) + 0.15, 4)
+# cube_x_range covering both cube rows, +/-0.15 m tolerance (judge convention).
+PART2_PLUM_CUBE_X_MIN_M = round(float(_PLUM_SPEC["cube_x_range_m"][0]) - 0.15, 4)
+PART2_PLUM_CUBE_X_MAX_M = round(float(_PLUM_SPEC["cube_x_range_m"][1]) + 0.15, 4)
 # Exit platform near edge (crossing evidence) and far edge (step-down to ground).
 PART2_PLUM_GOAL_X_M = float(_PLUM_SPEC["exit_platform_x_range_m"][0])
 PART2_PLUM_EXIT_END_X_M = float(_PLUM_SPEC["exit_platform_x_range_m"][1])
@@ -400,8 +399,8 @@ def _part2_terrain_state(
         _part2_state_buffers(env, n, env.device)
         env._part2_top_seen |= in_field_root & (~dropped.any(dim=1))
         # No ramps: reaching the 0.8 m exit platform near edge is evidence only;
-        # success requires stepping down from its far edge (x=5.0) to normal
-        # ground (mirrors v5_judge.py plum branch, no-ramp geometry).
+        # success requires stepping down from its far edge to normal ground
+        # (training termination = get down to the target; mirrors v5_judge.py).
         exit_platform = (lane & (rx >= PART2_PLUM_GOAL_X_M)
                          & on_surface(torch.full_like(d, PART2_PLUM_TOP_Z_M)))
         env._part2_plum_exit_seen |= m & exit_platform

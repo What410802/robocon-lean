@@ -124,5 +124,5 @@ Part2 单关场景由 `terrain/` 生成，不要手改 `scenes/part2/generated/`
 ## 来源与许可
 
 派生自 [fan-ziqi/rl_sar](https://github.com/fan-ziqi/rl_sar)（Apache-2.0）；主办方提供的
-blackW 模型/官方策略/地形归赛事材料。上游 commit、队内新增内容、BL-6 命名与“官方模型物理零改动”
+blackW 模型/官方策略/地形归赛事材料。上游 commit、本仓新增内容、BL-6 命名与“官方模型物理零改动”
 说明见 **[UPSTREAM.md](UPSTREAM.md)**。

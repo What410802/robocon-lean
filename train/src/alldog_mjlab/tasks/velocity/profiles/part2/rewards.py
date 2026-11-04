@@ -223,14 +223,14 @@ def _plum_foothold_reward(
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
     wheel_radius: float = 0.103,
     cube_x_lo: float = 2.70,
-    cube_x_hi: float = 4.10,
+    cube_x_hi: float = 4.40,
 ):
     """Dense foothold shaping for the plum field: reward wheels standing on piles.
 
     Blind policies cannot see the gaps; a fixed periodic pile field still lets a
     timed gait work.  This term pays in proportion to how many wheels are on a
     pile top (wheel bottom in [0.14, 0.34] m) while the robot is over the field.
-    Defaults span the owner-confirmed 3 cubes (x 2.7..4.1, see
+    Defaults span the rules-PDF cube field (x 2.7..4.4, see
     ``terrain/official/part2_terrain_spec.json``); the field is fixed, so this
     is not difficulty-interpolated.
     """

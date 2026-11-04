@@ -13,16 +13,17 @@ Route order (deployment-verified tier; every leg has its own judged direction):
      (default = fully validated safe tier; the 200-point stairs_30cm tier is
      PART2_STAIRS_LEVEL=30 + PART2_EXPERT_STAIRS=vt_band_v1 +
      PART2_VX_STAIRS=0.60, field-proven but run-to-run variable)
-  3. slope_35deg         WEST->EAST  (stand x=38.35, cross gate x>44.20)  row2p
-  4. trench_30cm         WEST->EAST  (stand x=14.10, cross gate x>19.70)  s1d_trench
+  3. slope_30deg         WEST->EAST  (stand x=32.40, cross gate x>38.20)  row2p
+  4. trench_20cm         WEST->EAST  (stand x=8.05,  cross gate x>13.60)  s1d_trench
   5. high_plum_bypass    WEST->EAST  (no expert: no deployable blind plum
-     expert exists; the route goes around the row at x=2.60 and joins the
-     wall transit; PART2_PLUM_MODE=cross restores the old non-scoring pass)
-  6. high_wall_20cm      EAST->WEST  (stand x=8.40,  cross gate x<7.20)   vt_band
-     = cross_bar_5 (the field instance only leaves a 0.54 m runway; the 40 cm
-     bar7 passes only the official 1.8 m-runway level on the deployment stack).
-     PART2_ROUTE_WALL=0 skips the leg; PART2_ROUTE_WALL_VARIANT=bar6|bar7
-     switches the bar (all variants clearance-audited).
+     expert exists; the route goes around the row at x=2.60; PART2_PLUM_MODE=cross
+     restores the old non-scoring pass)
+
+The high-wall leg is optional and OFF by default (PART2_ROUTE_WALL=1 enables the
+20 cm cross_bar_5 instance; PART2_ROUTE_WALL_VARIANT=bar6|bar7 switches the bar,
+all variants clearance-audited).  Default route levels are deliberately below the
+highest eval-side levels we have seen succeed: platform 20 / stairs 20 /
+slope 30 / trench 20; max tiers stay available via PART2_*_LEVEL env vars.
 
 Transits are chains of ``goto()`` waypoints <= 10 m (the locked-wheel connector
 has almost no vy authority: a pure lane hold drifts ~0.008 m/m, while goto's
@@ -73,12 +74,14 @@ artifacts/traces/, replayed with the Part2 v5 judge):
                  PASS).  Optional 200-point tier: stairs_30cm vt_band
                  adaptive vx=0.60 (v14/v17 PASS, v15/v18 top-landing stall;
                  vx=0.50/0.55/0.65/0.70 do not transfer from the eval side).
-  slope       -> slope_35deg row2p adaptive 0.50 (3/3 single-level; 1x
+  slope       -> slope_30deg row2p adaptive 0.50 (default below max tier; 35deg
+                 remains the eval-side max) (3/3 single-level; 1x
                  full-field PASS after the lateral sidestep fix)
-  trench      -> trench_30cm s1d adaptive 0.80 (3/3; 1x full-field PASS)
+  trench      -> trench_20cm s1d adaptive 0.80 (default below max tier; 30cm
+                 remains the eval-side max) (3/3; 1x full-field PASS)
   plum        -> bypass (no deployable blind expert: 0/200 eval, 0/384 old
                  repo; crossing attempt stalled and fell in real_v14)
-  wall        -> cross_bar_5 20cm in the field slot (0.54 m runway; the 40cm
+  wall (off by default) -> cross_bar_5 20cm in the field slot (0.54 m runway; the 40cm
                  bar7 only passes the OFFICIAL 1.8 m-runway level, 2/3, not
                  the field slot) -> default PART2_ROUTE_WALL_VARIANT=bar5.
 Defaults below follow that set; every tier stays switchable.
@@ -242,8 +245,8 @@ WALL_TIERS = {
              "xy_tol": 0.05, "yaw_tol": 2.5},
 }
 STAIRS_LEVEL = _level_env("PART2_STAIRS_LEVEL", 20, STAIRS_LEVELS)
-SLOPE_LEVEL = _level_env("PART2_SLOPE_LEVEL", 35, SLOPE_LEVELS)
-TRENCH_LEVEL = _level_env("PART2_TRENCH_LEVEL", 30, TRENCH_LEVELS)
+SLOPE_LEVEL = _level_env("PART2_SLOPE_LEVEL", 30, SLOPE_LEVELS)
+TRENCH_LEVEL = _level_env("PART2_TRENCH_LEVEL", 20, TRENCH_LEVELS)
 
 # Plum row: no deployable blind expert exists (0/200 eval, 0/384 old repo), so
 # the default is a BYPASS around the row (x=2.60, west of the entry platform at
@@ -253,7 +256,7 @@ PLUM_MODE = os.environ.get("PART2_PLUM_MODE", "bypass").strip().lower()
 if PLUM_MODE not in ("bypass", "cross"):
     PLUM_MODE = "bypass"
 
-WALL_ENABLED = os.environ.get("PART2_ROUTE_WALL", "1").strip().lower() not in (
+WALL_ENABLED = os.environ.get("PART2_ROUTE_WALL", "0").strip().lower() not in (
     "0", "false", "no", "off")
 WALL_VARIANT = (os.environ.get("PART2_ROUTE_WALL_VARIANT", "bar5").strip().lower()
                 or "bar7")

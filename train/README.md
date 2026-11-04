@@ -2,7 +2,7 @@
 
 本目录是 `robocon-lean` 的训练子项目：用 **MjLab 1.6.0 + RSL-RL 5.4.2** 训练
 **black**（12 DoF 四足）与 **blackW**（16 DoF 轮足）的速度跟踪 / Part 1、Part 2 越障策略，
-并导出部署用 TorchScript。只保留队内赛需要的 **PPO / HIM 主线**；深度相机、BC 蒸馏、
+并导出部署用 TorchScript。只保留比赛需要的 **PPO / HIM 主线**；深度相机、BC 蒸馏、
 PUMA foothold、Extreme-Parkour 等研究分支已在迁移时移除（来源与取舍见
 [UPSTREAM.md](UPSTREAM.md)）。
 
@@ -70,14 +70,14 @@ tests/                       # Part 2 wall predicate 单测（CPU）
 | `blackw-vt-edge` | `blackw-vt` + 0.05–0.20 m 平台边缘地形（桥台/台阶唇交接边缘鲁棒） |
 | `blackw-vt-locked` | **真 12-DoF 锁轮衔接**：45×6 obs / 12 act，轮关节不属于策略 IO、由轮锁 PD 保持；RecoveryLoco 式接触/步态 + 动态支撑框（见 `docs/VT-RECIPE.md` §4.3/§8） |
 | `blackw-official` | Part 1/2 官方难度混合地形（主力任务） |
-| `blackw-plum` | Part 2 plum（owner 确认的 no-ramp 3-pile 布局） |
+| `blackw-plum` | Part 2 plum（按规则 PDF 图的 6 桩两排、无坡道布局） |
 | `blackw-{stairs,platform,slope,trench,wall}-exact` | 单障碍官方地形专项 |
 | `blackw-platform-easy` | 低难度平台专项（课程起点） |
 | `blackw-flat-him` / `blackw-official-him` / `blackw-platform-{exact,easy}-him` | HIM 变体 |
 
 > `*-exact` / `blackw-official` / `blackw-plum` 的地形尺寸全部读取
 > `terrain/official/part2_terrain_spec.json` 与 `terrain/plum/plum_spec.json`；
-> plum 是队内确认的 **no-ramp 3-pile** 布局（详见 `terrain/README.md`）。
+> plum 按规则 PDF 图重建为 **6 桩两排、无坡道**（详见 `terrain/README.md`）。
 
 ## 4. 训练示例（每型机器人一条；本文档不执行训练）
 
@@ -120,7 +120,7 @@ pixi run -e train train blackw-official-him --agent.resume True --agent.load-run
 ```
 
 训练默认写入 `logs/rsl_rl/<experiment_name>/<时间戳>_<run_name>/`（`logs/` 已被
-仓库根 `.gitignore` 忽略）。默认 logger 是 wandb；队内训练通常用
+仓库根 `.gitignore` 忽略）。默认 logger 是 wandb；训练通常用
 `--agent.logger tensorboard`，或先 `wandb login`。
 
 ## 5. 回放
@@ -244,7 +244,7 @@ physics dt         : 0.002 s；control 0.005 s（200 Hz）；policy 0.02 s（50 
 nominal PD         : legs Kp=50/Kd=1.2；wheel Kp=0（速度控制），Kd=1
 ```
 
-joint order / observation layout / term 顺序属于**部署契约**；改动前先与部署/demo 负责人确认。
+joint order / observation layout / term 顺序属于**部署契约**；改动前先与部署/demo 维护者确认。
 
 ## 10. 常见问题
 

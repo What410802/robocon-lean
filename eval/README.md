@@ -1,6 +1,6 @@
 # eval/ — 判分与回放
 
-队内赛 Part 1 / Part 2 的独立判分侧：只吃 trace/JSON + MuJoCo CPU，不 import ROS、
+本赛题 Part 1 / Part 2 的独立判分侧：只吃 trace/JSON + MuJoCo CPU，不 import ROS、
 不 import 训练仓。**人读标准 = [`SPEC.md`](SPEC.md)；机器可读标准 = `robocon_eval/rules.py`。**
 
 ## 环境
@@ -54,8 +54,8 @@ Part2 的 meta 需带 `level`（官方关卡条目）与可选 `support_frame`�
 - `tests/test_trace_replay.py` — trace 解析、golden 回放、2 ms/20 ms 兼容、伪造关卡拒绝
 - `tests/test_part1_judge.py` — Part1 判据子集（接近地面/桥/限高杆/高墙/斜坡/尝试账本）
 - `tests/test_t_stairs.py` — T 台阶回归（异臂 100、同臂 50、漏级失败、冻结时机）
-- `tests/test_part2_v5_judge.py` — 高台/沟壑/高墙终端态、车道、跌倒、采样兼容
-- `tests/test_part2_v5_plum.py` — 新梅花桩几何（3 桩、无斜坡、出口平台远边）
+- `tests/test_part2_v5_judge.py` — 高台/沟壑/高墙终端态、跌倒、采样兼容（车道不再判失败）
+- `tests/test_part2_v5_plum.py` — PDF 梅花桩几何（6 桩两排、无坡道、出口平台远边）
 - `tests/test_course_events.py` — 整场尝试/暂停恢复/跳过/回程奖励
 - `tests/test_policy_runner.py` — runner 契约（关节映射、obs 维度、场景/出生点、闭环 smoke）
 

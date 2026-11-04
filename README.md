@@ -1,6 +1,6 @@
 # robocon-lean
 
-RoboCon 2026 队内足式机器人仿真赛题的最小可读仓库：**Part 1 障碍赛（900 分）** 与
+RoboCon 2026 足式机器人仿真赛题的最小可读仓库：**Part 1 障碍赛（900 分）** 与
 **Part 2 越障能力测试（1300 分）** 的仿真、训练、评测与演示。一个人从零读完本文件即可跑起
 demo；规则依据、判分细节和训练配方分别在 `docs/` 与各目录 README 中。
 
@@ -86,7 +86,7 @@ pixi run -e eval robocon-eval replay-part2 --trace <trace.jsonl>
 
 ## 文档索引
 
-- `docs/RULES-BASIS.md` — 规则原文要点、官方 vs 队内更严约束、资产哈希、版本结论
+- `docs/RULES-BASIS.md` — 规则原文要点、官方 vs 本仓库更严约束、资产哈希、版本结论
 - `docs/ARCHITECTURE.md` — 数据流、坐标系/契约、判分链路
 - `docs/OPERATIONS.md` — 手柄/自动路线/录制/判分操作手册
 - `docs/VT-RECIPE.md` — 速度跟随衔接模型（Part 1 位置环）的配方、训练记录与验收

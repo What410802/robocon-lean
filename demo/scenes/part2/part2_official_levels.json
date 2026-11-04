@@ -53,8 +53,6 @@
           3.25
         ],
         "z_margin": 0.35,
-        "exit_x_min": 3.35,
-        "exit_ground_tol": 0.08,
         "lane_half_width": 0.7,
         "hold_s": 0.2
       }
@@ -110,8 +108,6 @@
           3.25
         ],
         "z_margin": 0.35,
-        "exit_x_min": 3.35,
-        "exit_ground_tol": 0.08,
         "lane_half_width": 0.7,
         "hold_s": 0.2
       }
@@ -167,8 +163,6 @@
           3.25
         ],
         "z_margin": 0.35,
-        "exit_x_min": 3.35,
-        "exit_ground_tol": 0.08,
         "lane_half_width": 0.7,
         "hold_s": 0.2
       }
@@ -224,8 +218,6 @@
           3.25
         ],
         "z_margin": 0.35,
-        "exit_x_min": 3.35,
-        "exit_ground_tol": 0.08,
         "lane_half_width": 0.7,
         "hold_s": 0.2
       }
@@ -1066,7 +1058,7 @@
       "level": 1,
       "unit": "bool",
       "scene": "part2_off_plum_1.xml",
-      "source": "owner-confirmed 3-pile plum layout (terrain/gen_plum.py): plum_entry, plum_r1_01, plum_r1_02, plum_r1_03, plum_exit",
+      "source": "rules-PDF plum layout (terrain/gen_plum.py): plum_entry, plum_r1_01, plum_r1_02, plum_r1_03, plum_r2_01, plum_r2_02, plum_r2_03, plum_exit",
       "obstacle_bbox": {
         "min": [
           1.8,
@@ -1074,7 +1066,7 @@
           0.0
         ],
         "max": [
-          5.0,
+          5.3,
           0.4,
           0.2
         ]
@@ -1108,14 +1100,14 @@
         "top_z": 0.2,
         "cube_x_range": [
           2.55,
-          4.25
+          4.55
         ],
-        "goal_x_min": 4.2,
+        "goal_x_min": 4.5,
         "z_margin": 0.35,
         "z_cross_min": 0.05,
         "lane_half_width": 0.7,
         "hold_s": 0.2,
-        "exit_ramp_end": 5.0,
+        "exit_ramp_end": 5.3,
         "exit_ground_tol": 0.08
       }
     }

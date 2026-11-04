@@ -1,4 +1,4 @@
-# Part2 全场自动路线 v2（修正版场地 / 最大可行难度）
+# Part2 全场自动路线 v2（修正版场地 / 保守验证档）
 
 更新：2026-11-04。实现：`demo/rl_sar/scripts/part2_auto_route.py`（v2，替换原 252 行初版）。
 场景：`demo/scenes/part2/full_field/part2_fixed_field.xml`（`map_fixed.xml` + 竞赛 PDF 修正后的梅花桩），
@@ -6,11 +6,14 @@
 
 ## 1. 结论（本轮）
 
-**1× 真场整场已完成：`real_v21` = 6/6 legs PASS（plum bypassed）**，1349 s 仿真（约 22.5 min 墙钟），
-command 见 §8。逐段：平台 20 → 楼梯 20（st30@0.45）→ 斜坡 35 → 沟壑 30 → 梅花桩绕行 → 高墙 20。
+**1× 真场整场已完成：`real_v22` = 5/5 段 PASS（plum bypassed，高墙默认关）**，1224.8 s 仿真，
+command 见 §8。逐段：平台 20 → 楼梯 20（st30@0.45）→ 斜坡 30 → 沟壑 20 → 梅花桩绕行。
+默认档刻意低于 eval 侧已成功过的最高档（平台 20<40、楼梯 20<30、斜坡 30<35、沟壑 20<30），
+用可靠性换演示稳定性；更高档位仍可用 env 切回（§8）。
 
-- 路线 6 段（默认档 = **真场 1× 验证档**）：平台 20（S→N）→ 楼梯 20（W→E）→ 斜坡 35（W→E）→
-  沟壑 30（W→E）→ 梅花桩**绕行**（无部署专家）→ 高墙 20（`cross_bar_5`，E→W）。
+- 默认路线 5 段（真场 1× 验证档）：平台 20（S→N）→ 楼梯 20（W→E）→ 斜坡 30（W→E）→
+  沟壑 20（W→E）→ 梅花桩**绕行**（无部署专家）。高墙 20cm 是可选第 6 段，默认关
+  （`PART2_ROUTE_WALL=1` 打开）。
   更高档位（平台 30/40、楼梯 30=200 分、斜坡 20/30、沟壑 10/20、高墙 bar6/bar7）全部可用环境变量切换，
   几何/审计均覆盖；楼梯 30 在 v14/v17 整场 PASS，但 v15/v18 在顶层平台 stall（run-to-run 不稳）。
 - 段落切换全部走 `vt_locked12` 锁轮衔接；转场是 **`goto()` 折线**（开阔区 ≤10 m @0.30 m/s，
@@ -21,8 +24,10 @@ command 见 §8。逐段：平台 20 → 楼梯 20（st30@0.45）→ 斜坡 35 �
   门限：默认 0.05 m/2.5°，platform 0.07 m/3°，stairs 0.02 m/1.5°，slope/trench/plum 0.08 m/2.5°，
   wall bar5 0.20 m/6°（bar5/bar6 走廊只有 1.08 m）。
 - 整条折线用 MuJoCo 几何 AABB 做净空审计（`tools/route/audit_part2_route.py`）：**PASS**
-  （默认档、各切档变体、wall-off、plum-cross 全部 PASS）。
-- 假运动学整场验证 6/6 PASS（§7.1）；真场整场 1× 结果见 §7.3。
+  （默认保守档、各切档变体、wall-off、plum-cross 全部 PASS）。
+- 部署单关补测（2026-11-04，用于默认档）：`slope_30deg` row2p@0.50 → success（50 分）；
+  `trench_20cm` s1d@0.80 → success（150 分）；trace 在 `artifacts/traces/lower_*.jsonl`。
+- 假运动学整场验证（旧 6 段档）见 §7.1；真场整场 1× 结果见 §7.3。
 
 ## 2. 几何（MuJoCo `MjModel.from_xml_path` 实测，非估算）
 
@@ -30,8 +35,8 @@ command 见 §8。逐段：平台 20 → 楼梯 20（st30@0.45）→ 斜坡 35 �
 |---|---|---|---|---|---|
 | 1 | 0 | `platform_40cm` | 21.00–22.50（y ±0.8） | 0.40 | 西侧邻 `platform_30cm` 止于 19.50 |
 | 2 | 3 | `stairs_30cm` | 63.00–67.40 | 1.80 | 6 级 0.30 上 + 0.8 台面 + 6 级下；y 2.3–3.7 |
-| 3 | 6 | `slope_35deg` | 39.00–43.80 | 1.40 | 上坡 39.0–41.0，台面 41.0–41.8，下坡 41.8–43.8 |
-| 4 | 9 | `trench_30cm` | 15.00–19.30 | 0.30 | 坡道 15–16 / 16–17 台 / **净宽 0.30 缺口 17.0–17.3** / 17.3–18.3 台 / 坡道 18.3–19.3 |
+| 3 | 6 | `slope_30deg` | 33.00–37.80 | 1.20 | 上坡 33.0–35.0，台面 35.0–35.8，下坡 35.8–37.8 |
+| 4 | 9 | `trench_20cm` | 9.00–13.20 | 0.20 | 坡道 9–10 / 10–11 台 / **净宽 0.20 缺口 11.0–11.2（按该档几何）** / 11.2–12.2 台 / 坡道 12.2–13.2 |
 | 5 | 12 | plum（竞赛 PDF） | 4.00–7.50 | 0.20 | entry 4.0–4.8，r1 方块 y=12.2 x=5.0/5.6/6.2，r2 y=11.8 x=5.3/5.9/6.5，exit 6.7–7.5 |
 | 6 | 21 | `cross_bar_7`（40 cm） | 10.14–10.26（y 20.3–21.7） | **0.40** | bar8 为 50 cm（y 同），free gap 10.26–11.34 |
 
@@ -60,21 +65,22 @@ command 见 §8。逐段：平台 20 → 楼梯 20（st30@0.45）→ 斜坡 35 �
 
 ## 3. 路线表（专家 / 速度 / 对齐位 / 穿越门）
 
-默认档 = **1× 真场 `real_v21` 6/6 验证档**（stairs_30 200 分档见 §8 的 env 说明；门槛与速度都可切换）。
+默认档 = **1× 真场 `real_v22` 5/5 段验证档**（平台 20 / 楼梯 20 / 斜坡 30 / 沟壑 20 / 梅花绕行；
+高墙默认关；更高档位见 §8 的 env 说明，门槛与速度都可切换）。
 `vx` 是专家 AdaptiveCommand 的目标体速（`/joy` 轴值 = vx/1.5，部署端再乘 `joy_command_scale=1.5`）。
 
 | # | leg | 方向 | 专家（env 覆盖） | vx | 入场对齐位 (x,y,yaw) | 穿越门 | 转场（goto 折线） |
 |---|---|---|---|---|---|---|---|
 | 1 | `high_platform_20cm` | **S→N** | `row2p_p40w40_v1` | 0.50 | (12.75, **−3.90**, +90°) | y>1.35 | (0,0)→(0,−4.5)→(10,−4.5)→(12.75,−4.5) |
 | 2 | `stairs_20cm` | W→E | `st30_ppo_st30_s100_600` | 0.45 | (46.00, 3.000, 0°) | x>52.80 | 平台 exit→(14.25,1.5)→(14.25,−2.5)→y=−2.5 东行→(46.45,−2.5)→(46.45,−0.5)→(46.45,2.97)→(46.00,2.97) |
-| 3 | `slope_35deg` | W→E | `row2p_p40w40_v1` | 0.50 | (38.35, 6.000, 0°) | x>44.20 | 楼梯 exit→(68.60,4.5)→y=4.5 西行→(38.35,4.5)→(38.35,5.50)→stand |
-| 4 | `trench_30cm` | W→E | `s1d_trench_reward_v75_m100` | 0.80（自适应） | (14.10, 9.000, 0°) | x>19.70 | 斜坡 exit→(44.40,4.5)（西端绕行）→y=4.5 西行→(20.50,4.5)→(20.50,7.5)→y=7.5 西行→(14.10,7.5)→(14.10,8.5)→stand |
+| 3 | `slope_30deg` | W→E | `row2p_p40w40_v1` | 0.50 | (32.40, 6.000, 0°) | x>38.20 | 楼梯 exit→(53.60,3.0)→(53.60,4.5)→y=4.5 西行→(32.40,4.5)→(32.40,5.50)→stand |
+| 4 | `trench_20cm` | W→E | `s1d_trench_reward_v75_m100` | 0.80（自适应） | (8.05, 9.000, 0°) | x>13.60 | 斜坡 exit→(38.40,4.5)→y=4.5 西行→(20.50,4.5)→(20.50,7.5)→y=7.5 西行→(8.05,7.5)→(8.05,8.5)→stand |
 | 5 | `high_plum_bypass` | W→E（绕行） | —（不切专家） | — | — | 无（到 join 点即 PASS） | (20.15,9)→y=10.5 西行→(2.60,10.5)→(2.60,13.2) |
-| 6 | `high_wall_20cm`（cross_bar_5） | E→W | `row2p_p40w40_v1`（bar5；bar6/7 用 `vt_band_v1`） | 0.40（bar5） | (8.40, 21.000, 180°) | x<7.20 | (2.40,13.2)→(2.40,19.5)→(8.40,19.5)→(8.40,20.5)→stand |
+| 6（可选，默认关） | `high_wall_20cm`（cross_bar_5） | E→W | `row2p_p40w40_v1`（bar5；bar6/7 用 `vt_band_v1`） | 0.40（bar5） | (8.40, 21.000, 180°) | x<7.20 | (2.40,13.2)→(2.40,19.5)→(8.40,19.5)→(8.40,20.5)→stand |
 
 - 平台 leg 是 **S→N**（南侧 y=−4.5 走廊，3.1 m 助跑）：W→E 的 field 槽只有 0.75 m 助跑，专家起不来。
 - 每个 leg 后先 `ensure_transfer()`（停 + 0.6 s + 切 `vt_locked12` + 1.2 s 稳定），再走 exit 折线。
-- 高墙：`PART2_ROUTE_WALL=1`（默认开）/`0` 关；`PART2_ROUTE_WALL_VARIANT=bar5|bar6|bar7`。
+- 高墙：`PART2_ROUTE_WALL=0`（默认关）/`1` 开；`PART2_ROUTE_WALL_VARIANT=bar5|bar6|bar7`。
   bar5 用 row2p@0.40 + 0.20 m/6° 宽容差（1.08 m 走廊内无空间做 2 cm 级对齐）；
   bar6/bar7 用 vt_band@0.50，但 field 槽 0.54 m 助跑只有官方单关证据（见 §7.2）。
 - 专家策略名/速度/模式在模块顶部 `EXPERT_SPECS`（`PART2_EXPERT_<LEG>`、`PART2_VX_<LEG>` env 覆盖），
@@ -195,7 +201,7 @@ timeout 1150 .pixi/envs/demo/bin/python demo/rl_sar/scripts/part2_auto_route.py
 或直接 `tools/route/run_part2_fake.sh <tag>`（自带 ROS domain 88、进程互斥检查、落盘）；
 `tools/route/summarize_part2_fake.py <tag>_route.log <tag>_plan.jsonl` 输出逐段 PASS/FAIL 表。
 
-### 7.1 本轮结果（假运动学，6/6 PASS）
+### 7.1 历史结果（假运动学，旧 6 段档 6/6 PASS）
 
 | tag | 档位 / 转场 | 结果 | 证据 |
 |---|---|---|---|
@@ -279,25 +285,32 @@ steplock 只用于假模型/逻辑验证**。`tools/route/run_bench_official.sh`
 | `real_v17` | 最佳档（stairs30@0.60）+ 东侧 slope 出口 | 同 v16：leg1–3 PASS，同一东侧缺口转场失败 |
 | `real_v19` | **安全档 + 西端绕行（y=4.5 走廊 → x=20.5 列 → y=7.5 走廊）+ plum bypass** | **leg1–5 全部 PASS**（platform20 / stairs20 st30@0.45 / slope35 / trench30 / high_plum_bypass）；leg6 wall20 对齐失败（e=+0.183/yaw−5.8°，bar5/bar6 1.08 m 走廊内无空间）→ wall 改用 bar5 专用宽容门限 + row2p@0.40 |
 | `real_v20` | 安全档 + **PART2_ROUTE_WALL=0** | **PASS：`Part2 route finished: plum bypassed`**（leg1–5 全 PASS，1182 s 仿真） |
-| `real_v21` | 安全档 + wall bar5（row2p@0.40 + 0.20 m/6° 门限） | **6/6 PASS：`Part2 route finished: 6/6 legs PASS (plum bypassed)`**；wall 终点 (7.02,20.97,−177.8°)；**最终交付档** |
+| `real_v21` | 安全档 + wall bar5（row2p@0.40 + 0.20 m/6° 门限） | **6/6 PASS**（含 wall20）；旧的高墙-included 验证 |
+| `real_v22` | **保守档**：platform20/stairs20/slope30/trench20/plum bypass，wall 默认关 | **5/5 段 PASS**（1224.8 s 仿真）：platform20（y=1.35 门）、stairs20、slope30（x>38.20）、trench20（x>13.60）、plum bypass 到 (2.60,13.20) 后结束；无 FAIL/stall 日志；**最终交付档** |
 
 部署栈整场结论：**所需五段地形（平台/楼梯/斜坡/沟壑/梅花桩）在 1× 真场可以连续走完**：平台 20cm、
-楼梯 20cm（st30@0.45，200 分档 stairs_30 用 vt_band@0.60 可过但 run-to-run 不稳）、斜坡 35°（西端绕行转场）、
-沟壑 30cm、梅花桩**不穿行**（无部署专家，绕行且不报分）、高墙 20cm 为可选段（bar5 专用宽容对齐）。
+楼梯 20cm（st30@0.45；200 分档 stairs_30 用 vt_band@0.60 可过但 run-to-run 不稳）、斜坡 30°（默认；
+35° 仍可切且部署 3/3）、沟壑 20°（默认；30° 仍可切且部署 3/3）、梅花桩**不穿行**（无部署专家，
+绕行且不报分）。高墙 20cm 为可选段，默认关（bar5 专用宽容对齐，`PART2_ROUTE_WALL=1` 打开）。
 每个失败点都定位到转场几何/对齐/恢复实现并修复，不是专家能力缺失。
+
+**与 eval 判据的一致性复核**：把 `real_v22` 每段场地轨迹按几何锚点投影回对应单关坐标，喂
+`Part2OfficialJudge`（v9）：platform20 / stairs20 / slope30 / trench20 四段均 **success**
+（plum 绕行段不计分）。这是一次性原型验证（脚本未入库），说明路线门限与 eval 判据在本次
+运行上不矛盾；正式报分仍以单关 eval 运行为准。
 
 ## 8. 真实运行命令（最终档）
 
-默认值 = `real_v21` 6/6 验证档（平台 20 / 楼梯 20 st30@0.45 / 斜坡 35 / 沟壑 30 / 梅花绕行 / 高墙 20），
-不需要任何 env：
+默认值 = `real_v22` 保守验证档（平台 20 / 楼梯 20 st30@0.45 / 斜坡 30 / 沟壑 20 / 梅花绕行，
+高墙默认关），不需要任何 env：
 
 ```bash
 cd /home/bis/robocon-lean
 source demo/install/setup.bash
 export ROS_LOCALHOST_ONLY=1 ROS_DOMAIN_ID=57
 PART1_ROUTE_JUDGE=0 \
-PART1_RECORD_PATH=$PWD/artifacts/part2_route3/real_v21_states.jsonl \
-PART1_RECORD_PLAN_PATH=$PWD/artifacts/part2_route3/real_v21_plan.jsonl \
+PART1_RECORD_PATH=$PWD/artifacts/part2_route3/real_v22_states.jsonl \
+PART1_RECORD_PLAN_PATH=$PWD/artifacts/part2_route3/real_v22_plan.jsonl \
 timeout 2800 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route:=part2 \
     policy_name:=vt_locked12 transfer_policy:=vt_locked12 \
     viewer:=false realtime:=true eval_state_every:=10 stop_on_fail:=true
@@ -305,16 +318,17 @@ timeout 2800 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route
 
 - 200 分楼梯 30 档：加 `PART2_STAIRS_LEVEL=30 PART2_EXPERT_STAIRS=vt_band_v1
   PART2_VX_STAIRS=0.60`（v14/v17 整场 PASS；v15/v18 顶层平台 stall，约 50% 可靠）。
-- 其它回退/加难：`PART2_PLATFORM_LEVEL=20|30`、`PART2_SLOPE_LEVEL=20|30|35`、
-  `PART2_TRENCH_LEVEL=10|20|30`、`PART2_ROUTE_WALL=0`、`PART2_ROUTE_WALL_VARIANT=bar6|bar7`。
+- 其它回退/加难：`PART2_PLATFORM_LEVEL=20|30|40`、`PART2_SLOPE_LEVEL=20|30|35|45`、
+  `PART2_TRENCH_LEVEL=10|20|30`、`PART2_ROUTE_WALL=1`（打开高墙 20cm）、
+  `PART2_ROUTE_WALL_VARIANT=bar5|bar6|bar7`。
 - `part:=1`：`route:=part2` 只覆盖场景/spawn；启动序列需要 A=StandUp（`part:=2` 时该键按规则无效）。
 - `realtime:=true` **必须**给：真场验证用 1×。**不要**用 steplock+`realtime:=false` 做整场真跑——
   仿真会跑在路线前面，命令更新/超时按错误仿真时间发生（§7.2 实测 leg1 会假失败）。
 - `stop_on_fail:=true` 在第一个 FAIL 处关掉整个 launch；先看第一条 FAIL 再改。
-- **时长**：`real_v21` 1182 s 仿真（约 20 min 墙钟）；建议外层 `timeout 2800`。路线跑完自己退出。
+- **时长**：`real_v22` 1224.8 s 仿真（约 20 min 墙钟）；建议外层 `timeout 2800`。路线跑完自己退出。
 - 单段调试：`PART2_ROUTE_ONLY=<leg名或序号>`。
-- 录像/复核：`real_v21_route.mp4`（5× 快放，`MUJOCO_GL=egl tools/video/replay_route_video.py`）、
-  `real_v21_overview.png`（俯视轨迹+切换点）、`real_v21_states.jsonl`/`_plan.jsonl`。
+- 录像/复核：`real_v22_route.mp4`（10× 快放，122 s；`MUJOCO_GL=egl tools/video/replay_route_video.py`）、
+  `real_v22_overview.png`（俯视轨迹+切换点）、`real_v22_states.jsonl`/`_plan.jsonl`。
 
 ## 9. 已知风险（按优先级）
 
@@ -360,4 +374,4 @@ timeout 2800 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route
 | `tools/route/run_bench_official.sh` + `bench_expert_cross.py` | 真实部署栈单关基准（自适应车道命令，domain 87） |
 | `demo/tests/run_joy_trial.sh` + `tools/trial/adaptive_joy.py` | 真实部署栈单关 trial harness（固定/自适应命令 + 判分 trace） |
 | `docs/PART2-ROUTE.md` §7.2/§7.3 | 部署实测档位证据 + 1× 真场整场试跑记录（trace 文件名 + 复放命令） |
-| `artifacts/part2_route3/` | 审计输出（`audit.txt` 及切档变体）+ 假模型 `v6_*/v7_*/v8_*/v10_*` + 部署单关/整场 `real_v8_*`…`real_v21_*` + 最终 `real_v21_{route.mp4,overview.png,states.jsonl,plan.jsonl,summary}` |
+| `artifacts/part2_route3/` | 审计输出 + 假模型 `v6_*/v7_*/v8_*/v10_*` + 部署单关/整场 `real_v8_*`…`real_v22_*`；默认交付证据 = `real_v22_{route.mp4,overview.png,states.jsonl,plan.jsonl}` |

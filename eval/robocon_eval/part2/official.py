@@ -10,8 +10,9 @@ Resolution order for the manifest path (kept configurable for CI/backfills):
 
 1. ``ROBOCON_EVAL_LEVELS`` environment variable (absolute path);
 2. ``demo/scenes/part2/part2_official_levels.json`` (the tracked generated file);
-3. ``eval/fixtures/legacy/part2_official_levels.json`` (bootstrap fallback used
-   only until the generator has written the manifest; SPEC documents this).
+3. ``eval/fixtures/legacy/part2_official_levels.json`` (bootstrap copy of the
+   generated manifest, used only if the tracked manifest is absent; regenerated
+   with ``cp demo/scenes/part2/part2_official_levels.json eval/fixtures/legacy/``).
 
 A trace is an untrusted input.  It carries a copy of the level entry so the
 replay can be self-describing, but the judge thresholds must come from the

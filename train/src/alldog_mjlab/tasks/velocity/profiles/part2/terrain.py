@@ -7,10 +7,10 @@ here: hand-copied constants drifted from the judge geometry before (the slope
 ramp was an older shape on one branch), so the numbers are data, the construction
 is code.
 
-The plum field is the team owner's no-ramp 3-pile layout (single source:
-``terrain/gen_plum.py`` -> ``terrain/plum/plum_spec.json``); it is *not* parsed
-from the official map, whose plum obstacle was replaced for the intra-squad
-competition.
+The plum field is the rules-PDF layout (single source:
+``terrain/gen_plum.py`` -> ``terrain/plum/plum_spec.json``: six cubes in two
+staggered rows, platform-to-platform span 3.5 m); it is *not* parsed from the
+official map, whose plum parameters the rules PDF itself says are wrong.
 
 The difficulty rows interpolate between the official tier endpoints; the
 protocol constants (1.8 m runway, 0.7 m lane) are also in the spec.
@@ -404,17 +404,13 @@ class ExactStairsTerrainCfg(SubTerrainCfg):
 
 @dataclass(kw_only=True)
 class ExactPlumTerrainCfg(SubTerrainCfg):
-    """Part 2 plum: owner-confirmed no-ramp 3-pile field.
+    """Part 2 plum: rules-PDF layout (six cubes, two staggered rows, no ramps).
 
-    Single source of truth: ``terrain/gen_plum.py`` -> ``terrain/plum/plum_spec.json``
-    (owner decision 2026-11-02).  Geometry: one 0.8 x 0.8 x 0.2 m entry platform
-    (top z = 0.2 m, near face 1.8 m ahead of the spawn), three 0.2 m cubes in a
-    single row along +x (cube-centre spacing 0.6 m; 0.1 m gap after the entry
-    platform and 0.1 m gap before the exit platform), then a 0.8 x 0.8 x 0.2 m
-    exit platform and a 0.2 m step down to normal ground.
+    Single source of truth: ``terrain/gen_plum.py`` ->
+    ``terrain/plum/plum_spec.json``.  Geometry: 0.8 x 0.8 x 0.2 m entry platform
+    (near face 1.8 m ahead of the spawn), six 0.2 m cubes in two staggered rows,
+    0.8 x 0.8 x 0.2 m exit platform, then the 0.2 m step down to normal ground.
 
-    There are **no ramps**: the older official-map plum field (1.2 m wedges plus
-    two staggered rows of 12 cubes) is not used for the intra-squad competition.
     The field is fixed, so the difficulty parameter does not change its shape.
     """
 
@@ -424,15 +420,15 @@ class ExactPlumTerrainCfg(SubTerrainCfg):
     platform_height: float = _PLUM["platform_height_m"]
     cube_half: float = _PLUM["cube_half_m"]
     cube_top: float = _PLUM["cube_top_m"]
-    cube_centers_x: tuple[float, ...] = tuple(_PLUM["cube_centers_x_m"])
-    cube_center_y: float = _PLUM["cube_center_y_m"]
-    gap_after_entry: float = _PLUM["gap_entry_to_first_cube_m"]
-    gap_before_exit: float = _PLUM["gap_last_cube_to_exit_m"]
+    cube_centres: tuple[tuple[float, float], ...] = tuple(
+        (float(x), float(y)) for x, y in _PLUM["cube_centres"])
+    exit_platform_x_range: tuple[float, float] = tuple(
+        float(v) for v in _PLUM["exit_platform_x_range_m"])
 
     def function(self, difficulty, spec, rng):
         del difficulty, rng  # fixed official field: no difficulty interpolation
         body = spec.body("terrain")
-        cy = self.size[1] / 2 + self.cube_center_y
+        cy = self.size[1] / 2
         # Scene-frame -> terrain-patch frame (spawn at patch origin).
         x0 = self.size[0] / 2 + self.start_x
         geoms = [_floor(body, self.size)]
@@ -443,19 +439,18 @@ class ExactPlumTerrainCfg(SubTerrainCfg):
             (x0 + self.platform_half_x, cy, self.platform_height / 2),
             _OBSTACLE_RGBA,
         ))
-        # Three cubes, single row (spec centres are scene-frame x positions).
-        for center_x in self.cube_centers_x:
+        # Six cubes in two staggered rows (spec centres are scene-frame x/y).
+        for center_x, center_y in self.cube_centres:
             geoms.append(_box(
                 body,
                 (self.cube_half, self.cube_half, self.cube_top / 2),
-                (x0 + (center_x - self.start_x), cy, self.cube_top / 2),
+                (x0 + (center_x - self.start_x), cy + center_y, self.cube_top / 2),
                 _OBSTACLE_RGBA,
             ))
         # Exit platform, then normal ground: the 0.2 m drop is the step-down the
-        # judge requires beyond ``exit_ramp_end``.
-        exit_near = (
-            self.cube_centers_x[-1] + self.cube_half + self.gap_before_exit
-        )
+        # judge requires beyond ``exit_ramp_end`` (training success also requires
+        # getting back down to the ground; see predicates.py).
+        exit_near = self.exit_platform_x_range[0]
         exit_cx = x0 + (exit_near - self.start_x) + self.platform_half_x
         geoms.append(_box(
             body,

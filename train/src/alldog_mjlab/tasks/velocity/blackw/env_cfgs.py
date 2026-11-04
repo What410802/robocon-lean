@@ -1257,9 +1257,11 @@ def blackw_plum_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     cfg.scene.terrain.terrain_generator.sub_terrains = {"plum": terrain}
     cfg.sim.nconmax = knobs.get_int("RC_NCONMAX", 512)
     cfg.sim.njmax = knobs.get_int("RC_NJMAX", 2048)
-    # Judge plum_1 has seconds=18.0 (timeout is a hard fail); match it so training
-    # cannot label success in the (18, 20] s window that the judge no longer accepts.
-    cfg.episode_length_s = 18.0
+    # Training episode must be long enough to include the step down to normal
+    # ground: success is not "reach the exit platform" but "descend past it"
+    # (predicates.py plum branch).  The judge scene's ``seconds`` is only a 120 s
+    # safety cap, so 24 s here is a training truncation, not a rule.
+    cfg.episode_length_s = 24.0
     # Parity option (P0 2026-10-31): the judge plum scene runs the official MJCF
     # <option> block (euler / elliptic / newton / iterations=100 / impratio=100 /
     # ccd=35) and spawns at spawn_default_pose z=0.55.  By default this builder

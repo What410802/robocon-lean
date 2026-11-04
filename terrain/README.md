@@ -11,7 +11,7 @@ terrain/
 │   ├── scene_terrain.xml          # 官方 Part 1 场景（原样）
 │   └── part2_terrain_spec.json    # Part 2 尺寸 spec（由 gen_part2_spec.py 生成，训练用）
 ├── plum/
-│   └── plum_spec.json             # plum 3-pile 几何 spec（由 gen_plum.py 生成）
+│   └── plum_spec.json             # plum PDF 几何 spec（由 gen_plum.py 生成）
 ├── gen_part2_spec.py              # map.xml(+gen_plum) -> official/part2_terrain_spec.json
 ├── gen_plum.py                    # plum 唯一几何源 -> plum/plum_spec.json
 └── gen_part2_levels.py            # map.xml(+gen_plum) -> demo/scenes/part2/{generated,manifest}
@@ -31,11 +31,11 @@ generated（提交入库，便于直接运行 demo；由生成器可复现重建
 - `map.xml` 是 Part 2 障碍尺寸的官方基准：`high_platform` / `stairs` / `slope` /
   `high_wall` / `trench` 五类障碍的几何全部从它解析，spec 里记录来源 sha256，
   `gen_part2_spec.py` 重新生成后可直接 `git diff` 审查任何尺寸变化。
-- **plum 例外**：`map.xml` 里的旧 plum 场（1.2 m 上/下坡道 + 两排 12 颗、行距 0.4 m 的
-  交错方块）已被队内确认的新布局替代，`part2_terrain_spec.json` 的 `categories.plum`
-  来自 `terrain/gen_plum.py`，**不是**从 map.xml 解析的（见 §4）。
-- 规则依据：`/home/bis/BiS.d/tmp/队内赛.pdf`（Part 2 允许自定义地图，只要障碍类型与
-  官方 ability field 一致；本仓的 plum 3-pile 布局是队内确认的定制实现）。
+- **plum 例外**：`map.xml` 里的旧 plum 场（1.2 m 上/下坡道 + 两排 12 颗方块）被规则 PDF
+  明确说明“参数有误”，按 PDF 图重建为 6 颗两排交错、无坡道；`part2_terrain_spec.json` 的
+  `categories.plum` 来自 `terrain/gen_plum.py`，**不是**从 map.xml 解析的（见 §4）。
+- 规则依据：`/home/bis/BiS.d/tmp/队内赛.pdf`（Part 2 允许自定义地图，但障碍须保持官方同类；
+  plum 按 PDF 图重建）。
 - 尺寸单位一律为米（m），角度为度（deg，训练侧转换 rad）。
 
 ## 2. 生成器命令（都从仓库根运行；依赖 numpy，验证脚本另需 mujoco）
@@ -92,34 +92,39 @@ python terrain/gen_part2_levels.py
   "import mujoco; mujoco.MjModel.from_xml_path('demo/scenes/part2/generated/part2_off_plum_1.xml')"
 ```
 
-## 4. Part 2 plum 3-pile 规则依据（队内确认，2026-11-02）
+## 4. Part 2 plum 几何（按规则 PDF 图重建）
 
-旧 `map.xml` 的 plum 是带 1.2 m 上下坡道、两排交错 12 颗方块的场地。队内赛改为
-**无坡道 3-pile** 布局（owner 确认），judge 与训练统一使用该几何：
+旧 `map.xml` 的 plum 是带 1.2 m 上下坡道、12 颗方块的场地；规则 PDF 说明其参数有误，要求
+按 PDF 图自建。本仓重建为 **6 颗方块、两排交错、无坡道**，judge 与训练统一使用该几何：
 
 ```text
-入口平台  : 0.8 x 0.8 x 0.2 m，top z = 0.2 m；x ∈ [1.8, 2.6]，y ∈ [-0.4, 0.4]
-3 颗方块  : 0.2 x 0.2 x 0.2 m，沿 +x 单排；中心 x = 2.8, 3.4, 4.0（中心间距 0.6 m），y = 0
-出口平台  : 0.8 x 0.8 x 0.2 m，top z = 0.2 m；x ∈ [4.2, 5.0]，y ∈ [-0.4, 0.4]
-间隙      : 入口平台远端(2.6) 与第一颗方块(2.7) 之间 0.1 m；
-            最后一颗方块远端(4.1) 与出口平台近端(4.2) 之间 0.1 m
-无坡道    : 机器人从地面直接上 0.2 m 入口平台，从出口平台 x=5.0 处下 0.2 m 回到地面
+入口/出口平台 : 0.8 x 0.8 x 0.2 m，top z = 0.2 m
+              入口 x ∈ [1.8, 2.6]；出口 x ∈ [4.5, 5.3]；y ∈ [-0.4, 0.4]
+6 颗方块      : 0.2 x 0.2 x 0.2 m
+              第一排 (x, y) = (2.8, +0.2), (3.4, +0.2), (4.0, +0.2)
+              第二排 (x, y) = (3.1, -0.2), (3.7, -0.2), (4.3, -0.2)
+间距          : 同排边距 0.4 m；两排边距 0.2 m；首桩距平台 0.1 m（第一排）/0.4 m（第二排）
+整体          : 平台外沿总长 3.5 m，中心对称；无坡道，出口平台远边下 0.2 m 台阶到地面
 ```
 
 对应 judge dict（`gen_part2_levels.py::_plum_judge`）：
 
 ```json
-{"kind": "plum", "top_z": 0.2, "cube_x_range": [2.55, 4.25], "goal_x_min": 4.2,
+{"kind": "plum", "top_z": 0.2, "cube_x_range": [2.55, 4.55], "goal_x_min": 4.5,
  "z_margin": 0.35, "z_cross_min": 0.05, "lane_half_width": 0.7, "hold_s": 0.2,
- "exit_ramp_end": 5.0, "exit_ground_tol": 0.08}
+ "exit_ramp_end": 5.3, "exit_ground_tol": 0.08}
 ```
 
-语义：base 在 `cube_x_range` 内时任何轮子低于 `z_cross_min` 即判失败（掉进间隙）；
-踩上出口平台是证据而非成功；必须从出口平台远边（x=5.0，judge 里沿用旧键名
-`exit_ramp_end`）下到地面、四轮在 `exit_ground_tol` 内稳定 `hold_s` 才算通过。
-`terrain/gen_plum.py` 是唯一几何源，输出 `plum/plum_spec.json`（常量 + 派生 boxes）并
-提供 `boxes()` / `mjcf_geoms()`（名字：`plum_entry`、`plum_r1_01..03`、`plum_exit`）
-供关卡生成器与训练地形复用。
+生成/复现（仓库根）：
+
+```bash
+python terrain/gen_plum.py            # -> terrain/plum/plum_spec.json
+python terrain/gen_part2_spec.py      # -> terrain/official/part2_terrain_spec.json
+python terrain/gen_part2_levels.py    # -> demo/scenes/part2/{generated, manifest}
+```
+
+若改几何，先改 `gen_plum.py` 顶部常数和 `_check_geometry`，再重生成；judge 与训练都读生成物，
+不再各自维护数字。
 
 ## 5. Part 1
 

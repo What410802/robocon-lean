@@ -209,7 +209,7 @@
       "start_x_m": 1.8
     },
     "plum": {
-      "layout": "3-pile single row, no ramps (owner decision 2026-11-02)",
+      "layout": "official PDF: entry/exit platforms + 6 cubes in two staggered rows",
       "no_ramps": true,
       "start_x_m": 1.8,
       "runway_m": 1.8,
@@ -229,30 +229,65 @@
       ],
       "cube_half_m": 0.1,
       "cube_top_m": 0.2,
-      "num_cubes": 3,
-      "cube_centers_x_m": [
-        2.8,
-        3.4,
-        4.0
+      "num_cubes": 6,
+      "num_rows": 2,
+      "row_centre_offset_m": 0.2,
+      "cube_centre_spacing_m": 0.6,
+      "same_row_edge_gap_m": 0.4,
+      "row_edge_gap_m": 0.2,
+      "first_cube_gap_m": [
+        0.1,
+        0.4
       ],
-      "cube_center_y_m": 0.0,
-      "cube_center_spacing_m": 0.6,
-      "gap_entry_to_first_cube_m": 0.1,
-      "gap_last_cube_to_exit_m": 0.1,
+      "cube_centres": [
+        [
+          2.8,
+          0.2
+        ],
+        [
+          3.4,
+          0.2
+        ],
+        [
+          4.0,
+          0.2
+        ],
+        [
+          3.1,
+          -0.2
+        ],
+        [
+          3.7,
+          -0.2
+        ],
+        [
+          4.3,
+          -0.2
+        ]
+      ],
+      "cube_x_range_m": [
+        2.7,
+        4.4
+      ],
+      "cube_y_range_m": [
+        -0.3,
+        0.3
+      ],
       "entry_platform_x_range_m": [
         1.8,
         2.6
       ],
       "exit_platform_x_range_m": [
-        4.2,
-        5.0
+        4.5,
+        5.3
       ],
-      "exit_ground_x_m": 5.0,
+      "exit_ground_x_m": 5.3,
       "step_down_m": 0.2,
       "total_x_range_m": [
         1.8,
-        5.0
-      ]
+        5.3
+      ],
+      "centre_x_m": 3.55
     }
   }
 }
