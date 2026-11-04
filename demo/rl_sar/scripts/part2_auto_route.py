@@ -63,12 +63,54 @@ class Part2Route(RouteNode):
                 vy = max(-0.2, min(0.2, -0.5 * e))
             else:                              # -x lane (body +y = world -y)
                 vy = max(-0.2, min(0.2, 0.5 * e))
-            wz = max(-0.35, min(0.35, 1.2 * wrap(lane_yaw - p.yaw) + 0.8 * e))
+            e_yaw_gain = -0.8 if abs(wrap(lane_yaw)) < 0.1 else 0.8
+            wz = max(-0.35, min(0.35,
+                   1.2 * wrap(lane_yaw - p.yaw) + e_yaw_gain * e))
             self.command(vx, vy, wz)
             prev = p
             self._tick()
         self.stop(0.5)
         return False
+
+    def lane_to_x(self, target_x: float, y: float, vx: float,
+                  timeout: float, label: str) -> None:
+        """Transfer along a world-x lane with the adaptive lateral hold.
+
+        The plain goto() only corrects heading; over the long Part2 transits
+        the connector accumulated a lateral drift into the platform row.  This
+        uses the same gains as the expert adaptive lane (vy + yaw + lateral
+        velocity damping) while keeping vx constant.
+        """
+        self.ensure_transfer()
+        p0 = self.pose()
+        direction = 1.0 if target_x >= p0.x else -1.0
+        lane_yaw = 0.0 if direction > 0 else math.pi
+        self._cmd = f"{label}(target_x={target_x:+.2f}, lane_y={y:+.2f}, vx={vx:+.2f})"
+        self._cli = f"switch {TRANSFER_POLICY}; lane hold x->{target_x:+.2f}, y={y:+.2f}"
+        self._emit_plan()
+        prev = None
+        t0 = self._now()
+        while self._now() - t0 < timeout:
+            p = self.pose()
+            if (direction > 0 and p.x >= target_x - 0.25) or                (direction < 0 and p.x <= target_x + 0.25):
+                self.stop(0.4)
+                return
+            if self.fallen():
+                break
+            e = p.y - y
+            if direction > 0:
+                vy = max(-0.2, min(0.2, -0.5 * e))
+            else:
+                vy = max(-0.2, min(0.2, 0.5 * e))
+            # +x lane: +e means north, must steer right (negative yaw).
+            # -x lane: +e means north, body-left is south (positive yaw).
+            e_yaw_gain = -0.8 if direction > 0 else 0.8
+            wz = max(-0.55, min(0.55,
+                   1.2 * wrap(lane_yaw - p.yaw) + e_yaw_gain * e))
+            self.command(vx, vy, wz)
+            prev = p
+            self._tick()
+        self.stop(0.5)
 
     def _route(self) -> None:
         log = self.get_logger()
@@ -89,8 +131,8 @@ class Part2Route(RouteNode):
         # 1) high_platform_20cm at x=12.75,y=0, east-side approach.
         self.set_leg("high_platform_20cm")
         self.require((0.0, -2.5), tol=0.25, timeout_s=12.0, speed=0.35)
-        self.require((14.0, -2.5), tol=0.30, timeout_s=45.0, speed=0.45)
-        self.require((14.0, -0.2), tol=0.15, timeout_s=20.0, speed=0.25)
+        self.require((14.2, -2.5), tol=0.30, timeout_s=45.0, speed=0.45)
+        self.require((14.2, -0.2), tol=0.15, timeout_s=20.0, speed=0.25)
         self.rotate_hold(math.pi, timeout_s=15.0)  # face -x
         ok = self.cross_x("row2p_p40w40_v1", 0.0, 0.40,
                           lambda p: p.x < 11.4, 20.0, "platform20",
@@ -100,8 +142,16 @@ class Part2Route(RouteNode):
 
         # 2) stairs_20cm at x=48.15..52.4,y=3, west approach.
         self.set_leg("stairs_20cm")
-        self.require((14.0, -2.5), tol=0.30, timeout_s=12.0, speed=0.35)
-        self.require((46.5, -2.5), tol=0.30, timeout_s=95.0, speed=0.55)
+        # Exit the platform on its west side instead of cutting diagonally
+        # back across platform_20cm.  The platform crossing leaves the robot
+        # facing west; turn east before the long return so the connector does
+        # not spend the whole require timeout yawing in place.
+        self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)  # face south
+        self.require((11.0, -3.0), tol=0.25, timeout_s=20.0, speed=0.30)
+        self.rotate_hold(0.0, timeout_s=12.0)
+        self.require((14.2, -3.0), tol=0.30, timeout_s=15.0, speed=0.35)
+        self.rotate_hold(0.0, timeout_s=12.0)
+        self.lane_to_x(46.5, -3.0, 0.55, 110.0, "stairs transit")
         self.require((46.5, 3.0), tol=0.15, timeout_s=30.0, speed=0.30)
         self.rotate_hold(0.0, timeout_s=15.0)  # face +x
         ok = self.cross_x("st30_ppo_st30_s100_600", 3.0, 0.45,
@@ -109,11 +159,11 @@ class Part2Route(RouteNode):
         self.report("stairs_20cm", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer(announce=True)
 
-        # 3) slope_20deg at x=22.3..24.5,y=6; platforms/down slope are in the
-        #    modified route scene.  West approach.
+        # 3) slope_20deg at x=21..25.8,y=6; official up/landing/down.  West approach.
         self.set_leg("slope_20deg")
         self.require((53.0, 4.5), tol=0.25, timeout_s=15.0, speed=0.30)
-        self.require((20.2, 4.5), tol=0.30, timeout_s=85.0, speed=0.55)
+        self.rotate_hold(math.pi, timeout_s=12.0)
+        self.lane_to_x(20.2, 4.5, 0.55, 95.0, "slope transit")
         self.require((20.2, 6.0), tol=0.15, timeout_s=20.0, speed=0.28)
         self.rotate_hold(0.0, timeout_s=15.0)
         ok = self.cross_x("row2p_p40w40_v1", 6.0, 0.45,
@@ -124,8 +174,9 @@ class Part2Route(RouteNode):
         # 4) trench_20cm at x=9.7..12.5,y=9, west approach.
         self.set_leg("trench_20cm")
         self.require((26.2, 7.5), tol=0.25, timeout_s=15.0, speed=0.30)
-        self.require((8.5, 7.5), tol=0.30, timeout_s=55.0, speed=0.50)
-        self.require((8.5, 9.0), tol=0.15, timeout_s=20.0, speed=0.28)
+        self.rotate_hold(math.pi, timeout_s=12.0)
+        self.lane_to_x(8.2, 7.5, 0.50, 70.0, "trench transit")
+        self.require((8.2, 9.0), tol=0.15, timeout_s=20.0, speed=0.28)
         self.rotate_hold(0.0, timeout_s=15.0)
         ok = self.cross_x("s1d_trench_reward_v75_m100", 9.0, 0.45,
                           lambda p: p.x > 13.0, 20.0, "trench20")
@@ -135,34 +186,48 @@ class Part2Route(RouteNode):
         # 5) reduced long plum at y=12: entry 4.4, three pairs at 5.0/6.2,
         #    exit platform 7.0; original side ramps removed.
         self.set_leg("plum_3pair")
-        self.require((13.0, 10.5), tol=0.25, timeout_s=12.0, speed=0.30)
-        self.require((2.5, 10.5), tol=0.30, timeout_s=30.0, speed=0.45)
+        self.rotate_hold(math.pi / 2.0, timeout_s=12.0)  # face north
+        self.require((13.0, 10.5), tol=0.25, timeout_s=20.0, speed=0.30)
+        self.rotate_hold(math.pi, timeout_s=12.0)
+        self.lane_to_x(2.5, 10.5, 0.45, 45.0, "plum transit")
         self.require((2.5, 12.0), tol=0.15, timeout_s=20.0, speed=0.28)
         self.rotate_hold(0.0, timeout_s=15.0)
         ok = self.cross_x("obstacle", 12.0, 0.40,
-                          lambda p: p.x > 7.6, 20.0, "plum3")
+                          lambda p: p.x > 7.9, 20.0, "plum3")
         self.report("plum_3pair", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer(announce=True)
 
         # 6) bridge_20cm at x=18.3..21.7,y=18, west approach.
         self.set_leg("bridge_20cm")
-        self.require((7.6, 13.5), tol=0.25, timeout_s=12.0, speed=0.30)
-        self.require((16.8, 13.5), tol=0.30, timeout_s=20.0, speed=0.45)
-        self.require((16.8, 18.0), tol=0.15, timeout_s=25.0, speed=0.30)
+        # The direct x=16.8 line crosses the rough row (y=14.3..15.7).
+        # Go west of the rough tiles (x<3.15), north through the gap, then
+        # east below the bridge row before the bridge approach.
+        self.require((8.0, 13.5), tol=0.25, timeout_s=12.0, speed=0.30)
+        self.rotate_hold(math.pi, timeout_s=12.0)
+        self.lane_to_x(2.5, 13.5, 0.35, 30.0, "rough west transit")
+        self.require((2.5, 16.5), tol=0.25, timeout_s=20.0, speed=0.35)
+        self.rotate_hold(0.0, timeout_s=12.0)
+        self.lane_to_x(17.3, 16.5, 0.45, 55.0, "rough east transit")
+        self.require((17.3, 18.0), tol=0.15, timeout_s=20.0, speed=0.30)
         self.rotate_hold(0.0, timeout_s=15.0)
         ok = self.cross_x("row2p_p40w40_v1", 18.0, 0.40,
                           lambda p: p.x > 22.5, 20.0, "bridge20")
         self.report("bridge_20cm", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer(announce=True)
 
-        # 7) high_wall_20cm = cross_bar_5 at x=7.8,y=21, west approach.
+        # 7) high_wall_20cm = cross_bar_5 at x=7.8,y=21.
+        # The bars are in a row spaced 1.2 m apart; approaching from the west
+        # would first hit cross_bar_3/4.  Approach from the east gap between
+        # cross_bar_5 (7.8) and cross_bar_6 (9.0), then cross bar 5 westward.
         self.set_leg("high_wall_20cm")
         self.require((22.5, 19.5), tol=0.25, timeout_s=12.0, speed=0.30)
-        self.require((5.5, 19.5), tol=0.30, timeout_s=55.0, speed=0.50)
-        self.require((5.5, 21.0), tol=0.15, timeout_s=20.0, speed=0.28)
-        self.rotate_hold(0.0, timeout_s=15.0)
+        self.rotate_hold(math.pi, timeout_s=12.0)
+        self.lane_to_x(8.4, 19.5, 0.50, 70.0, "wall transit")
+        self.require((8.4, 21.0), tol=0.15, timeout_s=20.0, speed=0.28)
+        self.rotate_hold(math.pi, timeout_s=15.0)
         ok = self.cross_x("row2p_p40w40_v1", 21.0, 0.40,
-                          lambda p: p.x > 10.0, 15.0, "wall20")
+                          lambda p: p.x < 7.2, 20.0, "wall20",
+                          lane_yaw=math.pi)
         self.report("high_wall_20cm", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
 
         log.info("Part2 route finished")

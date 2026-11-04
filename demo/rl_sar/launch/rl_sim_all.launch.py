@@ -225,7 +225,8 @@ def generate_launch_description() -> LaunchDescription:
                                               "per 2 ms physics frame (judged trace); 10 = 50 Hz for "
                                               "interactive runs; 0 = off"),
             DeclareLaunchArgument("route", default_value="",
-                                  description="auto route: 'part1'/'part2' starts the closed-loop course demo "
+                                  description="auto route: 'part1' or 'part2' starts the "
+                                              "closed-loop course demo "
                                               "(if eval_state_every:=0 is passed it is raised to 10)"),
             DeclareLaunchArgument("transfer_policy", default_value="vt_pose_v1",
                                   description="policy used for route transfers/alignment: "
