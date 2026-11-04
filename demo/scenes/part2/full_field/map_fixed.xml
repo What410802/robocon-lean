@@ -1,8 +1,11 @@
 <mujoco model="terrain ability test">
   <!-- Part2 terrain: official map.xml with only the required plum change.
-       Long plum row: side ramps removed; 3 pairs kept at the original 0.6 m
-       spacing; exit platform moved from x=12.5 to x=7.0.  Slope/trench are
-       unchanged official geometry. -->
+       Long plum row rebuilt to the competition PDF plum spec:
+         800 x 800 x 200 mm entry/exit platforms, 200 mm cubes,
+         3 staggered cubes per row, same-row edge gap 400 mm,
+         row edge gap 200 mm, first-cube-to-platform gaps 100/400 mm,
+         overall length 3500 mm, centre-symmetric.
+       Side ramps are removed.  Slope/trench are unchanged official geometry. -->
   <!--运动能力测试场：长度单位 m，角度单位 rad；原点和 x=0 走廊保持平地。-->
   <!--默认相机与 dog26 对齐：贴近机器人出生点，而不是整场远景。-->
   <statistic center="0 0 0.4" extent="5.0" />
@@ -507,7 +510,7 @@
     <geom name="plum_r2_01" type="box" pos="5.3 11.8 0.1" size="0.1 0.1 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
     <geom name="plum_r2_02" type="box" pos="5.9 11.8 0.1" size="0.1 0.1 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
     <geom name="plum_r2_03" type="box" pos="6.5 11.8 0.1" size="0.1 0.1 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
-    <geom name="plum_exit" type="box" pos="7.0 12 0.1" size="0.4 0.4 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
+    <geom name="plum_exit" type="box" pos="7.1 12 0.1" size="0.4 0.4 0.1" rgba=".3 .75 .4 1" friction="1 .005 .0001" condim="3" />
     <!--第 6 区 y=15：固定种子七档崎岖地面，块高上限 4 至 50 cm。-->
     <geom name="rough_t1_00_0" type="box" pos="3.15 14.3 0.0066249977" size="0.15 0.15 0.0066249977" rgba=".65 .55 .4 1" friction="1 .005 .0001" condim="3" euler="0 0 -0.0086275093" />
     <geom name="rough_t1_00_1" type="box" pos="3.15 14.65 0.0052034671" size="0.15 0.15 0.0052034671" rgba=".65 .55 .4 1" friction="1 .005 .0001" condim="3" euler="0 0 -0.042604421" />

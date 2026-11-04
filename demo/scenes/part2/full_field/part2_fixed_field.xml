@@ -1,7 +1,9 @@
 <mujoco model="part2_fixed_field">
   <!-- Part2 ability field: official terrain with only the plum change.
-       3 pairs with no side ramps and the exit platform at x=7.0; official
-       slope/trench geometry is intentionally unchanged. -->
+       Plum follows the competition PDF: 800 mm square platforms, 200 mm
+       staggered cubes, 3 cubes per row, 400 mm same-row gap, 200 mm row gap,
+       100/400 mm first-cube offsets, 3500 mm overall, centre-symmetric.
+       Official slope/trench geometry is intentionally unchanged. -->
   <include file="../../../robots/blackW/blackW_description.xml"/>
   <include file="map_fixed.xml"/>
 </mujoco>
