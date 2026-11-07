@@ -129,11 +129,13 @@
 每段场地轨迹映射回对应单关坐标，再喂同一个 `Part2OfficialJudge`：
 
 ```bash
-pixi run -e eval python tools/route/replay_field_part2.py --tag real_v22 --out /tmp/eval.json
+pixi run -e eval python tools/route/replay_field_part2.py --tag real_v23 --out /tmp/eval.json
 ```
 
 输出逐段 `success/fail/bypass` 与合计分；`--require-all` 可让任何穿越段非 success 时返回非零。
-全场投影是复核/诊断，正式分数仍以单关 eval 运行为准（场地实例的朝向/助跑与单关不完全相同）。
+投影工具对 `high_plum` 使用 `plum_1` 单关、梅花桩 field bbox 只选修正桩行的 geom；只有计划命令
+里明确含 `bypass` 的 leg 才按 bypass 计 0（真实穿越不会被静默降级）。全场投影是复核/诊断，
+正式分数仍以单关 eval 运行为准（场地实例的朝向/助跑与单关不完全相同）。
 
 ### 3.6 计分与采样
 
@@ -159,7 +161,13 @@ pixi run -e eval python tools/route/replay_field_part2.py --tag real_v22 --out /
 ## 5. 已知缺口 / 路线图
 
 - **“反复稳定越过”**：官方备注要求；当前计分只记单次成功，后续用独立随机化重复试验作为
-  提交门槛（不混入分数）。
+  提交门槛（不混入分数）。梅花桩深度专家的 spawn-offset 网格已量化（`plum_depth_final_v1`
+  manifest 的 `spawn_offset_grid`：同环境 2/15；官方固定 spawn 的单关运行 success 200），
+  说明它是"判分可过、鲁棒性不足"，重训（更宽初始位姿随机化 + 出口下降奖励）是下一步。
+- **部署栈与 eval 栈的出口下降差异**：同一份梅花桩深度权重在 eval 判分链路能自己完成出口
+  0.2 m 台阶下降，部署栈（sim_node+rl_sim）会在边缘前倾翻下；全场演示路线因此把出口下降
+  交给轮式专家（`/policy_switch` 切换，判分只看连续 trace 的支撑点，仍是一次合法尝试）。
+  这是部署链路的实现选择，不改变单关判分口径。
 - **mjdata 级裁判接口**：未来 judge 直接读 `mJData`（接触对/几何位姿/支撑点），用于
   “任何瞬间”接触与限高杆几何净空；当前 trace 输入与逻辑不变。
 - **Part 1 限高杆 / 高墙**：仍用 base-z 代理；mjdata 几何净空是计划项。
@@ -176,7 +184,7 @@ pixi run -e eval python tools/route/replay_field_part2.py --tag real_v22 --out /
 | Part 2 单关场景 | `demo/scenes/part2/generated/` | 每关一个 XML，include 官方 blackW |
 | Part 1 判分场景 | `demo/robots/<robot>/scene_part1.xml` | 与官方几何一一对应，仅命名/可动杆 |
 
-复现要求：同输入哈希 + 同环境 pin（MuJoCo 3.11、CPU torch）必须产生相同成功/失败/分数/原因；
+复现要求：同输入哈希 + 同环境 pin（MuJoCo 3.11、torch 2.14.1+cpu）必须产生相同成功/失败/分数/原因；
 不稳定则标 `flaky` 并定位，不得静默取最好值。
 
 ## 7. 快速对照

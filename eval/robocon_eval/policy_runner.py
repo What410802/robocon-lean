@@ -1214,6 +1214,12 @@ class PolicyRunner:
             "ground_feet": sorted(ground),
             "bar_z": bar_z,
             "support": {k: [round(float(v), 9) for v in xyz] for k, xyz in support.items()},
+            # Additive: joint angles and the support points as ``feet`` so the
+            # repo video tool (tools/video/replay_route_video.py) can pose and
+            # render any trace.  Both are derived, not new state.
+            "q": [round(float(v), 9) for v in np.asarray(d.qpos[self.qpos_adr], dtype=np.float64)],
+            "feet": {leg: [round(float(v), 9) for v in support[leg]]
+                     for leg in support},
             "contacts": contacts,
             # Keep full precision: adaptive commands are closed-loop; rounding
             # to 6 decimals makes a 9 s replay diverge (chaotic contact).

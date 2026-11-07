@@ -21,8 +21,21 @@ from . import rules, scoring
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
-    from .policy_runner import run
+    from .policy_runner import AdaptiveCommand, run
 
+    # The adaptive command mirrors an operator who keeps the dog on the level
+    # centreline; the defaults are the gains the expert matrix uses, so the
+    # documented regression commands reproduce the matrix numbers.
+    command_fn = None
+    if args.adaptive:
+        command_fn = AdaptiveCommand(
+            vx=args.adaptive_vx, k_y=args.k_y, k_yaw=args.k_yaw,
+            k_vy=args.k_vy, k_vheading=args.k_vheading, vy_gain=args.vy_gain,
+            max_vy=args.max_vy, max_wz=args.max_wz, center_y=args.center_y,
+        )
+    spawn_offset = None
+    if args.spawn_y or args.spawn_yaw:
+        spawn_offset = (args.spawn_y, args.spawn_yaw)
     result = run(
         args.robot, args.part, args.policy, args.level, Path(args.out),
         args.steps, Path(args.scene) if args.scene else None,
@@ -30,6 +43,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         command=tuple(args.command) if args.command else None,
         settle_s=args.settle, warmup_s=args.warmup,
         seed=args.seed, profile=args.profile,
+        command_fn=command_fn, spawn_offset=spawn_offset,
         depth_contract=args.depth_contract,
     )
     if args.result:
@@ -110,6 +124,22 @@ def main(argv: list[str] | None = None) -> int:
                    help="simulated seconds (default: level seconds / 10 s for Part1)")
     p.add_argument("--command", type=float, nargs=3, default=None,
                    metavar=("VX", "VY", "WZ"))
+    p.add_argument("--adaptive", action="store_true",
+                   help="state-feedback command: hold vx, centre y, face +x "
+                        "(same gains as tools/campaign/run_expert_matrix.py)")
+    p.add_argument("--adaptive-vx", type=float, default=0.5)
+    p.add_argument("--k-y", type=float, default=0.8)
+    p.add_argument("--k-yaw", type=float, default=2.0)
+    p.add_argument("--k-vy", type=float, default=0.6)
+    p.add_argument("--k-vheading", type=float, default=0.0)
+    p.add_argument("--vy-gain", type=float, default=0.5)
+    p.add_argument("--max-vy", type=float, default=0.2)
+    p.add_argument("--max-wz", type=float, default=0.7)
+    p.add_argument("--center-y", type=float, default=0.0)
+    p.add_argument("--spawn-y", type=float, default=0.0,
+                   help="initial base y offset after the settle (robustness runs)")
+    p.add_argument("--spawn-yaw", type=float, default=0.0,
+                   help="initial base yaw offset [deg] after the settle")
     p.add_argument("--settle", type=float, default=1.0,
                    help="fixed-gain settle before the policy starts")
     p.add_argument("--warmup", type=float, default=0.0)

@@ -31,7 +31,13 @@ python = "3.12.*"
 [feature.train.pypi-dependencies]
 # Keep the validated set together: the CUDA wheel comes from PyPI and
 # mujoco-warp/mjlab/rsl_rl versions all change numerics or checkpoint formats.
-torch = "==2.14.0"
+#
+# torch is the SAME VERSION as the CPU wheel pinned for demo/eval below.  The
+# depth-conditioned plum policy is contact-chaotic and already flipped its judge
+# verdict between a 2.12 and a 2.14 kernel (2026-11-07: the same exported file
+# failed in the eval env and passed in the train env), so one version across the
+# three environments is what makes a judged trace reproducible.
+torch = "==2.14.1"
 mujoco = "==3.11.0"
 mujoco-warp = "==3.11.0"
 mjlab = "==1.6.0"
@@ -52,8 +58,6 @@ cmake = "*"
 ninja = "*"
 cxx-compiler = "*"
 mujoco = "3.11.*"
-libtorch = { version = "*", build = "cpu_generic*" }
-pytorch = { version = "*", build = "cpu_generic*" }
 tbb-devel = "*"
 yaml-cpp = "*"
 numpy = "*"
@@ -62,6 +66,12 @@ evdev = "*"
 
 [feature.demo.pypi-dependencies]
 robocon-eval = { path = "eval", editable = true }
+# CPU libtorch from the PyTorch wheel: the same 2.14.1 build as eval uses, and
+# the same version as the train env.  (conda libtorch 2.14.1 cannot coexist with
+# mujoco 3.11: they need incompatible libabseil/protobuf generations.)  rl_sar
+# finds this wheel's CMake config, so C++ inference and the Python judge share
+# one numeric stack.
+torch = { url = "https://download.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl" }
 
 # ---------------------------------------------------------------------------
 # eval — CPU judge
@@ -71,12 +81,13 @@ python = "3.12.*"
 numpy = "*"
 pyyaml = "*"
 mujoco = "3.11.*"
-pytorch = { version = "*", build = "cpu_generic*" }
 pytest = ">=9.0"
 pillow = "*"
 
 [feature.eval.pypi-dependencies]
 robocon-eval = { path = "eval", editable = true }
+# Same CPU torch build as the demo runtime (see the demo section).
+torch = { url = "https://download.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl" }
 
 # ---------------------------------------------------------------------------
 # environments & tasks

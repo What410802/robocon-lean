@@ -5,7 +5,7 @@
 
 ## 环境
 
-使用仓库 pixi 的 `eval` 环境（MuJoCo 3.11 + CPU torch + pytest）：
+使用仓库 pixi 的 `eval` 环境（MuJoCo 3.11 + torch 2.14.1+cpu + pytest；与 demo/train 同一 torch 版本线）：
 
 ```bash
 pixi run -e eval eval-pytest          # = python -m pytest eval/tests -q
@@ -29,6 +29,10 @@ pixi run -e eval robocon-eval replay-part2 --trace artifacts/traces/trench_30cm.
 # 2) 只算分：给定每类最高成功难度
 pixi run -e eval robocon-eval score --levels '{"high_platform":30,"stairs":20,"plum":1}'
 #    或 --levels-file <v5 result JSON / {category: level} JSON>
+#    六类最高档（除 slope_45 外全拿）：
+pixi run -e eval robocon-eval score \
+    --levels '{"high_platform":40,"stairs":30,"slope":35,"high_wall":40,"trench":30,"plum":1}'
+#    -> total 1200 / max_score 1300
 
 # 3) 策略闭环（MuJoCo + TorchScript，写 trace 再 replay 判分）
 pixi run -e eval robocon-eval run --robot blackW --part 2 \
@@ -45,12 +49,13 @@ pixi run -e eval robocon-eval run --robot blackW --part 2 \
 全场连续跑不是官方计分单元；若要检查路线每段是否真的被 judge 接受：
 
 ```bash
-pixi run -e eval python tools/route/replay_field_part2.py --tag real_v22 \
-    --out artifacts/part2_route3/real_v22_eval.json
+pixi run -e eval python tools/route/replay_field_part2.py --tag real_v23 \
+    --out artifacts/part2_route3/real_v23_eval.json
 ```
 
 工具把每段场地轨迹投影回单关坐标后调用同一个 `Part2OfficialJudge`；路线自己的 PASS
-门限只是集成门限。
+门限只是集成门限。`high_plum` 映射到 `plum_1`，only a plan command containing
+`bypass` is scored 0（真实穿越会被判分，不会静默降级）。
 
 ## trace 格式
 
