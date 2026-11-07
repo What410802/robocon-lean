@@ -216,6 +216,28 @@
   "limitations": [
    "The actor's own exit-platform descent is knife-edge: it passes the official single-level run at the exact spawn, but the spawn grid above is 2/15 and the deployment stack tips off the exit edge; the demo route therefore composes the descent with a wheeled expert.",
    "Robustness retraining (wider spawn/velocity randomization, exit-descent reward) is the recommended next step; the single-level evidence here is the scored configuration, not a robustness claim."
-  ]
+  ],
+  "full_field_run": {
+   "tag": "real_v27",
+   "route": "Part2 route finished: 6/6 legs PASS (plum depth crossing, wall bar5)",
+   "judge_projection": {
+    "total": 600,
+    "max_score": 1300,
+    "per_leg": {
+     "high_platform_20cm": 50,
+     "stairs_20cm": 100,
+     "slope_30deg": 50,
+     "trench_20cm": 150,
+     "high_plum": 200,
+     "high_wall_20cm": 50
+    },
+    "note": "per-leg eval-judge projection of the same field trace; the continuous run is a non-scoring demo (official score comes from the single-level runs)"
+   },
+   "trace": "artifacts/part2_route3/real_v27_states.jsonl",
+   "plan": "artifacts/part2_route3/real_v27_plan.jsonl",
+   "eval": "artifacts/part2_route3/real_v27_eval.json",
+   "video": "artifacts/part2_route3/real_v27_route.mp4",
+   "overview": "artifacts/part2_route3/real_v27_overview.png"
+  }
  }
 }

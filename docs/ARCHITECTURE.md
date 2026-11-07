@@ -93,7 +93,16 @@ sequenceDiagram
 ```
 
 - 判分跑 **`eval_state_every:=1`（2 ms 一帧）**；普通演示可调大省 IO。
-- Part1 可用手柄或 `route:=part1` 自动路线；Part2 只允许 RL，不能固定动作。
+- Part1 可用手柄或 `route:=part1` 自动路线；Part2 只允许 RL，不能固定动作。Part2 全场演示
+  `route:=part2` 一次启动走完六类（梅花桩 = 深度专家穿越 + 轮式专家下降，见
+  [`part2/ROUTE.md`](part2/ROUTE.md)）。
+- 深度相机（plum 深度专家）：`sim_node` 用 EGL 离屏渲染场景里的 `depth_cam`（64x48、公制平面
+  深度、只画 geom group 0），每 `depth_every` 步发布 `/depth_cam`（默认 50 Hz，先于同一步
+  `/motor_state`，同一 `d->time`）；`rl_sim` 按 `depth.json` 契约归一化后作为 TorchScript 的
+  第二输入 `policy(obs_1d, [1x1xHxW])`。C++ 渲染与 eval 侧 `mujoco.Renderer` 逐位相同，
+  C++ 推理与 Python 同输入同动作（`demo/tests/check_depth_inference.py`）。
+- 策略热切换：`/policy_switch`（`std_msgs/String` = policy 目录名）由 `rl_sim` 直接加载
+  TorchScript（~3 ms），路线用它做深度专家/下降专家的切换；手柄组合键仍保留。
 - 场景来源：Part1 `demo/robots/blackW/scene_part1.xml`（官方几何 148 个 primitive 与
   `terrain/official/scene_terrain.xml` 一一对应），Part2 `demo/scenes/part2/generated/*.xml`。
 

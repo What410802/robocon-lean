@@ -129,7 +129,7 @@
 每段场地轨迹映射回对应单关坐标，再喂同一个 `Part2OfficialJudge`：
 
 ```bash
-pixi run -e eval python tools/route/replay_field_part2.py --tag real_v23 --out /tmp/eval.json
+pixi run -e eval python tools/route/replay_field_part2.py --tag real_v27 --out /tmp/eval.json
 ```
 
 输出逐段 `success/fail/bypass` 与合计分；`--require-all` 可让任何穿越段非 success 时返回非零。

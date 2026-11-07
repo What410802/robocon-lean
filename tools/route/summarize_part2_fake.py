@@ -16,7 +16,8 @@ import sys
 
 PAT_SWITCH = re.compile(
     r"expert switch leg=(\S+) policy=(\S+) .*actual=\(x=([+\-\d.]+),y=([+\-\d.]+),"
-    r"yaw=([+\-\d.]+)deg\) xy_err=([\d.]+) y_err=([+\-\d.]+) yaw_err=([+\-\d.]+)deg (\w+)")
+    r"yaw=([+\-\d.]+)deg\) e=([+\-\d.]+) along=([+\-\d.]+) "
+    r"yaw_err=([+\-\d.]+)deg (\w+)")
 PAT_LEG = re.compile(
     r"(\S+): (PASS|FAIL) policy=(\S+) vx=([+\-\d.]+) end=\(([+\-\d.]+),([+\-\d.]+),"
     r"yaw=([+\-\d.]+)deg\) gate=(\w+) post=(\w+).*")
@@ -37,8 +38,10 @@ def main() -> int:
         if m:
             switches[m.group(1)] = dict(policy=m.group(2), x=float(m.group(3)),
                                         y=float(m.group(4)), yaw=float(m.group(5)),
-                                        xy=m.group(6), y_err=m.group(7),
-                                        yaw_err=m.group(8), status=m.group(9))
+                                        e=float(m.group(6)),
+                                        along=float(m.group(7)),
+                                        yaw_err=float(m.group(8)),
+                                        status=m.group(9))
             continue
         m = PAT_LEG.search(line)
         if m and m.group(2) in ("PASS", "FAIL"):
@@ -57,7 +60,7 @@ def main() -> int:
         except OSError:
             pass
     print(f"{'leg':24s} {'verdict':7s} {'policy':31s} {'vx':>5s} "
-          f"{'y_err':>7s} {'yaw_err':>8s} {'xy':>5s}  end=(x,y,yaw)")
+          f"{'e':>7s} {'along':>7s} {'yaw_err':>8s}  end=(x,y,yaw)")
     npass = nfail = 0
     for leg in order:
         r = results[leg]
@@ -65,9 +68,13 @@ def main() -> int:
         v = "PASS" if r["verdict"] == "PASS" else "FAIL"
         npass += v == "PASS"
         nfail += v == "FAIL"
-        print(f"{leg:24s} {v:7s} {r['policy']:31s} {r['vx']:+5.2f} "
-              f"{float(s.get('y_err', 0)):+7.3f} {float(s.get('yaw_err', 0)):+8.1f} "
-              f"{s.get('xy', '-'):>5s}  ({r['x']:+.2f},{r['y']:+.2f},{r['yaw']:+.1f}deg) "
+        if s:
+            corr = (f"{s['e']:+7.3f} {s['along']:+7.3f} "
+                    f"{s['yaw_err']:+8.1f}")
+        else:
+            corr = f"{'-':>7s} {'-':>7s} {'-':>8s}"
+        print(f"{leg:24s} {v:7s} {r['policy']:31s} {r['vx']:+5.2f} {corr}  "
+              f"({r['x']:+.2f},{r['y']:+.2f},{r['yaw']:+.1f}deg) "
               f"gate={r['gate']} post={r['post']}")
     finished = bool(PAT_DONE.search(text))
     print(f"\nlegs: {npass} PASS / {nfail} FAIL; route_finished={finished}"

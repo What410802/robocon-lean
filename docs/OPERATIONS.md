@@ -6,8 +6,8 @@
 ## 0. 一次性准备
 
 ```bash
-pixi install -e demo          # ROS 2 Humble + MuJoCo 3.11 + CPU libtorch
-pixi install -e eval          # 判分器
+pixi install -e demo          # ROS 2 Humble + MuJoCo 3.11 + torch 2.14.1+cpu（PyPI CPU 轮子，与 eval 同版本）
+pixi install -e eval          # 判分器（torch 2.14.1+cpu，与 demo/train 同一 torch 版本线）
 pixi run -e demo demo-build   # colcon 构建 demo/rl_sar + demo/quadruped_ros2
 source demo/install/setup.bash
 ```
@@ -75,7 +75,38 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=2 \
 - 一关一个场景，`level`/`scene` 在 launch 时选定，手柄只切模型不切关卡。
 - 官方地图整场人工检查：`full_field:=true`（人工驾驶用，**不用于判分**）。
 - 关卡 `seconds` 只是 120 s 安全超时（规则不计时）。
-- 连续走完六类的"一次启动"全场 demo 是非计分演示（规划中），计分仍按单关独立。
+- 连续走完六类的"一次启动"全场 demo 是非计分演示（**已实现**，见下），计分仍按单关独立。
+
+### 2.1 全场 1× 演示（六类全开，含深度相机梅花桩）
+
+```bash
+source demo/install/setup.bash
+export ROS_LOCALHOST_ONLY=1 ROS_DOMAIN_ID=57
+PART1_ROUTE_JUDGE=0 \
+PART1_RECORD_PATH=$PWD/artifacts/part2_route3/real_v27_states.jsonl \
+PART1_RECORD_PLAN_PATH=$PWD/artifacts/part2_route3/real_v27_plan.jsonl \
+timeout 3000 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route:=part2 \
+    policy_name:=vt_locked12 transfer_policy:=vt_locked12 \
+    viewer:=false realtime:=true eval_state_every:=10 stop_on_fail:=true
+```
+
+- 路线顺序：平台 20（S→N）→ 楼梯 20 → 斜坡 30 → 沟壑 20 → 梅花桩（深度专家穿越 + 轮式专家
+  下降）→ 高墙 20（bar5，默认开）。默认档/切换项/判分投影见 [`part2/ROUTE.md`](part2/ROUTE.md)。
+- `part:=1`：`route:=part2` 只覆盖场景/spawn；启动序列需要 A=StandUp（`part:=2` 时该键按规则无效）。
+- `realtime:=true` 必须；整场约 20 min 墙钟（1200–1400 s 仿真），跑完路线自己退出。
+- 单段调试：`PART2_ROUTE_ONLY=<leg名或序号>` + 合适的 `spawn_x/spawn_y`。
+- 路线逐段判分投影：`pixi run -e eval python tools/route/replay_field_part2.py --tag real_v27`。
+
+### 2.2 深度相机（梅花桩专家）
+
+- `sim_node` 自动检测场景里的 `depth_cam`（blackW 的 `d435_link`），EGL 离屏渲染 64x48 公制
+  平面深度并发布 `/depth_cam`（50 Hz，`depth_every:=10`；`depth:=auto|on|off`）。
+- 离线自检：`demo/install/quadruped_ros2/lib/quadruped_ros2/sim_node --depth-self-test <scene.xml>`；
+  与 eval 侧 Python 渲染逐位对拍用 `tools/` 的 depth_parity 脚本逻辑（见 ROUTE.md §6.3）。
+- 深度策略的 C++ 推理与 Python 同输入对拍：
+  `RL_DEPTH_DEBUG=1 RL_DEPTH_DEBUG_MAX=6` 跑一小段后，
+  `pixi run -e eval python demo/tests/check_depth_inference.py --policy demo/rl_sar/policy/blackW/plum_depth_final_v1`。
+- 无窗口/EGL 不可用时深度相机会打印一次告警并停发，仿真与盲目策略不受影响。
 
 ## 3. 判分：录制 2 ms trace → replay
 
@@ -137,6 +168,18 @@ pixi run -e eval python tools/video/replay_route_video.py \
 `replay_route_video.py` 是运动学回放（`mj_forward`，不重新步进物理），忠实显示录制到的机器人
 状态；视频上部标注当前 leg / target / CLI / 轮地接触，右上有路线俯视 inset。要实时看窗口就去掉
 `viewer:=false`。
+
+### 4.2 全场 Part2 路线录像
+
+```bash
+MUJOCO_GL=egl pixi run -e eval python tools/video/replay_route_video.py \
+    artifacts/part2_route3/real_v27_states.jsonl artifacts/part2_route3/real_v27_route.mp4 \
+    artifacts/part2_route3/real_v27_plan.jsonl \
+    --scene demo/scenes/part2/full_field/part2_fixed_field.xml
+```
+
+`real_v27_*` 是六类全开的整场 1× 运行（命令见 §2.1）；视频/overview/判分投影见
+`docs/part2/ROUTE.md` §8。
 
 ## 5. 自检与排错
 

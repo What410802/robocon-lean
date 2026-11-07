@@ -12,8 +12,14 @@ Projection (from the full-field map geometry and the generated manifest bbox):
 * platform: route crosses S->N, official level crosses W->E -> rotate 90 deg
   (field +y -> level +x, field +x -> level -y), bbox-fitted;
 * stairs/slope/trench: pure translation (same +x crossing, same y lane centre);
+* plum: pure translation; the route leg ``high_plum`` maps to the official level
+  key ``plum_1`` (route leg names are not always level keys);
 * high_wall: route crosses E->W, official level crosses +x -> 180 deg rotation
   (mirror both axes), bbox-fitted.
+
+A leg is reported as bypass only when its plan command says so (the plum
+around-the-row transit); a leg with a real policy crossing must resolve to an
+official level and be judged, otherwise the tool raises.
 
 Inputs are the route recorder files (``*_states.jsonl`` + ``*_plan.jsonl``).
 Wheel support points in the route states are wheel *centres*; the judge wants
@@ -64,6 +70,21 @@ WALL_GEOM_PREFIX = {
     "high_wall_30cm": "cross_bar_6",
     "high_wall_40cm": "cross_bar_7",
 }
+# Route leg name -> official level key, only where the two differ: the route's
+# plum crossing leg is named high_plum, the manifest key is plum_1.
+LEG_LEVEL_KEY = {
+    "high_plum": "plum_1",
+}
+# The competition plum row on the full field.  Select the corrected row by name:
+# a "plum_" prefix also matches the plum_t2..t5 training rows at y=30/33/36/39,
+# which would make the bbox span the whole field.  The bounds are a second line
+# of defence (entry 4.0-4.8, cubes 5.0-6.5, exit 6.7-7.5).
+PLUM_FIELD_GEOMS = (
+    "plum_entry", "plum_r1_01", "plum_r1_02", "plum_r1_03",
+    "plum_r2_01", "plum_r2_02", "plum_r2_03", "plum_exit",
+)
+PLUM_FIELD_X = (3.5, 8.0)
+PLUM_FIELD_Y = (11.0, 13.0)
 CATEGORY_OBSTACLE = {
     "high_platform": "high_platform",
     "stairs": "stairs",
@@ -119,21 +140,36 @@ def field_bbox(model, level: dict):
     key = level["key"]
     if category == "high_wall":
         prefix = WALL_GEOM_PREFIX[key]
+        names = None
     elif category == "high_platform":
         prefix = key.replace("high_", "", 1)      # field geom: platform_20cm
+        names = None
+    elif category == "plum":
+        prefix = ""
+        names = set(PLUM_FIELD_GEOMS)
     else:
         prefix = key
+        names = None
     lo = np.full(3, np.inf)
     hi = np.full(3, -np.inf)
     for gid in range(model.ngeom):
         name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, gid)
-        if not name or not name.startswith(prefix):
+        if not name:
+            continue
+        if names is not None:
+            if name not in names:
+                continue
+        elif not name.startswith(prefix):
             continue
         gmin, gmax = geom_aabb(model, gid)
+        if category == "plum" and not (
+                PLUM_FIELD_X[0] <= gmin[0] and gmax[0] <= PLUM_FIELD_X[1]
+                and PLUM_FIELD_Y[0] <= gmin[1] and gmax[1] <= PLUM_FIELD_Y[1]):
+            continue
         lo = np.minimum(lo, gmin)
         hi = np.maximum(hi, gmax)
     if not np.all(np.isfinite(lo)):
-        raise RuntimeError(f"no field geoms matched {prefix!r} for {key}")
+        raise RuntimeError(f"no field geoms matched {names or prefix!r} for {key}")
     return lo, hi
 
 
@@ -247,14 +283,24 @@ def run(states: Path, plan: Path, map_path: Path, out: Path | None,
     total = 0
     for window in windows:
         leg = window["leg"]
-        if window.get("bypass") or leg not in by_key:
-            if "plum" in leg:
-                rows.append({"leg": leg, "status": "bypass",
-                             "reason": "no deployable expert; transit only",
-                             "score": 0})
-                continue
-            raise SystemExit(f"leg {leg!r}: no matching official level / bypass flag")
-        level = by_key[leg]
+        if window.get("bypass"):
+            # Bypass is a plan decision, not a name convention: only a plan
+            # command containing "bypass" counts, so a plum leg that really
+            # crossed on a policy is judged instead of silently scored 0.
+            if "plum" not in leg:
+                raise SystemExit(
+                    f"leg {leg!r}: plan bypass command on a non-plum leg")
+            rows.append({"leg": leg, "status": "bypass",
+                         "reason": "plan bypass command (no expert crossing)",
+                         "score": 0})
+            continue
+        level_key = LEG_LEVEL_KEY.get(leg, leg)
+        if level_key not in by_key:
+            raise SystemExit(
+                f"leg {leg!r}: a crossing leg has no official level mapping "
+                f"for {level_key!r}; add it to LEG_LEVEL_KEY (known levels: "
+                f"{', '.join(sorted(by_key))})")
+        level = by_key[level_key]
         field_lo, field_hi = field_bbox(model, level)
         level_lo = np.asarray(level["obstacle_bbox"]["min"], dtype=float)
         level_hi = np.asarray(level["obstacle_bbox"]["max"], dtype=float)

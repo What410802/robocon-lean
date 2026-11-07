@@ -83,13 +83,18 @@ pixi run -e eval robocon-eval replay-part2 --trace <trace.jsonl>
   `kp=50, kd=1.2`（hip/thigh/calf），轮子 kp=0；力矩上限 hip/thigh 25 N·m、calf 60 N·m（规则要求）。
 - 允许传感器：IMU、关节编码器、相机/雷达（仿真相机）；**禁止** body_lin_vel、heightmap、
   foot_force、foot_height、body_height 以及特权地形扫描进网络。世界位姿真值只可用于生成指令。
+- 仿真相机：`sim_node` 渲染场景里的 `depth_cam`（64x48、fovy 70、公制平面深度、cutoff 3.0 m），
+  以 `/depth_cam`（`DepthFrame`）50 Hz 发布；梅花桩深度专家 `plum_depth_final_v1` 用它作为
+  网络第二输入（`policy(obs_1d_324, [1x1x48x64])`）。相机契约（`depth.json`）与训练/eval 同源。
 
 ## 文档索引
 
 - **通用**：`docs/RULES-BASIS.md`（规则原文/实现约定/资产哈希）、`docs/ARCHITECTURE.md`
   （数据流/坐标系/判分链路）、`docs/OPERATIONS.md`（手柄/自动路线/录制/判分操作手册）
-- **Part 2**：`docs/part2/EXPERTS.md`（各地形专家选型、证据、入场对齐容差、梅花桩缺口）、
-  `docs/part2/ROUTE.md`（修正版全场自动路线：专家 + `vt_locked12` 衔接、转场/对齐/审计）
+- **Part 2**：`docs/part2/EXPERTS.md`（各地形专家选型、证据、入场对齐容差；六类最高档判分侧
+  **1200/1300**，含本轮新增的深度相机梅花桩专家）、
+  `docs/part2/ROUTE.md`（修正版全场自动路线 v3：六类全开、深度相机梅花桩组合穿越、高墙默认开、
+  转场/对齐/净空审计；整场 1× 运行命令见 §8）
 - **训练**：`docs/training/VT-RECIPE.md`（速度跟随衔接模型配方/训练记录/验收）、
   `train/README.md`（训练任务、导出、改造入口、权重管理）
 - **判分**：`eval/SPEC.md`（人读版单一标准）

@@ -56,8 +56,8 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
 
 # Part2 一键自动整场（六类全开：平台/楼梯/斜坡/沟壑/梅花桩/高墙；约 20 min 1×）
 PART1_ROUTE_JUDGE=0 \
-PART1_RECORD_PATH=$PWD/artifacts/part2_route3/real_v23_states.jsonl \
-PART1_RECORD_PLAN_PATH=$PWD/artifacts/part2_route3/real_v23_plan.jsonl \
+PART1_RECORD_PATH=$PWD/artifacts/part2_route3/real_v27_states.jsonl \
+PART1_RECORD_PLAN_PATH=$PWD/artifacts/part2_route3/real_v27_plan.jsonl \
 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route:=part2 \
     policy_name:=vt_locked12 transfer_policy:=vt_locked12 \
     viewer:=false realtime:=true eval_state_every:=10 stop_on_fail:=true

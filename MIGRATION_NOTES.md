@@ -85,7 +85,9 @@
    同样等该接口，逻辑暂不改）。
 2. **Part2 反复稳定性**：规则备注要求"反复稳定越过"，当前计分只要求单次成功；后续加稳定性指标
    （独立随机化 ≥N 次）作为提交门槛。
-3. **Part2 连续全场 demo**：新增一次启动走完六类的非计分演示（单关独立计分保持不变）。
+3. **Part2 连续全场 demo（已实现，2026-11-07）**：`route:=part2` 一次启动走完六类（平台/楼梯/
+   斜坡/沟壑/梅花桩/高墙），梅花桩 = 深度相机专家穿越 + 轮式专家下降；逐段 eval 判分投影见
+   `docs/part2/ROUTE.md`。单关独立计分保持不变。
 4. **MPC**：Part1 固定路线先做（速度层 MPC/路径跟踪，输出 vx/wz 给现有 RL）；Part2 规则仅 RL，
    另行研究（训练期 teacher/数据分析，不进正式计分环）。
 5. 旧仓不需要改动/tag/归档；新仓不引用旧仓。
@@ -101,8 +103,8 @@
   场景 202 geoms）；`train` import + 6/6 单测；`assets/verify.py` 20/20 哈希一致；
   Part1 运行时场景与官方 `scene_terrain.xml` 几何一致（148 primitive）。
 - 未完成（后续）：`pixi` 环境首次安装 + colcon build + ROS 冒烟（需联网，未在本轮执行）、
-  真实 rollout 判分复跑、Part1 MPC 落地、Part2 连续全场 demo、mjdata 裁判接口、
-  Part2 稳定性指标。
+  真实 rollout 判分复跑、Part1 MPC 落地、mjdata 裁判接口、Part2 稳定性指标
+  （2026-11-07 首轮补充见 §8）。
 
 ## 7. 新增：速度跟随衔接模型（VT，2026-11-02）
 
@@ -125,7 +127,7 @@
 本轮把迁移后的仓库真正按 README 从零跑通，并修掉迁移过程中遗留的问题：
 
 - **pixi 环境**：`pixi install -e eval`、`pixi install -e demo` 均成功（demo 2.7 GB，含 ROS 2
-  Humble + MuJoCo 3.11 + CPU libtorch）；`pixi run -e eval eval-pytest`（86 passed）、
+  Humble + MuJoCo 3.11 + torch 2.14.1+cpu）；`pixi run -e eval eval-pytest`（86 passed）、
   `pixi run -e eval demo-tests`、`pixi run -e demo demo-build`、`robocon-eval --help` 全部验证。
   生成并提交单份 `pixi.lock`（不 per-env lock、不用 `--frozen`）。
 - **构建修复**：`quadruped_ros2/CMakeLists.txt` 仍安装迁移时删掉的 `launch/` 目录 → 构建失败；
@@ -203,3 +205,24 @@
 - 实测：v1/v2 不迈步（轮锁滑行），v3 原地踏步，v4/v5 加 trot 相位后仍只有三足跳/单轮常抬，
   `vx=0.3` 实际 ~0.14 m/s，`error_vel_xy/yaw≈0.57/0.81`；**未达到 F 门禁/交接精度**。
   因此最终交付仍为滚轮 `vt_track_v2`；锁轮任务作为后续研究入口保留，需更长训练/步态课程。
+
+## 8. 2026-11-07 补充：torch 统一 / 深度相机 / 梅花桩专家 / 全场 demo
+
+1. **torch 版本统一到 2.14.1（三个环境同一版本线）**：train 用 PyPI CUDA 轮子
+   `torch==2.14.1`（2.14.1+cu130），demo/eval 用 PyPI CPU 轮子
+   `torch-2.14.1+cpu`（`pixi.toml` 里以 URL 依赖固定）。不再使用 conda 的 `libtorch`/`pytorch`：
+   conda-forge 2.14.1 与 `mujoco 3.11` 的 `libabseil` 冲突，而 PyPI 轮的依赖与 conda 隔离。
+   原因：torch 2.12 与 2.14 的数值差异会让 plum 深度策略从 success(200) 变成 fail
+   （`fell:tilt`），三个环境必须同版本才能让判分证据与部署一致。
+2. **深度相机接入**：`sim_node` EGL 离屏渲染 + `/depth_cam`（`DepthFrame` 消息，64x48 公制平面
+   深度，50 Hz，先于 `/motor_state`）；`rl_sim` 归一化后作为 TorchScript 第二输入。
+   C++ 渲染与 eval 侧 Python 渲染逐位相同；C++ 推理与 Python 同输入同输出（对拍脚本入库）。
+   详见 `demo/UPSTREAM.md` §2 与 `docs/part2/ROUTE.md` §6.3。
+3. **plum 深度学生（新专家）**：`blackw-plum-depth-s2` 训练、`train/scripts/plum/` 工具链导出，
+   权重目录 `demo/rl_sar/policy/blackW/plum_depth_final_v1/`。判分侧单关 `plum_1` **success 200**，
+   这是 Part2 判分侧从 1000/1300 提到 **1200/1300** 的最后一块（只差 slope_45 的 100）。
+   鲁棒性仍是刀锋：spawn offset 网格同环境 2/15（manifest 的 `spawn_offset_grid`），
+   部署栈出口台阶需要拆给轮式专家（全场路线这么做）；"更稳的重训"列入后续。
+4. **全场路线 v3**：梅花桩真穿越（不再绕行）、高墙默认开、`/policy_switch` 快切（~3 ms）、
+   `PART2_ROUTE_START` 单段启动；路线逐段 eval 投影工具 `tools/route/replay_field_part2.py`
+   支持 `high_plum -> plum_1` 映射。详见 `docs/part2/ROUTE.md`。

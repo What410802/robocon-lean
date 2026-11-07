@@ -4,7 +4,7 @@
 Scene: ``demo/scenes/part2/full_field/part2_fixed_field.xml`` (launch
 ``route:=part2`` selects it with spawn (0, 0, 0.675, 0)).
 
-Route order (deployment-verified tier; every leg has its own judged direction):
+Route order (default tier; every leg has its own judged direction):
 
   1. high_platform_20cm  SOUTH->NORTH (stand (12.75,-3.90), cross gate y>1.35) row2p
      (S->N from the y=-4.5 corridor: the W->E field slot leaves only a 0.75 m
@@ -15,15 +15,24 @@ Route order (deployment-verified tier; every leg has its own judged direction):
      PART2_VX_STAIRS=0.60, field-proven but run-to-run variable)
   3. slope_30deg         WEST->EAST  (stand x=32.40, cross gate x>38.20)  row2p
   4. trench_20cm         WEST->EAST  (stand x=8.05,  cross gate x>13.60)  s1d_trench
-  5. high_plum_bypass    WEST->EAST  (no expert: no deployable blind plum
-     expert exists; the route goes around the row at x=2.60; PART2_PLUM_MODE=cross
-     restores the old non-scoring pass)
+  5. high_plum           WEST->EAST  (composed crossing: the depth-conditioned
+     policy crosses the entry platform + pile field -- no command term, it
+     self-drives and ignores /joy; the route aligns tighter (0.05 m / 1.5 deg)
+     and emits only the fake-sim lane command.  On the exit platform it switches
+     (via /policy_switch, a few ms) to a wheeled expert that stands 2 s and then
+     walks the 0.2 m step-down under a slow lane command -- the depth actor's own
+     exit descent is knife-edge in the deployment stack.  The composed trace is
+     one legal attempt.  PART2_PLUM_MODE=bypass restores the old around-the-row
+     transit at x=2.60; PART2_PLUM_HANDOVER=none keeps the pure depth attempt.)
+  6. high_wall_20cm      EAST->WEST  (cross_bar_5; ON by default, PART2_ROUTE_WALL=0
+     turns it off, PART2_ROUTE_WALL_VARIANT=bar6|bar7 switches the bar, all
+     variants clearance-audited)
 
-The high-wall leg is optional and OFF by default (PART2_ROUTE_WALL=1 enables the
-20 cm cross_bar_5 instance; PART2_ROUTE_WALL_VARIANT=bar6|bar7 switches the bar,
-all variants clearance-audited).  Default route levels are deliberately below the
-highest eval-side levels we have seen succeed: platform 20 / stairs 20 /
-slope 30 / trench 20; max tiers stay available via PART2_*_LEVEL env vars.
+Default route levels are deliberately below the highest eval-side levels we have
+seen succeed: platform 20 / stairs 20 / slope 30 / trench 20; max tiers stay
+available via PART2_*_LEVEL env vars.  PART2_ROUTE_START=<leg name or 1-based
+index> starts a run at one leg (single-leg real runs): earlier legs are logged
+and skipped, and the selected leg's own transit chain brings the robot in.
 
 Route leg "PASS" lines are **integration gates** (did the segment finish); they
 are not an official second criterion.  For eval-judge verdicts per leg use
@@ -47,7 +56,8 @@ goto(tol=0.02) endgame and the old lateral `_pose_move_to` both dead-locked):
   * straight creep along the lane to the pre-align target (heading hold, no
     goto endgame), final yaw polish, then a hard gate:
     default |e|<=0.05 m / |yaw_err|<=2.5 deg; stairs_30cm 0.02 m / 1.5 deg;
-    slope/trench/plum 0.08 m / 2.5 deg; along-lane bounds per leg.
+    slope/trench 0.08 m / 2.5 deg; plum 0.05 m / 1.5 deg (the depth policy is
+    sensitive to its initial dy/yaw); along-lane bounds per leg.
   * lateral ``_sidestep_lane`` (face perpendicular, drive to the lane, face
     back) removes the 0.15-0.25 m yaw-servo drift WITHOUT spending runway
     (this is what makes slope/trench/stairs alignment converge);
@@ -62,7 +72,10 @@ re-aligns (30 s budget) and retries the crossing ONCE; a second failure FAILs.
 A stall on elevated terrain (base z >= 0.75 m, e.g. on the stairs) is NOT
 reversed: the leg FAILs immediately (backing down stairs tips the robot).
 Logs ``expert_recover leg=... reason=stall|timeout`` and ``recover=1`` in the
-leg report.
+leg report.  The depth plum leg opts out (``no_recover``): zero /joy commands
+do not stop the depth actor, so it never backs off or retries; once the depth
+expert has crossed, the route hands the exit step-down to the wheeled expert and
+then loads the transfer policy after the composed gate.
 The actual (x, y, yaw), e/along/yaw_err and gates at the switch are logged for
 every leg ("expert switch" lines, machine-readable).  The fake kinematic sim
 must meet the gates exactly (it follows commands without dynamics).
@@ -83,28 +96,47 @@ artifacts/traces/, replayed with the Part2 v5 judge):
                  full-field PASS after the lateral sidestep fix)
   trench      -> trench_20cm s1d adaptive 0.80 (default below max tier; 30cm
                  remains the eval-side max) (3/3; 1x full-field PASS)
-  plum        -> bypass (no deployable blind expert: 0/200 eval, 0/384 old
-                 repo; crossing attempt stalled and fell in real_v14)
-  wall (off by default) -> cross_bar_5 20cm in the field slot (0.54 m runway; the 40cm
-                 bar7 only passes the OFFICIAL 1.8 m-runway level, 2/3, not
-                 the field slot) -> default PART2_ROUTE_WALL_VARIANT=bar5.
+  plum        -> high_plum COMPOSED crossing: plum_depth_final_v1 (54x6
+                 proprio history + one 48x64 depth frame, no command term)
+                 crosses the entry platform + pile field; the route cannot
+                 steer it, so it aligns tighter (0.05 m / 1.5 deg) and at field
+                 x=6.80 (level 4.60, exit platform) switches (via /policy_switch)
+                 to vt_band_v1: a 0.6 s reverse-velocity brake, a 2 s zero-command
+                 stand, then 0.45 m/s down the 0.2 m exit step.  Switching on the
+                 platform is required: a wheeled expert that takes over on the
+                 pile field itself drops a wheel between piles (judge-invalid).
+                 The depth actor's own exit descent is knife-edge in the
+                 deployment stack (eval runner completes it; sim_node+rl_sim
+                 pitches off the edge), hence the split.  The old blind
+                 `obstacle` crossing (0/200 eval, 0/384 old repo) stays gone.
+  wall        -> ON by default: cross_bar_5 20cm in the field slot (0.54 m runway;
+                 the 40cm bar7 only passes the OFFICIAL 1.8 m-runway level, 2/3,
+                 not the field slot) -> default PART2_ROUTE_WALL_VARIANT=bar5.
 Defaults below follow that set; every tier stays switchable.
 
 Tier switches (all geometry is top-level tables, every combination is
 clearance-audited): PART2_PLATFORM_LEVEL=40|30|20, PART2_STAIRS_LEVEL=20|25|30,
 PART2_SLOPE_LEVEL=20|30|35, PART2_TRENCH_LEVEL=10|20|30,
-PART2_ROUTE_WALL=0/1 + PART2_ROUTE_WALL_VARIANT=bar5|bar6|bar7; the platform
-leg always crosses S->N from the y=-4.5 corridor (3.1 m runway).
+PART2_ROUTE_WALL=1|0 (default 1) + PART2_ROUTE_WALL_VARIANT=bar5|bar6|bar7; the
+platform leg always crosses S->N from the y=-4.5 corridor (3.1 m runway).
 
 Expert map (data-driven, env-overridable; the vx/mode follow the deployment
 traces in docs/part2/ROUTE.md §7.2/§7.3, not the eval-only matrix):
   platform row2p adaptive 0.50, stairs st30 adaptive 0.45 by default
   (stairs_30cm best tier: PART2_STAIRS_LEVEL=30 PART2_EXPERT_STAIRS=vt_band_v1
   PART2_VX_STAIRS=0.60),
-  slope row2p adaptive 0.50, trench s1d adaptive 0.80, plum bypass,
-  wall (bar5) vt_band adaptive 0.50.
-  Env overrides: PART2_EXPERT_PLATFORM / _STAIRS / _SLOPE / _TRENCH /
-  _WALL, PART2_VX_<LEG>, PART2_PLUM_MODE=bypass|cross.
+  slope row2p adaptive 0.50, trench s1d adaptive 0.80,
+  plum plum_depth_final_v1 mode=depth (self-driving, no command input; the
+  exit step-down is composed with the wheeled expert vt_band_v1 at field
+  x=6.80, brake 0.6 s, stand 2.0 s, 0.45 m/s down to the x>9.00 gate),
+  wall (bar5) row2p adaptive 0.40, bar6/bar7 vt_band adaptive 0.50.
+  Env overrides: PART2_EXPERT_PLATFORM / _STAIRS / _SLOPE / _TRENCH / _PLUM /
+  _WALL, PART2_VX_<LEG>, PART2_PLUM_MODE=bypass|cross,
+  PART2_ROUTE_START=<leg name or 1-based index>,
+  PART2_PLUM_HANDOVER=<policy|none>, PART2_PLUM_HANDOVER_X=<field x>,
+  PART2_PLUM_SETTLE_S=<s>, PART2_PLUM_DRIVE_VX=<m/s>,
+  PART2_PLUM_BRAKE_S=<s>, PART2_PLUM_BRAKE_VX=<m/s>, PART2_PLUM_GATE_SETTLE_S=<s>,
+  PART2_PLUM_GATE_X=<field x>.
 
 Run with the fake kinematic sim (see docs/part2/ROUTE.md):
   source demo/install/setup.bash
@@ -116,6 +148,8 @@ from __future__ import annotations
 
 import math
 import os
+
+from std_msgs.msg import String
 
 from part1_auto_route import (  # noqa: E402
     BTN_A, BTN_RB, RouteNode, TRANSFER_POLICY, wrap,
@@ -140,7 +174,11 @@ def _vx_env(name: str, default: float) -> float:
 #   policy  deployment dir name (env-overridable per leg)
 #   vx      commanded forward speed validated for that expert
 #   mode    "adaptive" = training-side AdaptiveCommand vy/wz feedback,
-#           "fixed"    = pure (vx,0,0) (expert not trained with feedback)
+#           "fixed"    = pure (vx,0,0) (expert not trained with feedback),
+#           "depth"    = depth-conditioned policy with NO command term: it
+#                        self-drives, /joy is ignored, the route never relies on
+#                        stop()/recovery for the leg (the fake kinematic sim
+#                        still moves on the lane command we emit).
 # platform40: row2p adaptive 0.50 (eval matrix; align tolerance 6/9)
 # stairs30:   vt_band adaptive 0.70 with a -0.030 m pre-align dy (start_dy):
 #             the vx=0.5 basin is chaotic (33/143), at 0.70 it is 93/143 and the
@@ -151,7 +189,8 @@ def _vx_env(name: str, default: float) -> float:
 # slope35:    row2p adaptive 0.50 (9/9 offsets robust)
 # wall40:     vt_band adaptive 0.50 (8/9 offsets; row2p only 3/9 -> never row2p)
 # trench30:   s1d adaptive 0.80 (adaptive, vx 0.8; fixed 0.8 fails at +2 deg yaw)
-# plum:       obstacle adaptive 0.40 (non-scoring transit only; no judge expert)
+# plum:       plum_depth_final_v1 mode=depth (the crossing expert; vx is only
+#             the fake-sim lane speed, the policy has no command input)
 # wall40:     vt_band adaptive 0.50 for cross_bar_7 (row2p is knife-edge at the
 #             0.54 m runway; vt_band/obstacle pass 7/8 offsets, vt_band 3/3 wall40)
 EXPERT_SPECS = {
@@ -178,8 +217,13 @@ EXPERT_SPECS = {
         "policy": _policy_env("PART2_EXPERT_TRENCH", "s1d_trench_reward_v75_m100"),
         "vx": _vx_env("PART2_VX_TRENCH", 0.80), "mode": "adaptive"},  # adaptive08
     "plum": {
-        "policy": _policy_env("PART2_PLUM_POLICY", "obstacle"),
-        "vx": _vx_env("PART2_VX_PLUM", 0.40), "mode": "adaptive"},
+        # Depth-conditioned crossing expert: 54x6 proprio history + one 48x64
+        # depth frame, no command term -> self-drives forward, ignores /joy.
+        # PART2_PLUM_POLICY is the old env name, kept as an alias.
+        "policy": _policy_env(
+            "PART2_EXPERT_PLUM",
+            _policy_env("PART2_PLUM_POLICY", "plum_depth_final_v1")),
+        "vx": _vx_env("PART2_VX_PLUM", 0.40), "mode": "depth"},
     "wall": {
         "policy": _policy_env("PART2_EXPERT_WALL", "vt_band_v1"),
         "vx": _vx_env("PART2_VX_WALL", 0.50), "mode": "adaptive"},
@@ -252,15 +296,46 @@ STAIRS_LEVEL = _level_env("PART2_STAIRS_LEVEL", 20, STAIRS_LEVELS)
 SLOPE_LEVEL = _level_env("PART2_SLOPE_LEVEL", 30, SLOPE_LEVELS)
 TRENCH_LEVEL = _level_env("PART2_TRENCH_LEVEL", 20, TRENCH_LEVELS)
 
-# Plum row: no deployable blind expert exists (0/200 eval, 0/384 old repo), so
-# the default is a BYPASS around the row (x=2.60, west of the entry platform at
-# x=4.00) instead of attempting the cubes.  PART2_PLUM_MODE=cross restores the
-# old transit-only crossing for when an expert exists.
-PLUM_MODE = os.environ.get("PART2_PLUM_MODE", "bypass").strip().lower()
+# Plum row: the depth-conditioned policy crosses the competition row by default
+# (entry 4.0-4.8, cubes 5.0-6.5, exit 6.7-7.5).  It has no command input, so it
+# is not steered; the route only aligns it and waits for the exit gate.  The old
+# around-the-row transit (x=2.60, west of the entry platform at x=4.00) stays
+# available as PART2_PLUM_MODE=bypass for runs without the depth camera chain.
+PLUM_MODE = os.environ.get("PART2_PLUM_MODE", "cross").strip().lower()
 if PLUM_MODE not in ("bypass", "cross"):
-    PLUM_MODE = "bypass"
+    PLUM_MODE = "cross"
 
-WALL_ENABLED = os.environ.get("PART2_ROUTE_WALL", "0").strip().lower() not in (
+# Exit step-down: the depth actor has no command term (it self-drives and
+# ignores /joy), and in the deployment stack its own exit-platform descent is
+# knife-edge -- the body pitches forward off the 0.2 m edge and falls, while the
+# eval judge run of the same weights completes it.  The route therefore splits
+# the leg: the depth expert crosses the entry platform + pile field, then a
+# wheeled expert takes over on the exit platform, stands, and walks down to
+# normal ground under a slow lane command.  Both halves are learned policies and
+# the judge only sees support points, so the trace is still one legal attempt.
+# field x = level x + 2.20; level 4.60 is the middle of the exit platform.
+PLUM_HANDOVER = os.environ.get("PART2_PLUM_HANDOVER", "vt_band_v1").strip()
+PLUM_HANDOVER_OFF = PLUM_HANDOVER.lower() in ("", "none", "off", "0")
+PLUM_HANDOVER_X = _vx_env("PART2_PLUM_HANDOVER_X", 6.80)
+PLUM_SETTLE_S = _vx_env("PART2_PLUM_SETTLE_S", 2.0)
+# The depth actor arrives on the 0.8 m exit platform at ~2 m/s; a short
+# reverse-velocity command before the zero-command stand is how a human
+# brakes a rolling wheeled expert, and it is what keeps the body from
+# carrying its momentum off the far edge during the handover.
+PLUM_BRAKE_S = _vx_env("PART2_PLUM_BRAKE_S", 0.6)
+PLUM_BRAKE_VX = _vx_env("PART2_PLUM_BRAKE_VX", -0.30)
+# Gate fires on normal ground while the body is still moving/yawed; keep
+# zero command long enough for the wheels to stop before the connector switch.
+PLUM_GATE_SETTLE_S = _vx_env("PART2_PLUM_GATE_SETTLE_S", 1.5)
+# Composed leg gate (field x): high enough that the judge's 0.3 s all-wheels-on-
+# ground hold has completed (measured latch ~x 9.1 on a clean run), low enough
+# that the wheeled expert does not keep walking far past the exit.
+PLUM_GATE_X = _vx_env("PART2_PLUM_GATE_X", 9.00)
+PLUM_DRIVE_VX = _vx_env("PART2_PLUM_DRIVE_VX", 0.45)
+
+# High wall: enabled by default (bar5 20 cm, the only variant with the 0.54 m
+# field-slot runway evidence); PART2_ROUTE_WALL=0 turns the leg off.
+WALL_ENABLED = os.environ.get("PART2_ROUTE_WALL", "1").strip().lower() not in (
     "0", "false", "no", "off")
 WALL_VARIANT = (os.environ.get("PART2_ROUTE_WALL_VARIANT", "bar5").strip().lower()
                 or "bar7")
@@ -344,12 +419,16 @@ def _leg(leg, policy, vx, mode, lane_x, lane_y, lane_yaw, transit, stand,
          align_yaw_tol_deg=ALIGN_YAW_TOL_DEG,
          settle_forward=ALIGN_SETTLE_FORWARD,
          along_min=-0.15, along_max=0.60, align_backoff=0.0,
-         no_creep=False) -> dict:
+         no_creep=False, no_recover=False,
+         handover_policy="", handover_x=0.0, handover_settle_s=0.0,
+         handover_vx=0.0, handover_brake_s=0.0, handover_brake_vx=0.0) -> dict:
     # ``stand`` is the lane-centre approach pose; ``start_dy`` shifts only the
     # pre-align target (the expert AdaptiveCommand keeps centring on lane_y).
     return {
         "leg": leg, "policy": policy, "vx": vx,
+        "mode": str(mode).lower(),
         "fixed": str(mode).lower() == "fixed",
+        "no_recover": bool(no_recover),
         "lane_x": float(lane_x), "lane_y": float(lane_y),
         "lane_yaw": float(lane_yaw),
         "start_dy": float(start_dy),
@@ -367,6 +446,14 @@ def _leg(leg, policy, vx, mode, lane_x, lane_y, lane_yaw, transit, stand,
         "stop": stop, "post": post,
         "exit": [(float(x), float(y)) for x, y in exit],
         "cross_timeout": float(cross_timeout),
+        # "depth" legs only: split the exit step-down to a wheeled expert
+        # (empty handover_policy = keep the pure depth-policy attempt).
+        "handover_policy": str(handover_policy),
+        "handover_x": float(handover_x),
+        "handover_settle_s": float(handover_settle_s),
+        "handover_vx": float(handover_vx),
+        "handover_brake_s": float(handover_brake_s),
+        "handover_brake_vx": float(handover_brake_vx),
         "note": note,
     }
 
@@ -505,22 +592,55 @@ def _build_legs() -> list[dict]:
                         stand=(2.60, 12.0), cross_end=(2.60, 12.0),
                         stop=lambda p: True, post=lambda p: True,
                         exit=[], cross_timeout=1.0,
-                        note="plum BYPASS at x=2.60 (no deployable blind expert; "
+                        note="plum BYPASS at x=2.60 (PART2_PLUM_MODE=bypass; "
                              "no expert switch, no crossing)")
         plum_leg["bypass"] = True
     else:
+        # Cross end = where the whole composed attempt is over: with the exit
+        # step-down handed to a wheeled expert we wait until it is well past the
+        # exit platform (level x 6.8) so the judge's descend-to-ground hold can
+        # complete inside the leg window; a pure depth attempt uses the old gate.
+        cross_end_x = 7.90 if PLUM_HANDOVER_OFF else PLUM_GATE_X
         plum_leg = _leg("high_plum", **EXPERT_SPECS["plum"],
                         lane_x=2.20, lane_y=12.0, lane_yaw=0.0,
                         transit=_chain(prev["exit"][-1][0], 2.20, 10.50,
                                        hop=TIGHT_HOP_M),
                         transit_speed=TIGHT_TRANSIT_SPEED,
-                        stand=(2.20, 12.0), cross_end=(7.90, 12.0),
-                        stop=_x_gt(7.90), post=_post(_x_gt(7.85), 12.0),
-                        exit=[(8.90, 12.0), (8.90, 13.2)], cross_timeout=35.0,
-                        settle_forward=0.25, along_min=-0.10, along_max=1.00,
-                        align_xy_tol=0.08, align_yaw_tol_deg=2.5,
-                        note="plum entry4.0-4.8 cubes5.0-6.6 exit6.7-7.5; "
-                             "TRANSIT ONLY (no judge-verified blind expert)")
+                        stand=(2.20, 12.0), cross_end=(cross_end_x, 12.0),
+                        stop=_x_gt(cross_end_x),
+                        # The composed descent is walked by a wheeled expert on
+                        # open ground, so the body may still be yawed/slightly
+                        # off-lane when the gate fires (the eval judge only
+                        # cares about support points); the pure-depth attempt
+                        # keeps the tighter lane gate.
+                        post=_post(_x_gt(cross_end_x - 0.05), 12.0,
+                                   y_tol=0.40 if PLUM_HANDOVER_OFF else 0.90),
+                        exit=([(8.90, 12.0), (8.90, 13.2)] if PLUM_HANDOVER_OFF
+                              else [(9.80, 12.0), (9.80, 13.2)]),
+                        cross_timeout=35.0 if PLUM_HANDOVER_OFF else 60.0,
+                        settle_forward=0.25,
+                        along_min=-0.10, along_max=0.50,
+                        # The depth policy is sensitive to its start pose: it
+                        # cannot be steered back, so align tighter than the
+                        # generic 0.08 m / 2.5 deg gate.
+                        align_xy_tol=0.05, align_yaw_tol_deg=1.5,
+                        # no command feedback -> no reverse/recovery retry.
+                        no_recover=True,
+                        handover_policy="" if PLUM_HANDOVER_OFF else PLUM_HANDOVER,
+                        handover_x=PLUM_HANDOVER_X,
+                        handover_settle_s=PLUM_SETTLE_S,
+                        handover_vx=PLUM_DRIVE_VX,
+                        handover_brake_s=PLUM_BRAKE_S,
+                        handover_brake_vx=PLUM_BRAKE_VX,
+                        note=("plum DEPTH crossing entry4.0-4.8 cubes5.0-6.5 "
+                              "exit6.7-7.5; exit step-down handed to %s at "
+                              "field x %.2f (PART2_PLUM_HANDOVER=none keeps the "
+                              "pure depth attempt)" % (PLUM_HANDOVER,
+                                                      PLUM_HANDOVER_X))
+                             if not PLUM_HANDOVER_OFF else
+                             ("plum DEPTH crossing entry4.0-4.8 cubes5.0-6.5 "
+                              "exit6.7-7.5; pure depth attempt "
+                              "(PART2_PLUM_HANDOVER=none)"))
     legs.append(plum_leg)
     prev = plum_leg
 
@@ -535,14 +655,20 @@ def _build_legs() -> list[dict]:
                 wall_spec["policy"] = "row2p_p40w40_v1"
             if "PART2_VX_WALL" not in os.environ:
                 wall_spec["vx"] = 0.40
+        # The wall approach joins the y=13.2 corridor at x=2.40.  A plum CROSS
+        # comes from the plum exit waypoint list (last hop (8.90, 13.20)), the
+        # BYPASS already stands near (2.60, 13.20), so one join hop is enough.
+        if PLUM_MODE == "bypass":
+            wall_transit = [(2.40, 13.20)]
+        else:
+            wall_transit = _chain(float(prev["exit"][-1][0]), 2.40, 13.20,
+                                  hop=TIGHT_HOP_M)
+        wall_transit += [(2.40, 19.5), (wx, 19.5), (wx, 20.5)]
         wall_leg = _leg(wt["name"], **wall_spec,
                         lane_x=wx, lane_y=21.0, lane_yaw=math.pi,
                         settle_forward=0.03, along_min=-0.15, along_max=0.10,
                         no_creep=True,
-                        transit=([(2.40, 13.20)] if PLUM_MODE == "bypass" else
-                                 _chain(prev["exit"][-1][0], 2.40, 13.20,
-                                        hop=TIGHT_HOP_M))
-                                + [(2.40, 19.5), (wx, 19.5), (wx, 20.5)],
+                        transit=wall_transit,
                         transit_speed=TIGHT_TRANSIT_SPEED,
                         align_xy_tol=float(wt["xy_tol"]),
                         align_yaw_tol_deg=float(wt["yaw_tol"]),
@@ -556,6 +682,19 @@ def _build_legs() -> list[dict]:
     return legs
 
 LEGS = _build_legs()
+
+
+def _resolve_start_leg(raw: str) -> int:
+    """PART2_ROUTE_START -> 0-based leg index (-1 if no leg matches)."""
+    key = raw.strip()
+    for index, leg in enumerate(LEGS):
+        if key.lower() == leg["leg"].lower():
+            return index
+    try:
+        number = int(key)
+    except ValueError:
+        return -1
+    return number - 1 if 1 <= number <= len(LEGS) else -1
 
 
 # --------------------------------------------------------------------------
@@ -639,6 +778,15 @@ def _dist(a, b) -> float:
 
 
 class Part2Route(RouteNode):
+    def __init__(self) -> None:
+        super().__init__()
+        # /policy_switch is rl_sim's gamepad-less policy loader (it takes a
+        # policy dir name).  Create the publisher upfront: a lazily created
+        # endpoint would race discovery on its first sample.  This is never
+        # published to while rclpy.spin() has not started (RouteNode starts a
+        # thread, but that thread's first step waits for /eval_state).
+        self._switch_pub = self.create_publisher(String, "/policy_switch", 1)
+
     # ---- policy switching -------------------------------------------------
     def switch(self, name: str) -> None:
         # Part1's binding table lacks the Part2 trench/band specialists.
@@ -658,7 +806,35 @@ class Part2Route(RouteNode):
             self._emit_plan()
             self._hold(0.45)
             return
-        super().switch(name)
+        try:
+            super().switch(name)
+        except ValueError:
+            # rl_sim can load any policy directory, but the gamepad map only
+            # binds a fixed roster.  The depth plum expert has no combo: rl_sim
+            # takes its dir name on /policy_switch (std_msgs/String).  A fixed
+            # wait is enough there, and the fake kinematic sim ignores the
+            # topic (it keeps following the route's lane command).
+            self._switch_topic(name)
+
+    def switch_topic(self, name: str, hold_s: float = 0.15) -> None:
+        """Load a policy through /policy_switch (no gamepad combo, no press).
+
+        rl_sim loads a TorchScript in a few ms, so this is also the fast path
+        for the plum depth-expert handover: the switch happens within the same
+        control period the route asked for it (a gamepad combo press costs
+        ~0.7 s and the body travels another 0.5 m before the new policy runs).
+        """
+        if name == self._current_policy:
+            return
+        self._switch_pub.publish(String(data=name))
+        self._current_policy = name
+        self._cli = f"switch {name}"
+        self._emit_plan()
+        self.get_logger().info(f"switch -> {name} (/policy_switch)")
+        self._hold(hold_s)
+
+    def _switch_topic(self, name: str) -> None:
+        self.switch_topic(name, hold_s=1.0)
 
     # ---- adaptive lane command (exact training-side gains) ----------------
     @staticmethod
@@ -1013,18 +1189,31 @@ class Part2Route(RouteNode):
         / fallen.  A stall means the lane-projected position made less than
         ``CROSS_STALL_PROGRESS_M`` progress for ``CROSS_STALL_WINDOW_S``; the
         caller may recover (back off + re-align + retry once).
+
+        ``mode="depth"`` (plum): the policy has no command input and ignores
+        /joy, so the lane command below is only for the fake kinematic sim, and
+        the stop/reverse primitives are skipped -- the caller hands the body to
+        the transfer policy right after the gate.
         """
         policy = leg["policy"]
         vx = float(leg["vx"])
         lane_x = float(leg["lane_x"])
         lane_y = float(leg["lane_y"])
         lane_yaw = float(leg["lane_yaw"])
+        depth = leg.get("mode") == "depth"
+        if depth:
+            return self.depth_plum_cross(leg)
         self.switch(policy)
         retry_note = "" if attempt <= 1 else f" (recovery retry {attempt - 1})"
         self._cmd = ("%s(policy=%s, vx=%+.2f, lane=(%+.2f,%+.2f))%s"
                      % (leg["leg"], policy, vx, lane_x, lane_y, retry_note))
-        self._cli = (f"switch {policy}; forward {vx:+.2f} m/s + adaptive lane hold"
-                     + retry_note)
+        if depth:
+            self._cli = (f"switch {policy}; depth policy self-drives "
+                         f"(no command input)")
+        else:
+            self._cli = (f"switch {policy}; forward {vx:+.2f} m/s "
+                         f"+ adaptive lane hold")
+        self._cli += retry_note
         self._corr = {}
         self._emit_plan()
         log = self.get_logger()
@@ -1061,6 +1250,7 @@ class Part2Route(RouteNode):
                 # pre-leg alignment gate is what keeps it on the lane
                 self.command(vx, 0.0, 0.0)
             else:
+                # AdaptiveCommand every velocity expert was trained with.
                 self.command(*self.lane_cmd(p, prev, lane_x, lane_y, lane_yaw, vx))
             prev = p
             self._tick()
@@ -1068,6 +1258,129 @@ class Part2Route(RouteNode):
         p = self.pose()
         crossed = (why == "gate" and not self.fallen())
         return crossed, why, p
+
+    def depth_plum_cross(self, leg: dict):
+        """Composed plum attempt: depth expert crosses the piles, wheeled expert descends.
+
+        The depth actor has no command term (it self-drives and ignores /joy).
+        In the eval runner it also completes the exit-platform step-down, but in
+        the deployment stack its own descent is knife-edge: the body pitches
+        forward off the 0.2 m edge and falls.  So the route splits the attempt:
+        the depth expert crosses the entry platform and pile field, then at
+        ``handover_x`` a wheeled expert takes over on the exit platform (it must
+        be the platform: a wheeled expert taking over on the pile field drops a
+        wheel between piles, which the judge rejects), brakes with a short
+        reverse command, stands, and walks down under a slow lane command.  Both
+        halves are learned policies and the judge only consumes support points,
+        so the recorded trace is one legal attempt; the plan marks the handover.
+
+        ``PART2_PLUM_HANDOVER=none`` keeps a pure depth attempt (used for
+        eval-parity probes and for when the deployment stack catches up).
+        """
+        log = self.get_logger()
+        policy = leg["policy"]
+        handover = str(leg["handover_policy"])
+        handover_x = float(leg["handover_x"])
+        settle_s = float(leg["handover_settle_s"])
+        drive_vx = float(leg["handover_vx"])
+        lane_y = float(leg["lane_y"])
+        lane_yaw = float(leg["lane_yaw"])
+        self.switch(policy)
+        if not handover:
+            # Pure depth attempt (PART2_PLUM_HANDOVER=none): the actor drives the
+            # whole row and the gate is the old exit edge.  The route can only
+            # align and wait; in the deployment stack this usually tips off the
+            # 0.2 m exit edge, which is why the composed path is the default.
+            self._cmd = ("%s(policy=%s, vx=%+.2f)" % (leg["leg"], policy,
+                                                      float(leg["vx"])))
+            self._cli = (f"switch {policy}; depth policy self-drives "
+                         f"(no command input)")
+            self._corr = {}
+            self._emit_plan()
+            log.info("plum cross: pure depth attempt with %s (handover disabled)"
+                     % policy)
+            t0 = self._now()
+            prev = None
+            while self._now() - t0 < float(leg["cross_timeout"]):
+                p = self.pose()
+                if self.fallen():
+                    return False, "fallen", p
+                if leg["stop"](p):
+                    return True, "gate", p
+                self.command(*self.lane_cmd(p, prev, 2.20, lane_y, lane_yaw,
+                                            float(leg["vx"])))
+                prev = p
+                self._tick()
+            return False, "timeout", self.pose()
+        self._cmd = ("%s(policy=%s, vx=%+.2f, handover->%s@x=%+.2f)"
+                     % (leg["leg"], policy, float(leg["vx"]), handover,
+                        handover_x))
+        self._cli = (f"switch {policy}; depth expert self-drives the pile "
+                     f"field; at field x {handover_x:+.2f} switch {handover} "
+                     f"(/policy_switch), stand {settle_s:.1f} s, then forward "
+                     f"{drive_vx:+.2f} m/s down to the gate")
+        self._corr = {}
+        self._emit_plan()
+        log.info("plum cross: depth policy %s crosses the pile field; handover "
+                 "to %s at field x=%+.2f (level x=%+.2f) -- the depth actor "
+                 "cannot be steered and its own exit step-down falls in the "
+                 "deployment stack"
+                 % (policy, handover, handover_x, handover_x - 2.20))
+        t0 = self._now()
+        prev = None
+        driven = False
+        while self._now() - t0 < float(leg["cross_timeout"]):
+            p = self.pose()
+            if self.fallen():
+                return False, "fallen", p
+            if not driven and p.x >= handover_x:
+                log.info("plum handover: switch %s at (%+.2f,%+.2f) level x=%+.2f"
+                         % (handover, p.x, p.y, p.x - 2.20))
+                self.set_cmd("%s(handover=%s@field_x=%+.2f)"
+                             % (leg["leg"], handover, handover_x))
+                self._cli = (f"switch {handover} (/policy_switch); stand "
+                             f"{settle_s:.1f} s; forward {drive_vx:+.2f} m/s "
+                             f"+ lane hold")
+                self._emit_plan()
+                self.switch_topic(handover)
+                # The depth actor crosses at ~2 m/s and the exit platform is only
+                # 0.8 m long: command a short reverse velocity first (like a human
+                # braking a rolling robot), then stand still, then walk down.
+                brake_s = float(leg.get("handover_brake_s", 0.0))
+                t_brake = self._now()
+                while self._now() - t_brake < brake_s:
+                    if self.fallen():
+                        return False, "fallen", self.pose()
+                    self.command(float(leg.get("handover_brake_vx", 0.0)), 0.0, 0.0)
+                    self._tick()
+                t_settle = self._now()
+                while self._now() - t_settle < settle_s:
+                    if self.fallen():
+                        return False, "fallen", self.pose()
+                    self.command(0.0, 0.0, 0.0)
+                    self._tick()
+                prev = self.pose()
+                driven = True
+                continue
+            if driven:
+                if leg["stop"](p):
+                    # Stop the wheels before the caller switches to the locked
+                    # connector: locking wheel hinges while the body is still
+                    # rolling lurches the connector backwards (measured, real_v24
+                    # needed +0.5 m forward and ended -0.5 m back).
+                    self.command(0.0, 0.0, 0.0)
+                    self._hold(PLUM_GATE_SETTLE_S)
+                    return True, "gate", self.pose()
+                self.command(*self.lane_cmd(p, prev, 2.20, lane_y, lane_yaw,
+                                            drive_vx))
+            else:
+                # Pre-handover the depth policy ignores commands; the lane
+                # command is what keeps the fake kinematic sim on the lane.
+                self.command(*self.lane_cmd(p, prev, 2.20, lane_y, lane_yaw,
+                                            float(leg["vx"])))
+            prev = p
+            self._tick()
+        return False, "timeout", self.pose()
 
     def recover_cross(self, leg: dict, why: str) -> bool:
         """Back off along -lane, re-align and report readiness for one retry.
@@ -1112,8 +1425,9 @@ class Part2Route(RouteNode):
         log.info("Part2 route v2: %d legs, connector=%s"
                  % (len(LEGS), TRANSFER_POLICY))
         log.info("tiers: platform=%dcm stairs=%dcm slope=%ddeg trench=%dcm "
-                 "wall=%s(%s)"
+                 "plum=%s wall=%s(%s)"
                  % (PLATFORM_LEVEL, STAIRS_LEVEL, SLOPE_LEVEL, TRENCH_LEVEL,
+                    PLUM_MODE,
                     WALL_VARIANT if WALL_ENABLED else "off",
                     "on" if WALL_ENABLED else "off"))
         for i, leg in enumerate(LEGS):
@@ -1158,8 +1472,33 @@ class Part2Route(RouteNode):
         p = self.pose()
         log.info("route start at (%.2f, %.2f, yaw %.2f) policy=%s"
                  % (p.x, p.y, p.yaw, self._current_policy))
+        start_index = 0
+        raw_start = os.environ.get("PART2_ROUTE_START", "").strip()
+        if raw_start:
+            start_index = _resolve_start_leg(raw_start)
+            if start_index < 0:
+                log.warning(
+                    "PART2_ROUTE_START=%r matches no leg (names: %s); "
+                    "starting at leg 1"
+                    % (raw_start, ", ".join(l["leg"] for l in LEGS)))
+                start_index = 0
+            else:
+                entry = (LEGS[start_index]["transit"][0]
+                         if LEGS[start_index]["transit"]
+                         else LEGS[start_index]["stand"])
+                log.info("PART2_ROUTE_START=%s: starting at leg %d/%d %s "
+                         "(earlier legs skipped; first goto (%+.2f,%+.2f))"
+                         % (raw_start, start_index + 1, len(LEGS),
+                            LEGS[start_index]["leg"], entry[0], entry[1]))
 
         for index, leg in enumerate(LEGS):
+            if index < start_index:
+                # Single-leg real runs: no transit/exit/expert switch of the
+                # earlier legs; the selected leg's own goto chain drives in
+                # from wherever the robot currently stands.
+                log.info("skip leg %d/%d %s (PART2_ROUTE_START)"
+                         % (index + 1, len(LEGS), leg["leg"]))
+                continue
             t_leg0 = self._now()
             self.set_leg(leg["leg"])
             log.info("=== leg %d/%d %s (policy=%s, vx=%+.2f) ==="
@@ -1170,16 +1509,16 @@ class Part2Route(RouteNode):
             if leg.get("bypass"):
                 self._cmd = "%s(bypass transit, no expert)" % leg["leg"]
                 self._cli = ("transit only: go around the plum row at x=2.60 "
-                             "(no deployable blind expert)")
+                             "(PART2_PLUM_MODE=bypass)")
                 self._corr = {}
                 self._emit_plan()
                 self.report(leg["leg"], True,
-                            "TRANSIT ONLY / bypass: no deployable blind plum "
-                            "expert; route goes around the row at x=2.60")
+                            "bypass: PART2_PLUM_MODE=bypass; route goes around "
+                            "the row at x=2.60 (no expert switch)")
                 self.ensure_transfer(announce=True)
                 if not WALL_ENABLED:
                     log.info("Part2 route finished: plum bypassed "
-                             "(no deployable expert)")
+                             "(PART2_PLUM_MODE=bypass)")
                     self.stop(0.5)
                     return
                 continue
@@ -1197,7 +1536,7 @@ class Part2Route(RouteNode):
             crossed, why, pend = self.expert_cross(leg)
             recoveries = 0
             if (not crossed and RECOVER_ENABLED and why in ("stall", "timeout")
-                    and not self.fallen()):
+                    and not leg.get("no_recover") and not self.fallen()):
                 if self.recover_cross(leg, why):
                     recoveries = 1
                     crossed, why2, pend = self.expert_cross(leg, attempt=2)
@@ -1213,16 +1552,16 @@ class Part2Route(RouteNode):
             ok = bool(crossed and post_ok)
             detail = ("policy=%s vx=%+.2f end=(%+.2f,%+.2f,yaw=%+.1fdeg) gate=%s"
                       " post=%s y_err_at_switch=%+.3f yaw_err=%+.1fdeg"
-                      " align_s=%.1f cross_s=%.1f recover=%d"
+                      " align_s=%.1f cross_s=%.1f recover=%d mode=%s"
                       % (leg["policy"], leg["vx"], pend.x, pend.y,
                          math.degrees(pend.yaw), why,
                          "ok" if post_ok else "out", aligned[4], aligned[5],
                          float(self._corr.get("align_s", 0.0)), t_cross,
-                         recoveries))
-            if leg["leg"] == "high_plum":
-                detail += (" TRANSIT_ONLY(no judge-verified deployable blind "
-                           "expert; route report is transit+gate only)")
+                         recoveries, leg.get("mode", "")))
             self.report(leg["leg"], ok, detail)
+            # For the depth plum leg this is the immediate post-gate handover:
+            # zero /joy commands would not stop it, so the transfer policy is
+            # loaded right here (the move_to exit hops then run on the connector).
             self.ensure_transfer(announce=True)
             for pt in leg["exit"]:
                 self.search_goto(pt)
@@ -1235,14 +1574,16 @@ class Part2Route(RouteNode):
                 return
 
         if PLUM_MODE == "bypass":
-            log.info("Part2 route finished: %d/%d legs PASS (plum bypassed: "
-                     "no deployable expert; PASS = integration gate only, "
+            log.info("Part2 route finished: %d/%d legs PASS (plum bypassed via "
+                     "PART2_PLUM_MODE=bypass; PASS = integration gate only, "
                      "judge verdicts: tools/route/replay_field_part2.py)"
                      % (len(LEGS), len(LEGS)))
         else:
-            log.info("Part2 route finished: %d/%d legs PASS (integration gates "
-                     "only; judge verdicts: tools/route/replay_field_part2.py)"
-                     % (len(LEGS), len(LEGS)))
+            wall_note = ("wall %s" % WALL_VARIANT) if WALL_ENABLED else "wall off"
+            log.info("Part2 route finished: %d/%d legs PASS (plum depth crossing, "
+                     "%s; PASS = integration gate only, judge verdicts: "
+                     "tools/route/replay_field_part2.py)"
+                     % (len(LEGS), len(LEGS), wall_note))
         self.stop(0.5)
 
 
