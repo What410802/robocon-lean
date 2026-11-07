@@ -26,10 +26,12 @@
  * 控制周期 = 物理步长 = 0.002 s（500 Hz，与实机主控同量级）。
  */
 
-#include "quadruped_ros2/attitude.hpp" // 状态行里的倾角
-#include "quadruped_ros2/control.hpp"  // kNu（与控制器、站姿表同源）
+#include "quadruped_ros2/attitude.hpp"     // 状态行里的倾角
+#include "quadruped_ros2/control.hpp"      // kNu（与控制器、站姿表同源）
+#include "quadruped_ros2/depth_camera.hpp" // 深度相机（plum 深度策略的 sim 侧输入）
 #include "quadruped_ros2/motor.hpp"
 
+#include "quadruped_ros2/msg/depth_frame.hpp"
 #include "quadruped_ros2/msg/mit_command.hpp"
 #include "quadruped_ros2/msg/motor_state.hpp"
 
@@ -65,6 +67,7 @@ namespace
 
 namespace fs = std::filesystem;
 
+using quadruped_ros2::msg::DepthFrame;
 using quadruped_ros2::msg::MitCommand;
 using quadruped_ros2::msg::MotorState;
 using sensor_msgs::msg::Imu;
@@ -189,6 +192,10 @@ struct Options
     int publish_every = 1; ///< 每多少步发一次反馈（1 = 每步 = 500 Hz）
     /// 每多少步发一次 eval_state（评测 trace 用；0 = 关）。内容为 base/foot/contact 的 JSON。
     int eval_state_every = 0;
+    /// 深度相机：auto（模型里有 depth_cam 就开）/ on（必须有，缺失 = 装配失败）/ off。
+    std::string depth = "auto";
+    /// 每多少步渲一帧深度并发布 /depth_cam（默认 10 步 = 20 ms = 50 Hz，与反馈共用同一 d->time）。
+    int depth_every = 10;
     /// 关节力矩上限 [N·m]。默认 -1 = 自动：优先 tau_max_array，其次标量，最后从模型的
     /// 力矩执行器 `ctrlrange` 读取（blackW = 23.7/23.7/59.25/20）。审计 F1：标量 20 与
     /// 训练/judge 的逐关节限值不等价，必须默认对齐全。
@@ -238,6 +245,8 @@ class SimNode : public rclcpp::Node
         opt.realtime = declare_parameter<bool>("realtime", true);
         opt.publish_every = declare_parameter<int>("publish_every", 1);
         opt.eval_state_every = declare_parameter<int>("eval_state_every", 0);
+        opt.depth = declare_parameter<std::string>("depth", opt.depth);
+        opt.depth_every = declare_parameter<int>("depth_every", opt.depth_every);
         opt.tau_max = declare_parameter<double>("tau_max", opt.tau_max);
         opt.tau_max_array =
             declare_parameter<std::vector<double>>("tau_max_array", opt.tau_max_array);
@@ -275,6 +284,14 @@ class SimNode : public rclcpp::Node
         if (opt.eval_state_every < 0)
         {
             throw std::runtime_error("参数 eval_state_every 不能为负（0 = 关）");
+        }
+        if (opt.depth != "auto" && opt.depth != "on" && opt.depth != "off")
+        {
+            throw std::runtime_error("参数 depth 只能是 auto / on / off，收到：" + opt.depth);
+        }
+        if (opt.depth_every < 1)
+        {
+            throw std::runtime_error("参数 depth_every 必须 ≥ 1（0/负数无效；默认 10 步 = 50 Hz）");
         }
         if (opt.motor_deadzone < 0.0 || opt.motor_noise < 0.0)
         {
@@ -320,6 +337,7 @@ class SimNode : public rclcpp::Node
         state_pub_ = create_publisher<MotorState>("motor_state", LatestQoS());
         imu_pub_ = create_publisher<Imu>("imu", LatestQoS());
         eval_pub_ = create_publisher<std_msgs::msg::String>("eval_state", LatestQoS());
+        depth_pub_ = create_publisher<DepthFrame>("depth_cam", LatestQoS());
         reset_srv_ =
             create_service<Empty>("sim_reset", [this](const std::shared_ptr<Empty::Request>,
                                                       std::shared_ptr<Empty::Response>)
@@ -370,6 +388,19 @@ class SimNode : public rclcpp::Node
         eval_pub_->publish(msg);
     }
 
+    /// 深度帧：`depth` 是 DepthCamera::Render 的输出（64x48 row-major 公制深度）。`sim_time`
+    /// 用同一步的 d->time（不是取消息时的墙钟），与 /motor_state.sim_time 对齐。
+    void PublishDepth(const std::vector<float>& depth, double sim_time)
+    {
+        DepthFrame msg;
+        msg.header.stamp = now();
+        msg.sim_time = sim_time;
+        msg.width = quadruped::depth::DepthCamera::kWidth;
+        msg.height = quadruped::depth::DepthCamera::kHeight;
+        msg.depth = depth;
+        depth_pub_->publish(msg);
+    }
+
   private:
     void OnCommand(const MitCommand::SharedPtr& msg)
     {
@@ -417,6 +448,7 @@ class SimNode : public rclcpp::Node
     rclcpp::Publisher<MotorState>::SharedPtr state_pub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr eval_pub_;
     rclcpp::Publisher<Imu>::SharedPtr imu_pub_;
+    rclcpp::Publisher<DepthFrame>::SharedPtr depth_pub_;
     rclcpp::Service<Empty>::SharedPtr reset_srv_;
 };
 
@@ -775,6 +807,82 @@ int MotorSelfTest()
     return bad == 0 ? 0 : 1;
 }
 
+/// 深度相机自检（`sim_node --depth-self-test <scene.xml>`）：不需要 ROS/窗口，跑完即退。
+/// 用 EGL 离屏渲染场景**默认姿态**的一帧（就是 LoadScene 摆完的样子），把 64x48 row-major
+/// float32（单位 m）写到 /tmp/depth_selftest.f32，供 eval 侧 Python 渲染器对同一场景逐位对拍。
+int DepthSelfTest(const char* scene_path)
+{
+    Options opt;
+    opt.scene = scene_path;
+    Scene scene;
+    std::string err;
+    if (!LoadScene(opt, &scene, &err))
+    {
+        std::fprintf(stderr, "深度自检失败：%s\n", err.c_str());
+        return 1;
+    }
+    mjModel* m = scene.m;
+    std::printf("深度相机自检（EGL 离屏，不需要 ROS/窗口）\n场景：%s\nMuJoCo %s\n",
+                scene.path.c_str(), mj_versionString());
+
+    quadruped::depth::DepthCamera camera;
+    if (!camera.Init(m, false))
+    {
+        std::fprintf(stderr, "深度自检失败：%s\n", camera.error().c_str());
+        return 1;
+    }
+    std::vector<float> depth;
+    if (!camera.Render(m, scene.d, &depth))
+    {
+        std::fprintf(stderr, "深度自检失败：%s\n", camera.error().c_str());
+        return 1;
+    }
+
+    const char* out_path = "/tmp/depth_selftest.f32";
+    std::FILE* file = std::fopen(out_path, "wb");
+    if (file == nullptr)
+    {
+        std::fprintf(stderr, "深度自检失败：无法写 %s\n", out_path);
+        return 1;
+    }
+    const std::size_t written = std::fwrite(depth.data(), sizeof(float), depth.size(), file);
+    std::fclose(file);
+    if (written != depth.size())
+    {
+        std::fprintf(stderr, "深度自检失败：%s 只写了 %zu/%zu 个 float32\n", out_path, written,
+                     depth.size());
+        return 1;
+    }
+
+    double min = std::numeric_limits<double>::infinity();
+    double max = 0.0;
+    double sum = 0.0;
+    std::size_t finite = 0;
+    for (const float value : depth)
+    {
+        if (std::isfinite(value))
+        {
+            ++finite;
+            min = std::min(min, static_cast<double>(value));
+            max = std::max(max, static_cast<double>(value));
+            sum += value;
+        }
+    }
+    const int camera_id = mj_name2id(m, mjOBJ_CAMERA, "depth_cam");
+    const double znear = m->vis.map.znear * m->stat.extent;
+    const double zfar = m->vis.map.zfar * m->stat.extent;
+    std::printf("相机：depth_cam id=%d；输出 %dx%d row-major float32（单位 m）\n", camera_id,
+                quadruped::depth::DepthCamera::kWidth, quadruped::depth::DepthCamera::kHeight);
+    std::printf("模型 vis：znear=%.6g zfar=%.6g extent=%.6g -> 近端 %.6g m / 远端 %.6g m\n",
+                m->vis.map.znear, m->vis.map.zfar, m->stat.extent, znear, zfar);
+    std::printf("深度统计：min=%.6f max=%.6f mean=%.6f finite=%zu/%zu（无命中 = 远端 %.6g m）\n",
+                finite > 0 ? min : 0.0, max,
+                finite > 0 ? sum / static_cast<double>(finite) : 0.0, finite, depth.size(), zfar);
+    std::printf("已写 %s（%zu 个 float32 = %zu 字节）\n", out_path, depth.size(),
+                depth.size() * sizeof(float));
+    return 0;
+}
+
 /// 仿真主循环：**物理 + 渲染都在这一条线程**（主线程），`mjModel`/`mjData` 不被别人碰。
 ///
 /// 两种节奏：
@@ -797,6 +905,15 @@ int SimLoop(SimNode* node)
     const ActuatorIndex idx = BuildIndex(m);
     const ImuAddress imu = FindImu(m);
     const double dt = m->opt.timestep;
+    // 深度相机：模型里有没有 depth_cam（blackW_description.xml 自带，所有场景都 include 它）。
+    // depth:=on 表示"必须有"：与其它装配失败一样直接退出，而不是悄悄跑成盲走。
+    const int depth_camera_id = mj_name2id(m, mjOBJ_CAMERA, "depth_cam");
+    if (opt.depth == "on" && depth_camera_id < 0)
+    {
+        std::fprintf(stderr, "仿真节点装配失败：depth:=on 要求模型里有 depth_cam 相机，"
+                             "但场景 %s 里没有\n", scene.path.c_str());
+        return 1;
+    }
 
     // 逐关节力矩上限：tau_max_array > tau_max 标量 > 模型力矩执行器 ctrlrange。
     // blackW MJCF 的 <motor ctrlrange> 就是关节力矩限幅（23.7/23.7/59.25/20）；
@@ -861,6 +978,11 @@ int SimLoop(SimNode* node)
 
     // 窗口（可选）：GLFW 要求"谁建窗口谁用它"，本函数就在主线程，所以在这里建。
     std::unique_ptr<quadruped::viewer::Window> win;
+    // 深度相机的 mjr 上下文只该跟着**模型默认**的 offsamples 走（eval/Python 渲染器就是默认值）。
+    // 窗口下面会把 m->vis.quality.offsamples 改成 viewer 的 MSAA 选择，那只对已建好的窗口
+    // 上下文有效；深度 Init 之前再改回来，窗口模式的 /depth_cam 数值才与 headless/评测一致
+    // （实测 offsamples 4 vs 0 在近地平线行能差到 ~10 m——不是小噪声）。
+    const int model_offsamples = m->vis.quality.offsamples;
     if (opt.viewer)
     {
         if (opt.viewer_shadow_size > 0)
@@ -901,6 +1023,29 @@ int SimLoop(SimNode* node)
         if (!opt.realtime)
         {
             std::printf("注意：窗口模式下仍按墙钟节流（要全速跑请 viewer:=false）\n");
+        }
+    }
+    // 深度相机：必须**在窗口建好之后**初始化——有窗口就复用 GLFW 已经 make current 的上下文
+    // （同一线程，没必要再开第二个），无窗口才自建 EGL 离屏上下文（见 depth_camera.hpp）。
+    // 失败只影响 /depth_cam：打印一条警告后照常跑，盲走策略与物理完全不受影响。
+    m->vis.quality.offsamples = model_offsamples; // 见窗口前 model_offsamples 的注释
+    quadruped::depth::DepthCamera depth_camera;
+    bool depth_on = false;
+    if (opt.depth != "off" && depth_camera_id >= 0)
+    {
+        if (depth_camera.Init(m, win != nullptr))
+        {
+            depth_on = true;
+            std::printf("深度相机：开（%dx%d，每 %d 步渲一帧 = %.0f Hz；"
+                        "先于同一步的 /motor_state 发布，同一 d->time）\n",
+                        quadruped::depth::DepthCamera::kWidth,
+                        quadruped::depth::DepthCamera::kHeight, opt.depth_every,
+                        1.0 / (dt * static_cast<double>(opt.depth_every)));
+        }
+        else
+        {
+            std::fprintf(stderr, "警告：深度相机初始化失败（%s），/depth_cam 不发；"
+                                 "仿真与盲走策略照常\n", depth_camera.error().c_str());
         }
     }
     mj_forward(m, d); // 先算一遍派生量，第一帧才不是空的
@@ -950,6 +1095,8 @@ int SimLoop(SimNode* node)
     // 看门狗按**控制周期数**算（不是墙上时间）：500 Hz 下 200 ms = 100 步；这样
     // `realtime:=false` 的全速回归与实时跑行为一致（实机上驱动板也是数控制周期的）。
     const int nu = m->nu;
+    std::vector<float> depth_buf; // 深度帧输出（64x48），复用以避免每帧分配
+    int depth_failures = 0;
     const auto step_once = [&]()
     {
         MitCommand cmd;
@@ -1003,6 +1150,23 @@ int SimLoop(SimNode* node)
         }
         mj_step(m, d);
         ++steps;
+
+        // 深度帧：与同一步的 /motor_state 用同一个 d->time，且**先于** PublishFeedback 发出——
+        // 深度策略的消费端要在反馈回调驱动下一步之前先拿到这一帧（见 DepthFrame.msg 的注释）。
+        // 渲染是 64x48 的离屏矩形（实测 ~0.1 ms），不改变物理/发布节奏。
+        if (depth_on && steps % opt.depth_every == 0)
+        {
+            if (depth_camera.Render(m, d, &depth_buf))
+            {
+                depth_failures = 0;
+                node->PublishDepth(depth_buf, d->time);
+            }
+            else if (++depth_failures >= 3)
+            {
+                depth_on = false;
+                std::fprintf(stderr, "警告：深度渲染连续失败，停用 /depth_cam（仿真继续）\n");
+            }
+        }
 
         if (steps % opt.publish_every == 0)
         {
@@ -1099,9 +1263,9 @@ int SimLoop(SimNode* node)
                     d->sensordata[imu.quat + 0], d->sensordata[imu.quat + 1],
                     d->sensordata[imu.quat + 2], d->sensordata[imu.quat + 3]);
             }
-            std::printf("t=%.3f x=%.3f y=%.3f z=%.4f tilt=%.1f ncon=%d cmd=%s", d->time,
+            std::printf("t=%.3f x=%.3f y=%.3f z=%.4f tilt=%.1f ncon=%d cmd=%s depth=%s", d->time,
                         d->qpos[0], d->qpos[1], d->qpos[2], tilt, d->ncon,
-                        (!stale && got) ? "ok" : "damping");
+                        (!stale && got) ? "ok" : "damping", depth_on ? "on" : "off");
             if (wheel_body[0] >= 0 && wheel_body[1] >= 0 && wheel_body[2] >= 0 &&
                 wheel_body[3] >= 0)
             {
@@ -1302,13 +1466,23 @@ int SimLoop(SimNode* node)
 int main(int argc, char** argv)
 {
     std::setvbuf(stdout, nullptr, _IOLBF, 0); // 交互式运行：日志要立刻可见，别等缓冲区满
-    // `--self-test`：只跑电机模型的离线自检（不需要模型/窗口/硬件/ROS），跑完即退，口径与其他任务一致。
-    // 放在 rclcpp::init 之前，免得把未知参数塞给它。
+    // 两个离线自检都放在 rclcpp::init 之前（不需要 ROS，也免得把未知参数塞给它）：
+    //   --self-test                    电机模型的离线自检
+    //   --depth-self-test <scene.xml>  EGL 离屏深度渲染自检（供 eval 侧 Python 逐位对拍）
     for (int i = 1; i < argc; ++i)
     {
         if (std::string(argv[i]) == "--self-test")
         {
             return MotorSelfTest();
+        }
+        if (std::string(argv[i]) == "--depth-self-test")
+        {
+            if (i + 1 >= argc)
+            {
+                std::fprintf(stderr, "用法：%s --depth-self-test <scene.xml>\n", argv[0]);
+                return 1;
+            }
+            return DepthSelfTest(argv[i + 1]);
         }
     }
     rclcpp::init(argc, argv);

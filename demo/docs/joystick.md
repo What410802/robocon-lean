@@ -102,12 +102,18 @@ signed（FR、RR 为 `-10`），与 `robots/blackW/robot.yaml` 一致；运行�
 | `vt_track_v1` | 速度跟随衔接 v1（Part1 位置环；`LB+→`；训练/验收见 `docs/training/VT-RECIPE.md`） |
 | `vt_track_v2` | 速度跟随衔接 v2（四轮共面/跟随奖励，推荐；`LB+↑`；见 §4.2） |
 | `vt_edge_v1` | 轮子掉边恢复专家（自动路线排障，手柄 Back+↑） |
-| `vt_band_v1` | Part2 `stairs_30cm` 专用自适应楼梯专家（`RB+←` / 键盘 `b`；自适应命令，路线实测 vx=0.60） |
+| `vt_band_v1` | Part2 `stairs_30cm` 自适应楼梯专家（`RB+←` / 键盘 `b`；路线实测 vx=0.60）；全场路线里还负责梅花桩出口下降 |
+| `plum_depth_final_v1` | Part2 `plum_1` 深度相机专家（54x6 proprio + 1 帧 48x64 深度；**无 command 项，忽略 `/joy`，自走**；手柄无键位，由 `/policy_switch` 加载） |
 
-Part2 覆盖（2026-10-31 评审）：`row2p_p40w40_v1` 单独 16/20，加上 `s1d_trench_reward_v75_m100`
-后为 **17/20**；`vt_band_v1`（2026-11-04 接入，`RB+←` / 键盘 `b`）补上 `stairs_30cm`；
-仍无前沿模型覆盖的关卡：`slope_45deg`、`plum`（盲走专家 0/200，路线已改为绕行；
-见 `docs/part2/EXPERTS.md` §4）。
+Part2 覆盖（2026-11-07 评审）：`row2p_p40w40_v1` 单独 16/20，加上 `s1d_trench_reward_v75_m100`
+后为 17/20；`vt_band_v1`（2026-11-04 接入，`RB+←` / 键盘 `b`）补上 `stairs_30cm`；
+`plum_depth_final_v1`（2026-11-07 接入，深度相机）补上 `plum_1` 的判分侧 200 分档；
+仍无前沿模型覆盖的关卡只剩 `slope_45deg`（按用户要求本轮不做）。
+详见 `docs/part2/EXPERTS.md`。
+
+`/policy_switch`（`std_msgs/String`，payload = 策略目录名，如 `plum_depth_final_v1` 或
+`vt_band_v1`）是 rl_sim 的 gamepad-less 加载入口（实测 ~3 ms），自动路线用它切换深度专家/
+下降专家；手柄键表不变。
 `RB+十字上` 保持 EnterRL，因此楼梯专家改用 `RB+十字左`（原空键位），不冲突。
 `vt_pose_v1` / `vt_edge_v1` / `vt_track_v1` / `vt_track_v2` 是操作辅助模型（**不是障碍策略**），只在 launch 或自动路线里使用。
 `vt_track_v2` 是推荐的速度衔接（`transfer_policy:=vt_track_v2`；v1 保留作对照）；首次使用先用
@@ -179,7 +185,10 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=2 \
 - Part2 为 RL-only：固定动作（Back+…）在 `part:=2` 下不生效。
 - 官方整场地图人工查看：`full_field:=true`（场景 `scenes/part2/full_field/`，只用于人工检查/驾驶，
   **判分仍走单关场景**）。
-- 仍无前沿模型的关卡：`stairs_30cm`、`slope_45deg`、`plum_1`。
+- 梅花桩 `plum_1`：`policy_name:=plum_depth_final_v1`（深度相机专家，自走；需要 `sim_node` 的
+  `/depth_cam`，默认 `depth:=auto` 自动开）。它没有 command 项，`/joy` 摇杆无效；
+  部署栈的出口 0.2 m 台阶在自动路线里交给轮式专家（见 `docs/part2/ROUTE.md` §6.4）。
+- 仍无前沿模型的关卡：`slope_45deg`（按用户要求本轮不做；其余五类 + plum 均有专家）。
 
 ## 7. 排错
 

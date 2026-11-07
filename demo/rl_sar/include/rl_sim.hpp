@@ -27,7 +27,9 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/joy.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/empty.hpp>
+#include "quadruped_ros2/msg/depth_frame.hpp"
 #include "quadruped_ros2/msg/mit_command.hpp"
 #include "quadruped_ros2/msg/motor_state.hpp"
 
@@ -78,6 +80,14 @@ private:
     sensor_msgs::msg::Joy joy_msg;
     quadruped_ros2::msg::MitCommand mit_command_msg;
     quadruped_ros2::msg::MotorState motor_state_msg;
+    // Depth-conditioned policies only: sim_node publishes metric planar depth on
+    // /depth_cam once per policy step, and the policy is called with it as the
+    // second input.  Blind policies never touch these members.
+    quadruped_ros2::msg::DepthFrame depth_frame_msg;
+    double depth_sim_time = -1.0;
+    int depth_frames = 0;
+    rclcpp::Subscription<quadruped_ros2::msg::DepthFrame>::SharedPtr depth_subscriber;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr policy_switch_subscriber;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscriber;
     rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_subscriber;
@@ -88,6 +98,10 @@ private:
     void CmdvelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
     void MotorStateCallback(const quadruped_ros2::msg::MotorState::SharedPtr msg);
     void JoyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
+    void DepthCallback(const quadruped_ros2::msg::DepthFrame::SharedPtr msg);
+    void PolicySwitchCallback(const std_msgs::msg::String::SharedPtr msg);
+    bool DepthReady(double sim_time) const;
+    torch::Tensor DepthInput() const;
     std::uint32_t KeyboardMask() const;
     void ControlStep(double sim_time);
 

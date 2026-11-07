@@ -438,7 +438,16 @@ void RL::ValidateRobotManifest(std::string robot_name, bool check_loaded_params)
     }
     const YAML::Node man = YAML::LoadFile(manifest_path.string());
     const int num_dofs = man["num_dofs"].as<int>();
-    const YAML::Node obs = man["obs_contract"];
+    // Depth policies are command-free (54 x 6); they are declared by the robot
+    // manifest's obs_contract_depth instead of the ordinary 57 x 6 contract.
+    const YAML::Node obs = this->params.depth_enabled
+        ? man["obs_contract_depth"] : man["obs_contract"];
+    if (!obs.IsDefined() || obs.IsNull())
+    {
+        throw std::runtime_error(
+            "robot manifest missing " + std::string(this->params.depth_enabled
+                ? "obs_contract_depth" : "obs_contract") + ": " + manifest_path.string());
+    }
     const int num_obs = obs["num_observations"].as<int>();
     const int history = obs["history"].as<int>();
     const std::vector<int> mapping = ReadVectorFromYaml<int>(man["joint_mapping"]);
@@ -591,6 +600,27 @@ void RL::ReadYamlRL(std::string robot_path)
     this->params.action_scale = torch::tensor(ReadVectorFromYaml<double>(config["action_scale"])).view({1, -1});
     this->params.wheel_indices = ReadVectorFromYaml<int>(config["wheel_indices"]);
     this->params.lock_wheels = config["lock_wheels"] ? config["lock_wheels"].as<bool>() : false;
+    // Optional depth camera.  A policy without the block behaves exactly as before
+    // (one-input forward); a depth policy is validated against the robot's
+    // obs_contract_depth and waits for /depth_cam before its first inference.
+    this->params.depth_enabled = false;
+    if (config["depth"] && config["depth"].IsMap() && config["depth"]["enabled"]
+        && config["depth"]["enabled"].as<bool>())
+    {
+        const YAML::Node depth = config["depth"];
+        this->params.depth_enabled = true;
+        this->params.depth_width = depth["width"].as<int>();
+        this->params.depth_height = depth["height"].as<int>();
+        this->params.depth_cutoff = depth["cutoff"].as<double>();
+        this->params.depth_min_depth = depth["min_depth"].as<double>();
+        if (this->params.depth_width <= 0 || this->params.depth_height <= 0
+            || this->params.depth_cutoff <= 0.0
+            || this->params.depth_min_depth < 0.0
+            || this->params.depth_min_depth >= this->params.depth_cutoff)
+        {
+            throw std::runtime_error("policy config depth block is invalid: " + config_path);
+        }
+    }
     this->params.num_of_dofs = config["num_of_dofs"].as<int>();
     this->params.lin_vel_scale = config["lin_vel_scale"].as<double>();
     this->params.ang_vel_scale = config["ang_vel_scale"].as<double>();

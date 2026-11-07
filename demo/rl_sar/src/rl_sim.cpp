@@ -11,6 +11,7 @@
 #include <iostream>
 #include <exception>
 #include <cstdlib>
+#include <iomanip>
 
 #include "command_limit.hpp"
 #include "input_map.hpp"
@@ -18,6 +19,7 @@
 #include <torch/utils.h> // torch::set_num_threads (libtorch >= 2.x no longer pulls it in via torch/script.h)
 
 #include <chrono>
+#include <cmath>
 
 namespace
 {
@@ -107,6 +109,18 @@ RL_Sim::RL_Sim()
     this->motor_state_subscriber = this->create_subscription<quadruped_ros2::msg::MotorState>(
         "motor_state", LatestQoS(),
         [this] (const quadruped_ros2::msg::MotorState::SharedPtr msg) {this->MotorStateCallback(msg);}
+    );
+    // Depth camera for depth-conditioned policies (sim_node publishes it; blind
+    // policies never read it) and the automation policy-switch hook: the Part2
+    // route asks for the plum depth policy here because all easy gamepad combos
+    // are already taken.
+    this->depth_subscriber = this->create_subscription<quadruped_ros2::msg::DepthFrame>(
+        "depth_cam", LatestQoS(),
+        [this] (const quadruped_ros2::msg::DepthFrame::SharedPtr msg) {this->DepthCallback(msg);}
+    );
+    this->policy_switch_subscriber = this->create_subscription<std_msgs::msg::String>(
+        "policy_switch", LatestQoS(),
+        [this] (const std_msgs::msg::String::SharedPtr msg) {this->PolicySwitchCallback(msg);}
     );
 
     // service
@@ -248,7 +262,10 @@ void RL_Sim::SwitchPolicy(const std::string &policy_name)
     this->rl_init_done = false;
     try
     {
+        const auto switch_start = std::chrono::steady_clock::now();
         this->InitRL(this->robot_name + "/" + policy_name);
+        const auto switch_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - switch_start).count();
         this->rl_init_done = true;
         this->control.x = 0.0;
         this->control.y = 0.0;
@@ -258,7 +275,8 @@ void RL_Sim::SwitchPolicy(const std::string &policy_name)
         while (this->output_dof_vel_queue.try_pop(drop)) {}
         while (this->output_dof_tau_queue.try_pop(drop)) {}
         this->episode_length_buf = 0;
-        std::cout << std::endl << LOGGER::INFO << "[policy] switched to " << policy_name << std::endl;
+        std::cout << std::endl << LOGGER::INFO << "[policy] switched to " << policy_name
+                  << " (" << switch_ms << " ms)" << std::endl;
     }
     catch (const std::exception &e)
     {
@@ -432,6 +450,67 @@ void RL_Sim::MotorStateCallback(const quadruped_ros2::msg::MotorState::SharedPtr
     this->ControlStep(msg->sim_time);
 }
 
+void RL_Sim::DepthCallback(const quadruped_ros2::msg::DepthFrame::SharedPtr msg)
+{
+    // Keep the newest frame only (LatestQoS).  Size / staleness checks are done in
+    // DepthReady() when a depth policy actually asks for an inference.
+    if (msg->depth.empty())
+    {
+        return;
+    }
+    this->depth_frame_msg = *msg;
+    this->depth_sim_time = msg->sim_time;
+    this->depth_frames++;
+}
+
+void RL_Sim::PolicySwitchCallback(const std_msgs::msg::String::SharedPtr msg)
+{
+    if (!msg->data.empty())
+    {
+        this->SwitchPolicy(msg->data);
+    }
+}
+
+bool RL_Sim::DepthReady(double sim_time) const
+{
+    if (!this->params.depth_enabled)
+    {
+        return true;
+    }
+    if (this->depth_sim_time < 0.0)
+    {
+        return false;
+    }
+    const std::size_t expected = static_cast<std::size_t>(this->params.depth_width)
+                               * static_cast<std::size_t>(this->params.depth_height);
+    if (this->depth_frame_msg.depth.size() != expected)
+    {
+        return false;
+    }
+    // sim_node renders one frame per 20 ms of sim time; accept the newest frame
+    // if it is at most 50 ms older than the current control stamp.
+    return std::abs(sim_time - this->depth_sim_time) <= 0.05;
+}
+
+torch::Tensor RL_Sim::DepthInput() const
+{
+    // Same normalization as eval/robocon_eval/policy_runner.py::render_depth and
+    // the training camera: non-positive (no hit) -> cutoff, clamp to
+    // [min_depth, cutoff], divide by cutoff.
+    const std::vector<float> &raw = this->depth_frame_msg.depth;
+    const int width = this->params.depth_width;
+    const int height = this->params.depth_height;
+    const float cutoff = static_cast<float>(this->params.depth_cutoff);
+    const float near = static_cast<float>(this->params.depth_min_depth);
+    std::vector<float> normalized(raw.size());
+    for (std::size_t i = 0; i < raw.size(); ++i)
+    {
+        const float d = raw[i] > 0.0f ? raw[i] : cutoff;
+        normalized[i] = std::min(std::max(d, near), cutoff) / cutoff;
+    }
+    return torch::tensor(normalized, torch::kFloat32).view({1, 1, height, width});
+}
+
 void RL_Sim::ControlStep(double sim_time)
 {
     // Both control and inference are paced by SIM time - not by "one step per feedback message" and not
@@ -471,6 +550,19 @@ void RL_Sim::RunModel()
 {
     if (this->rl_init_done && simulation_running)
     {
+        if (!this->DepthReady(this->last_control_sim_time))
+        {
+            // The first inference after switching to a depth policy can beat the
+            // next /depth_cam frame by one control period; hold the previous
+            // command instead of feeding the policy an empty image.
+            static int waiting = 0;
+            if (waiting++ < 3)
+            {
+                std::cout << std::endl << LOGGER::WARNING
+                          << "waiting for /depth_cam before the first depth inference" << std::endl;
+            }
+            return;
+        }
         this->episode_length_buf += 1;
         this->obs.ang_vel = torch::tensor(this->robot_state.imu.gyroscope).unsqueeze(0);
         if (this->control.navigation_mode)
@@ -523,6 +615,18 @@ torch::Tensor RL_Sim::Forward()
         clamped_obs = torch::nan_to_num(clamped_obs, 0.0, 100.0, -100.0);
     }
 
+    // Depth policies are exported as policy(obs_1d, [1x1xHxW depth]); blind ones
+    // keep the historical single-input call.  The image is normalized exactly like
+    // the eval runner / training camera (see DepthInput()).
+    const auto run_policy = [this](const torch::Tensor &input)
+    {
+        if (!this->params.depth_enabled)
+        {
+            return this->model.forward({input}).toTensor();
+        }
+        return this->model.forward({input, std::vector<torch::Tensor>{this->DepthInput()}}).toTensor();
+    };
+
     torch::Tensor actions;
     if (this->params.observations_history.size() != 0)
     {
@@ -539,11 +643,11 @@ torch::Tensor RL_Sim::Forward()
         }
         this->history_obs_buf.insert(clamped_obs);
         this->history_obs = this->history_obs_buf.get_obs_vec(this->params.observations_history);
-        actions = this->model.forward({this->history_obs}).toTensor();
+        actions = run_policy(this->history_obs);
     }
     else
     {
-        actions = this->model.forward({clamped_obs}).toTensor();
+        actions = run_policy(clamped_obs);
     }
 
     if (!torch::isfinite(actions).all().item<bool>())
@@ -569,6 +673,36 @@ torch::Tensor RL_Sim::Forward()
         for (int i = 0; i < int(actions.numel()); ++i)
             debug_csv << actions[0][i].item<double>() << (i + 1 == int(actions.numel()) ? "\n" : ",");
         debug_count++;
+    }
+    // Depth-policy deployment dump (RL_DEPTH_DEBUG=1): the exact policy input (obs
+    // history + the raw metric depth frame that DepthInput() normalizes) and the raw
+    // model output, so this C++ inference can be compared bit-for-bit with the same
+    // policy run from Python on identical inputs (demo/tests/check_depth_inference.py).
+    if (this->params.depth_enabled && std::getenv("RL_DEPTH_DEBUG") != nullptr)
+    {
+        static int depth_debug_count = 0;
+        static const int depth_debug_max = []() {
+            const char *m = std::getenv("RL_DEPTH_DEBUG_MAX");
+            return (m != nullptr) ? std::max(1, std::atoi(m)) : 40;
+        }();
+        static std::ofstream depth_debug_csv("/tmp/rl_depth_debug.csv", std::ios::trunc);
+        if (depth_debug_count < depth_debug_max)
+        {
+            const torch::Tensor &policy_input =
+                (this->params.observations_history.size() != 0) ? this->history_obs : clamped_obs;
+            depth_debug_csv << std::setprecision(17)
+                            << this->last_control_sim_time << ";" << this->depth_frame_msg.sim_time << ";";
+            for (int i = 0; i < int(policy_input.numel()); ++i)
+                depth_debug_csv << policy_input[0][i].item<double>()
+                                << (i + 1 == int(policy_input.numel()) ? ";" : ",");
+            for (int i = 0; i < int(actions.numel()); ++i)
+                depth_debug_csv << actions[0][i].item<double>()
+                                << (i + 1 == int(actions.numel()) ? ";" : ",");
+            const auto &raw_depth = this->depth_frame_msg.depth;
+            for (int i = 0; i < int(raw_depth.size()); ++i)
+                depth_debug_csv << raw_depth[i] << (i + 1 == int(raw_depth.size()) ? "\n" : ",");
+            depth_debug_count++;
+        }
     }
     if (this->params.clip_actions_upper.numel() != 0 && this->params.clip_actions_lower.numel() != 0)
     {

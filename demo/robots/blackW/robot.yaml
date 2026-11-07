@@ -48,6 +48,33 @@ obs_contract:
     actions: 1.0
   clip: 100.0
   wheel_dof_pos_zeroed: true
+# Depth-conditioned policies (currently plum_depth_final_v1) see one 48x64 depth
+# frame plus a command-free 54-D proprio frame, so they declare their own
+# observation contract.  PD gains, action scaling and joint mapping are shared
+# with the ordinary 57-D contract above.  The camera itself is described by the
+# policy directory's depth.json; demo/tests/check_policy_contracts.py keeps the
+# two in sync.
+obs_contract_depth:
+  num_observations: 54
+  terms: [ang_vel_body, gravity_vec, dof_pos, dof_vel, actions]
+  history: 6
+  history_order: newest_first
+  layout: term_major_concat
+  scales:
+    ang_vel_body: 0.25
+    gravity_vec: 1.0
+    dof_pos: 1.0
+    dof_vel: 0.05
+    actions: 1.0
+  clip: 100.0
+  wheel_dof_pos_zeroed: true
+  depth:
+    camera_name: depth_cam
+    parent_body: d435_link
+    width: 64
+    height: 48
+    cutoff: 3.0
+    min_depth: 0.10
 spawn:
   part1: [3.7, -9.0, 0.676, 0.0]
   part2_source: scenes/part2/part2_official_levels.json

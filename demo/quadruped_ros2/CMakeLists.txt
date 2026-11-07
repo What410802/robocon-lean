@@ -32,8 +32,11 @@ endif()
 # default so CMake 4.x does not emit the CMP0072 dev warning and the link set cannot flip later.
 set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(mujoco REQUIRED)
-# 截图诊断（viewer.hpp 的 SavePpm）直接用 glReadPixels/glPixelStorei，所以要显式链 OpenGL
-find_package(OpenGL REQUIRED)
+# 截图诊断（viewer.hpp 的 SavePpm）直接用 glReadPixels/glPixelStorei，所以要显式链 OpenGL。
+# EGL 组件给深度相机（depth_camera.hpp）用：无窗口时它自己建离屏 GL 上下文，而 libmujoco
+# 对 GL 没有 DT_NEEDED（运行时自己 dlopen），所以 EGL 必须由可执行文件显式链上。
+# EGL 头/库由 pixi demo 环境提供（conda libegl-devel）；CMake ≥ 3.10 会给出 OpenGL::EGL。
+find_package(OpenGL REQUIRED COMPONENTS OpenGL EGL)
 find_package(glfw3 REQUIRED)
 find_package(Threads REQUIRED)
 
@@ -43,6 +46,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
     "msg/MitCommand.msg"
     "msg/MotorState.msg"
     "msg/ControlStatus.msg"
+    "msg/DepthFrame.msg"
     DEPENDENCIES std_msgs
 )
 
@@ -75,6 +79,7 @@ target_link_libraries(sim_node
     mujoco::mujoco
     glfw
     OpenGL::GL
+    OpenGL::EGL # 深度相机自建 EGL 离屏上下文（include/quadruped_ros2/depth_camera.hpp）
     Threads::Threads
 )
 

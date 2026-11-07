@@ -27,6 +27,16 @@
   命令安全限幅（`command_limit.hpp`）、`/eval_state` 遥测、robot.yaml 契约预检。
 - **策略工程化**：`policy/<robot>/{base.yaml,knobs.hpp,fsm.hpp,behaviors/}` 的团队策略/specialist
   配置与固定动作姿态。
+- **深度相机（本轮新增，上游没有）**：`quadruped_ros2/include/quadruped_ros2/depth_camera.hpp`
+  + `msg/DepthFrame.msg`。`sim_node` 用 EGL 设备显示离屏渲染相机贴图 64x48 公制平面深度
+  （只画 geom group 0；`mjRND_SEGMENT|mjRND_IDCOLOR`、`readDepthMap=mjDEPTH_ZEROFAR`、
+  reverse-Z→米、上下翻转，与 mujoco-python 的 depth 渲染逐位一致），有窗口时复用 GLFW 上下文，
+  每 `depth_every` 步先于 `/motor_state` 发布 `/depth_cam`；失败一次性告警后停发，仿真与盲走不受影响。
+  `rl_sim` 新增深度策略输入路径（`policy(obs_1d, [1x1xHxW])`）与 `RL_DEPTH_DEBUG` 对拍 dump。
+- **`/policy_switch`（本轮新增）**：`std_msgs/String`（payload = policy 目录名）直接加载 TorchScript，
+  供 Part2 自动路线在 leg 内切换深度专家/下降专家；不复用手柄组合键（~0.7 s 太慢）。
+- **构建**：`rl_sar` 的 C++ 标准 17→20（PyPI torch 2.14 的 ATen 头文件硬性要求），
+  `find_package(Torch)` 改为从 demo 环境的 Python 解释器定位 PyPI torch 的 CMake 包。
 
 ## 3. BL-6：blackW 轮碰撞 geom 命名
 

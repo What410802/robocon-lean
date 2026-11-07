@@ -6,7 +6,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(rl_sar VERSION 3.0.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+# The 2.14 torch wheel headers require C++20 (ATen/ATen.h hard-errors on
+# older standards); the rest of this package is plain C++17 code.
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(NOT CMAKE_BUILD_TYPE)
@@ -22,7 +24,25 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(quadruped_ros2 REQUIRED) # messages: MitCommand / MotorState (@20261005_ros2)
-find_package(Torch REQUIRED)          # libtorch from the pixi environment (root pixi.toml)
+
+# libtorch comes from the PyPI torch wheel (the same 2.14.1 cpu build the eval
+# judge runs), not from a conda libtorch package: conda libtorch 2.14 cannot
+# coexist with mujoco 3.11 in one environment.  Ask the environment's python
+# where the wheel is, then point find_package() at its CMake config.
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" -c "import torch, os; print(os.path.dirname(torch.__file__))"
+    OUTPUT_VARIABLE TORCH_PYTHON_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE TORCH_LOOKUP_RESULT)
+if(NOT TORCH_LOOKUP_RESULT EQUAL 0 OR TORCH_PYTHON_DIR STREQUAL "")
+    message(FATAL_ERROR "cannot locate the torch python package; no PyPI torch in this environment (pixi install -e demo)")
+endif()
+list(APPEND CMAKE_PREFIX_PATH "${TORCH_PYTHON_DIR}")
+find_package(Torch REQUIRED)          # stock TorchConfig.cmake shipped inside the wheel
+# The wheel's TorchConfig/Caffe2 config quotes the main libraries by absolute path
+# but still lists plain names (c10); give the linker the wheel's lib dir too.
+link_directories("${TORCH_PYTHON_DIR}/lib")
 find_package(TBB REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(Threads REQUIRED)
@@ -47,6 +67,10 @@ target_link_libraries(rl_sim rl_sdk)
 ament_target_dependencies(rl_sim rclcpp sensor_msgs geometry_msgs std_srvs quadruped_ros2)
 
 install(TARGETS rl_sim DESTINATION lib/${PROJECT_NAME})
+# The wheel's libtorch lives under site-packages/torch/lib.  Let CMake put every
+# linked library directory on the installed binary's rpath, so `ros2 run`
+# works without an LD_LIBRARY_PATH dance.
+set_target_properties(rl_sim PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # Header-only self-tests: no ROS graph, no sim, no gamepad. They live in test/ because they are not
 # part of the node. Built unconditionally so `ros2 run rl_sar <name>` always works; the CTest

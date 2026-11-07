@@ -11,7 +11,9 @@ Policy weights (policy.pt / best.pt) are local-only: a checkout without them rep
 from __future__ import annotations
 
 import hashlib
+import json
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import yaml
@@ -36,6 +38,52 @@ def fail(where: str, msg: str) -> None:
     raise SystemExit(1)
 
 
+def _camera_attrs(description_file: Path, camera_name: str) -> dict:
+    """The named camera element from the robot description, as plain attributes."""
+    root = ET.parse(description_file).getroot()
+    for cam in root.iter("camera"):
+        if cam.get("name") == camera_name:
+            return dict(cam.attrib)
+    return {}
+
+
+def _check_depth_contract(where: str, policy_dir: Path, obs: dict, man: dict) -> None:
+    """Keep depth.json, the policy config block and the robot description in sync.
+
+    Three places describe the same camera: the policy directory's depth.json
+    (drives the eval runner and the demo depth topic), robot.yaml
+    obs_contract_depth.depth (declares what the deployment expects) and the
+    <camera> element in the robot XML (what sim_node actually renders).  A
+    mismatch here is exactly the kind of silent drift that would feed the policy
+    an image from a different camera.
+    """
+    depth_json = policy_dir / "depth.json"
+    if not depth_json.is_file():
+        fail(where, "depth policy is missing depth.json")
+    contract = json.loads(depth_json.read_text())
+    expect = obs.get("depth") or {}
+    for key in ("camera_name", "parent_body", "width", "height", "cutoff", "min_depth"):
+        if contract.get(key) != expect.get(key):
+            fail(where, f"depth.json {key}={contract.get(key)!r} != robot.yaml {expect.get(key)!r}")
+    # The policy config repeats the camera block so the deployment loader can pick
+    # it up from config.yaml alone (rl_sdk.cpp reads it there).
+    config = payload(yaml.safe_load((policy_dir / "config.yaml").read_text()))
+    for key in ("camera_name", "width", "height", "cutoff", "min_depth"):
+        if (config.get("depth") or {}).get(key) != contract.get(key):
+            fail(where, f"config.yaml depth.{key} != depth.json {key}")
+    # ... and the robot description's <camera> element is what sim_node renders.
+    description = ROOT / man["description_file"]
+    cam = _camera_attrs(description, contract["camera_name"])
+    if not cam:
+        fail(where, f"robot description has no camera {contract['camera_name']!r}")
+    for key in ("pos", "quat"):
+        got = [float(v) for v in cam.get(key, "").split()]
+        if len(got) != len(contract[key]) or any(abs(a - b) > 1e-6 for a, b in zip(got, contract[key])):
+            fail(where, f"robot camera {key}={cam.get(key)!r} != depth.json {contract[key]!r}")
+    if abs(float(cam.get("fovy", "nan")) - float(contract["fovy"])) > 1e-6:
+        fail(where, f"robot camera fovy={cam.get('fovy')!r} != depth.json {contract['fovy']!r}")
+
+
 def main() -> int:
     checked = 0
     for robot, man in ROBOTS.items():
@@ -54,7 +102,17 @@ def main() -> int:
                     fail(where, f"{key} length != {n}")
             if cfg.get("action_scale") and len(cfg["action_scale"]) != n:
                 fail(where, "action_scale length mismatch")
-            obs = man["obs_contract"]
+            depth = cfg.get("depth") or {}
+            if depth.get("enabled"):
+                # Depth policies are command-free (54 x 6) and carry their camera
+                # in depth.json; the robot manifest declares the matching
+                # observation contract under obs_contract_depth.
+                obs = man.get("obs_contract_depth") or {}
+                if not obs:
+                    fail(where, "depth policy but robot.yaml has no obs_contract_depth")
+                _check_depth_contract(where, cfg_path.parent, obs, man)
+            else:
+                obs = man["obs_contract"]
             if cfg.get("num_observations") and cfg["num_observations"] != obs["num_observations"]:
                 fail(where, "num_observations mismatch")
             if cfg.get("observations") and list(cfg["observations"]) != list(obs["terms"]):

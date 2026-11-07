@@ -140,6 +140,14 @@ struct ModelParams
     // Locked-wheel (12-DoF point-foot) mode: wheel actions ignored, wheel joints
     // held at default q with rl_kp/rl_kd; ordinary wheel mode keeps velocity.
     bool lock_wheels = false;
+    // Optional depth camera (policy config.yaml "depth:" block).  A depth policy
+    // is called as model.forward(obs, [1x1xHxW depth]) and never reads the
+    // command terms; the image arrives on /depth_cam from sim_node.
+    bool depth_enabled = false;
+    int depth_width = 0;
+    int depth_height = 0;
+    double depth_cutoff = 0.0;     // metres; larger distances are clipped to this
+    double depth_min_depth = 0.0;  // metres; nearer distances are clipped to this
     int num_of_dofs;
     double lin_vel_scale;
     double ang_vel_scale;

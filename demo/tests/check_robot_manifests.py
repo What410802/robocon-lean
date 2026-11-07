@@ -54,14 +54,30 @@ def main() -> int:
         act = d["action_contract"]
         if len(act["scale"]) != n or act["dim"] != n:
             fail(name, "action_contract dim/scale mismatch")
+        # The ordinary contract is always present; depth-conditioned policies
+        # declare a second command-free one (see demo/robots/blackW/robot.yaml).
+        contracts = {"obs_contract": d.get("obs_contract"),
+                     "obs_contract_depth": d.get("obs_contract_depth")}
+        for contract_name, obs in contracts.items():
+            if obs is None:
+                if contract_name == "obs_contract":
+                    fail(name, "missing obs_contract")
+                continue
+            total = 0
+            for term in obs["terms"]:
+                total += TERM_WIDTHS.get(term, n)
+            if total != obs["num_observations"]:
+                fail(name, f"{contract_name} terms sum {total} != num_observations {obs['num_observations']}")
+            if obs.get("history", 0) < 1:
+                fail(name, f"{contract_name} history must be >= 1")
+            if contract_name == "obs_contract_depth":
+                depth = obs.get("depth") or {}
+                for key in ("camera_name", "parent_body", "width", "height", "cutoff", "min_depth"):
+                    if key not in depth:
+                        fail(name, f"obs_contract_depth.depth has no {key}")
+                if depth["min_depth"] >= depth["cutoff"]:
+                    fail(name, "obs_contract_depth min_depth must be < cutoff")
         obs = d["obs_contract"]
-        total = 0
-        for term in obs["terms"]:
-            total += TERM_WIDTHS.get(term, n)
-        if total != obs["num_observations"]:
-            fail(name, f"obs terms sum {total} != num_observations {obs['num_observations']}")
-        if obs.get("history", 0) < 1:
-            fail(name, "obs history must be >= 1")
         desc = ROOT / d["description_file"]
         if not desc.is_file():
             fail(name, f"description_file missing: {desc}")

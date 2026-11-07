@@ -23,7 +23,7 @@ demo/
 
 ## 构建
 
-环境来自仓库根 `pixi.toml` 的 `demo` 环境（ROS 2 Humble + MuJoCo + CPU libtorch）：
+环境来自仓库根 `pixi.toml` 的 `demo` 环境（ROS 2 Humble + MuJoCo + torch 2.14.1+cpu，PyPI CPU 轮子；与 eval 同版本，libtorch 由策略侧 C++ 直接链接）：
 
 ```bash
 # 仓库根目录
@@ -54,13 +54,30 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=2 \
 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
     policy_name:=vt_pose_v1 route:=part1 viewer:=false realtime:=true
 
+# Part2 一键自动整场（六类全开：平台/楼梯/斜坡/沟壑/梅花桩/高墙；约 20 min 1×）
+PART1_ROUTE_JUDGE=0 \
+PART1_RECORD_PATH=$PWD/artifacts/part2_route3/real_v23_states.jsonl \
+PART1_RECORD_PLAN_PATH=$PWD/artifacts/part2_route3/real_v23_plan.jsonl \
+ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route:=part2 \
+    policy_name:=vt_locked12 transfer_policy:=vt_locked12 \
+    viewer:=false realtime:=true eval_state_every:=10 stop_on_fail:=true
+
 # black（12 DoF，历史对照）
 ros2 launch rl_sar rl_sim_all.launch.py robot:=black part:=1 policy_name:=himloco
 ```
 
 关键 launch 参数：`robot:=blackW|black`、`part:=1|2`、`level:=<Part2 key>`、`policy_name:=...`、
 `scene:=`（显式覆盖场景）、`viewer`（无 `DISPLAY` 时自动无窗口）、`realtime`（无窗口时是否按墙钟节流）、
-`joy`、`follow_camera`、`status_period_s`、`publish_every` / `eval_state_every`。
+`joy`、`follow_camera`、`status_period_s`、`publish_every` / `eval_state_every`、
+`depth`（`auto|on|off`，默认 auto：场景有 `depth_cam` 就发 `/depth_cam`）、
+`depth_every`（多少物理步渲一帧，默认 10 = 50 Hz）。
+
+话题（本仓库新增）：
+
+- `/depth_cam`（`quadruped_ros2/msg/DepthFrame`）：64x48 公制平面深度，50 Hz；先于同一步
+  `/motor_state` 发布，同一 `d->time`。深度策略（plum）消费；盲目策略不受影响。
+- `/policy_switch`（`std_msgs/msg/String`）：payload 为 policy 目录名，`rl_sim` 直接加载
+  TorchScript（实测 ~3 ms），供自动路线切换深度专家/下降专家；手柄键位不变。
 
 无头/自动化一律 `viewer:=false realtime:=false`（全速）；**1x 实时演示**用
 `viewer:=false realtime:=true`。
@@ -95,7 +112,8 @@ pixi run -e eval robocon-eval replay-part2 --trace artifacts/traces/trench_30cm.
 本地权重（`policy.pt`，不提交）。选中保留的 blackW 策略：
 
 `flat`、`stair`、`obstacle`、`row2p_p40w40_v1`、`st30_ppo_st30_s100_600`、
-`s1d_trench_reward_v75_m100`、`vt_band_v1`、`vt_pose_v1`、`vt_edge_v1`；
+`s1d_trench_reward_v75_m100`、`vt_band_v1`、`vt_pose_v1`、`vt_edge_v1`、
+`plum_depth_final_v1`（深度相机梅花桩专家，含 `depth.json` 契约）；
 black：`himloco`（`best.pt`）。固定动作姿态在 `policy/blackW/behaviors/`。
 训练导出一个新策略 = 把 `config.yaml`/`manifest.json`/`policy.pt` 拷进对应目录（见 `train/README.md`）。
 
@@ -114,7 +132,12 @@ pixi run -e eval python demo/tests/check_policy_contracts.py
 pixi run -e eval python demo/tests/check_spawns.py
 pixi run -e demo bash demo/tests/smoke_policy_load.sh    # 需已构建 + 本地权重
 pixi run -e demo bash demo/tests/smoke_policy_switch.sh
+pixi run -e eval python demo/tests/check_depth_inference.py \
+    --policy demo/rl_sar/policy/blackW/plum_depth_final_v1  # 需先 RL_DEPTH_DEBUG=1 跑过一小段
 ```
+
+深度相机离线自检（不需要 ROS）：`demo/install/quadruped_ros2/lib/quadruped_ros2/sim_node
+--depth-self-test <scene.xml>` 会打印统计并把原始 float32 写到 `/tmp/depth_selftest.f32`。
 
 ## 场景
 

@@ -83,6 +83,10 @@
       <body name="d435_link" pos="0.225 0 0.028">
         <inertial pos="0 0 -0.0125" mass="0.072" diaginertia="0.00002 0.00006 0.00006"/>
         <geom pos="0.07 0 -0.08" quat="0.3155095 0.6328142 0.6328142 0.3155095" group="1" contype="0" conaffinity="0" material="d435_link_mat" type="mesh" mesh="d435" />
+        <!-- Training/eval depth camera (plum policy contract, depth.json).  Mount
+             and fov are verbatim from DEPTH_CONTRACT::pos/quat/fovy; no collision
+             or inertia, so the blind policies are numerically unaffected. -->
+        <camera name="depth_cam" pos="0.01 0 0" quat="0.5610 0.4304 -0.4304 -0.5610" fovy="70"/>
       </body>
       <body name="FL_hip" pos="0.1566 0.060001 -0.06425">
         <joint name="FL_hip_joint" type="hinge" axis="1 0 0" limited="true" range="-0.5 0.5"/>

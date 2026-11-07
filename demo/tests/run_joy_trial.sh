@@ -15,6 +15,10 @@
 #     OUT=$PWD/artifacts/traces/trial_platform40.jsonl SECONDS_REC=25 \
 #     bash demo/tests/run_joy_trial.sh
 #   pixi run -e eval robocon-eval replay-part2 --trace $PWD/artifacts/traces/trial_platform40.jsonl
+#   # extra launch args (e.g. a later depth-camera / depth-policy flag):
+#   EXTRA_LAUNCH_ARGS="depth:=true depth_policy:=plum_depth_final_v1" \
+#     PART=2 LEVEL=plum_1 POLICY=plum_depth_final_v1 SECONDS_REC=40 \
+#     bash demo/tests/run_joy_trial.sh
 #
 # Two command modes:
 #   ADAPTIVE=0 (default): hold raw /joy axes; AXIS_VX is the raw axes[1] value;
@@ -50,6 +54,13 @@ set -u
 SCENE="$ROOT/demo/scenes/part2/generated/part2_off_${LEVEL}.xml"
 LEVEL_ARGS=()
 if [ "$PART" = "2" ]; then LEVEL_ARGS=(level:="$LEVEL"); fi
+# Optional extra `ros2 launch` arguments, passed through verbatim and space
+# separated (e.g. "depth:=true depth_policy:=plum_depth_final_v1" for a later
+# depth-camera / depth-policy trial, so this script needs no edit again).
+EXTRA_ARGS=()
+if [ -n "${EXTRA_LAUNCH_ARGS:-}" ]; then
+  read -r -a EXTRA_ARGS <<<"$EXTRA_LAUNCH_ARGS"
+fi
 : >"$LAUNCH_LOG"
 : >"$REC_LOG"
 
@@ -60,7 +71,8 @@ rec=$!
 
 setsid timeout -s INT "$TIMEOUT" ros2 launch rl_sar rl_sim_all.launch.py robot:="$ROBOT" part:="$PART" \
   "${LEVEL_ARGS[@]}" policy_name:="$POLICY" viewer:=false realtime:=true joy:=false \
-  publish_every:=${PUBLISH_EVERY:-1} eval_state_every:=${EVAL_EVERY:-1} >"$LAUNCH_LOG" 2>&1 &
+  publish_every:=${PUBLISH_EVERY:-1} eval_state_every:=${EVAL_EVERY:-1} \
+  "${EXTRA_ARGS[@]}" >"$LAUNCH_LOG" 2>&1 &
 simlaunch=$!
 
 pub_joy() {

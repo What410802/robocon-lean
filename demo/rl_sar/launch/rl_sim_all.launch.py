@@ -67,7 +67,17 @@ def _validate_contract(robot: str, policy: str) -> None:
         raise RuntimeError(f"policy config missing: {policy_path} (policy={policy!r})")
     man = yaml.safe_load(robot_path.read_text()) or {}
     cfg = _unwrap_config(yaml.safe_load(policy_path.read_text()) or {})
-    obs = man.get("obs_contract", {})
+    depth = cfg.get("depth") or {}
+    if depth.get("enabled"):
+        # Depth policies are command-free (54 x 6) and declare their own contract.
+        obs = man.get("obs_contract_depth") or {}
+        if not obs:
+            raise RuntimeError(f"robot manifest missing obs_contract_depth: {robot_path}")
+        depth_json = policy_path.parent / "depth.json"
+        if not depth_json.is_file():
+            raise RuntimeError(f"depth policy is missing depth.json: {depth_json}")
+    else:
+        obs = man.get("obs_contract", {})
     checks = [
         ("num_of_dofs", cfg.get("num_of_dofs"), man.get("num_dofs")),
         ("num_observations", cfg.get("num_observations"), obs.get("num_observations")),
@@ -149,6 +159,8 @@ def _sim_params(context):
         "start": ParameterValue(LaunchConfiguration("start"), value_type=str),
         "publish_every": ParameterValue(LaunchConfiguration("publish_every"), value_type=int),
         "eval_state_every": eval_state_every,
+        "depth": ParameterValue(LaunchConfiguration("depth"), value_type=str),
+        "depth_every": ParameterValue(LaunchConfiguration("depth_every"), value_type=int),
     }
     sx, sy, sz, syaw = spawn
     for key, arg in (("spawn_x", sx), ("spawn_y", sy), ("spawn_z", sz), ("spawn_yaw", syaw)):
@@ -224,6 +236,13 @@ def generate_launch_description() -> LaunchDescription:
                                   description="publish /eval_state every N physics steps: 1 = one sample "
                                               "per 2 ms physics frame (judged trace); 10 = 50 Hz for "
                                               "interactive runs; 0 = off"),
+            DeclareLaunchArgument("depth", default_value="auto",
+                                  description="sim_node offscreen depth camera on /depth_cam: "
+                                              "auto = on when the scene has a depth_cam camera, "
+                                              "on = require it, off = disable"),
+            DeclareLaunchArgument("depth_every", default_value="10",
+                                  description="render/publish /depth_cam once per N physics steps "
+                                              "(10 = 50 Hz, the policy rate)"),
             DeclareLaunchArgument("route", default_value="",
                                   description="auto route: 'part1' or 'part2' starts the "
                                               "closed-loop course demo "

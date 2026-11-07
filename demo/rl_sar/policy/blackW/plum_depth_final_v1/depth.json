@@ -1,0 +1,25 @@
+{
+ "camera_name": "depth_cam",
+ "parent_body": "d435_link",
+ "pos": [
+  0.01,
+  0.0,
+  0.0
+ ],
+ "quat": [
+  0.561,
+  0.4304,
+  -0.4304,
+  -0.561
+ ],
+ "fovy": 70.0,
+ "width": 64,
+ "height": 48,
+ "min_depth": 0.1,
+ "cutoff": 3.0,
+ "input_layout": "1,1,H,W",
+ "visible_geom_groups": [
+  0
+ ],
+ "hide_robot_geoms": true
+}
