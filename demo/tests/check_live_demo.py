@@ -76,6 +76,33 @@ class LiveDemoTimingTests(unittest.TestCase):
                 environment = self.environment(context)
                 self.assertEqual(environment["PART1_ROUTE_STEPLOCK"], "1")
 
+    def test_part2_resume_spawns_at_alignment_and_reaches_route_environment(self):
+        for name, expected in (("stairs_04cm", (1.2, 3.0)),
+                               ("stairs_30cm", (60.45, 3.0)),
+                               ("plum", (1.2, 11.8))):
+            if name == "plum":
+                plan = live_launch.runpy.run_path(str(live_launch.PART2_ROUTE_PLAN))
+                name = next(leg["leg"] for leg in plan["LEGS"] if leg["category"] == "plum")
+            with self.subTest(name=name):
+                context = self.context(route="part2", resume_before=name, timeout_scale="0")
+                environment = self.environment(context)
+                self.assertEqual(environment["PART2_ROUTE_START"], name)
+                self.assertEqual(environment["PART2_TIMEOUT_SCALE"], "0")
+                with patch.object(live_launch, "_validate_contract"), \
+                        patch.object(live_launch, "Node", side_effect=lambda **kwargs: kwargs):
+                    params = live_launch._sim_params(context)[-1]["parameters"][0]
+                self.assertEqual((params["spawn_x"], params["spawn_y"]), expected)
+
+    def test_part2_bad_resume_or_timeout_fails_before_nodes_start(self):
+        for values in ({"resume_before": "missing"}, {"resume_before": "0"},
+                       {"timeout_scale": "-1"}, {"timeout_scale": "nan"},
+                       {"timeout_scale": "inf"}, {"timeout_scale": "later"}):
+            context = self.context(route="part2", **values)
+            with self.subTest(values=values), patch.object(live_launch, "Node") as node:
+                with self.assertRaises(ValueError):
+                    live_launch._sim_params(context)
+                node.assert_not_called()
+
     def test_part1_keeps_baseline_wall_clock_and_honors_explicit_timing_override(self):
         with patch.dict(os.environ):
             os.environ.pop("PART1_ROUTE_STEPLOCK", None)

@@ -12,6 +12,7 @@ These checks validate controller logic, not policy dynamics or obstacle support.
 from __future__ import annotations
 
 import math
+import copy
 import os
 from pathlib import Path
 import sys
@@ -307,6 +308,58 @@ class DriftingTrenchRoute(IdealVelocityRoute):
 
 
 class Part2ControllerTests(unittest.TestCase):
+    def test_resume_uses_alignment_then_the_unchanged_canonical_suffix(self):
+        snapshot = copy.deepcopy(controller.PLAN_LEGS)
+        for name in ("stairs_04cm", "stairs_30cm", "high_wall_30cm"):
+            leg = next(leg for leg in controller.LEGS if leg["leg"] == name)
+            x, y = controller.approach_point(leg)
+            ideal = IdealVelocityRoute(_Pose(x, y, 0.55, leg["lane_yaw"], 0.0, 0.0))
+            transits = []
+            original_transit = ideal.transit_path
+            def record_transit(points, speed=0.5):
+                transits.append(list(points))
+                return original_transit(points, speed)
+            ideal.transit_path = record_transit
+            # Stop after the selected obstacle so the fixture isolates entry.
+            with mock.patch.dict(os.environ, {"PART2_ROUTE_START": name,
+                                               "PART2_ROUTE_ONLY": name}):
+                ideal._route()
+            self.assertEqual([record[0] for record in ideal.reports], [name])
+            self.assertTrue(ideal.reports[0][1])
+            self.assertEqual(transits, [leg["exit"]], "resumed entry traversed its old corridor")
+            self.assertEqual(controller.PLAN_LEGS, snapshot)
+
+    def test_timeout_scale_disables_deadlines_and_stalls_but_preserves_safety(self):
+        leg = next(leg for leg in controller.LEGS if leg["leg"] == "high_platform_25cm")
+        class DelayedProgress(IdealVelocityRoute):
+            def _tick(self, fallback_s=0.02):
+                self.immobile = self._now() < 70.0
+                super()._tick(fallback_s)
+        delayed = DelayedProgress(point_in_lane(leg))
+        delayed._timeout_scale = 0.0
+        self.assertTrue(delayed.expert_cross(leg)[0])
+        self.assertGreater(delayed._now(), 70.0)
+        for fault in ("fallen", "lane"):
+            invalid = IdealVelocityRoute(point_in_lane(leg))
+            invalid._timeout_scale = 0.0
+            if fault == "fallen":
+                invalid._plant_pose.tilt = 70.0
+            else:
+                invalid._plant_pose.y += 2.0
+            crossed, why, _ = invalid.expert_cross(leg)
+            self.assertFalse(crossed)
+            self.assertNotIn(why, ("timeout", "stall"))
+        scaled = IdealVelocityRoute(point_in_lane(leg), immobile=True)
+        scaled._timeout_scale = 2.0
+        crossed, why, _ = scaled.expert_cross(leg)
+        self.assertFalse(crossed)
+        self.assertEqual(why, "stall")
+        self.assertGreaterEqual(scaled._now(), 24.0)
+        self.assertLess(scaled._now(), 25.0)
+        budget = scaled._remaining(scaled._now() + 9.0, 8.0)
+        self.assertAlmostEqual(budget, 9.0)
+        self.assertAlmostEqual(scaled._timeout(budget), 9.0, msg="nested deadline was scaled twice")
+
     def test_expert_feedback_damps_body_lateral_velocity_on_each_lane_axis(self):
         # A robot travelling along the world lane with a 0.1 rad heading
         # offset has nonzero lateral velocity in its body frame. The official

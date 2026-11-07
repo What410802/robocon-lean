@@ -52,27 +52,20 @@ pixi run -e demo demo-part2
 
 # 无窗口仍按 1× 实时运行
 pixi run -e demo demo-part2 viewer:=false
+# Part2 从指定障碍前对线后继续；0 关闭路线超时/停滞退出，Ctrl+C 手动停止
+pixi run -e demo demo-part2 resume_before:=stairs_30cm timeout_scale:=0
 ```
 
 以上演示依次运行，一次只开一个 launch。两个快捷入口均自动 source 工作区，默认开窗口、
 1× 实时和 50 Hz 位姿记录，无需操作手柄；Part1 使用 `vt_locked12` 衔接，Part2 长直线使用
 `flat`、转向与精对线使用 `vt_locked12`。上一场自动退出后再启动下一场。
 
-Part1 砂砾坑入口本次向东修正前的 [v67 开窗口 1× 整场](artifacts/route_fix/part1_final_v67_evidence.json)
-已完成：全部路线门限 PASS、0 次恢复、退出状态 0，13109 帧、262.16 s 返回起点
-`(3.561, -8.939, 0.557)`。
-此前真锁轮与砂砾坑局部修正后的 [v55 整场](artifacts/route_fix/part1_fixed_wheels_v55_evidence.json)
-也已完成，保留为历史证据。
-历史 [full40 视频](artifacts/route/locked12_full40_operator.mp4) 和
-[约 354 s 基线复跑](artifacts/route_fix/part1_baseline_recheck_evidence.json) 也完成实体运动，
-这两份 full40 / 基线记录早于真锁轮修复；v55 和 v67 均已使用真锁轮。当前保留原路线拓扑，
-继续修正桥梁交接、砂砾坑切换余量与转弯对线。
-**Part1 默认入口已恢复 v55/v67 阶段保留源码（与 v56/v72 快照哈希一致）。** 冻结副本与恢复文件的 SHA256
-均为 `c556739c…`；该基线保留原桥 A / 桥 B 对线、低杆路点与砂砾坑 `x=5.70` 入口。
-本次请求的延后桥 A 换模、桥 B 精对线、低杆纠偏、四轮上坑即换模仍未解决，均未作为默认启用。
-[v88 校准失败记录](artifacts/route_fix/part1_final_calibration_v88_evidence.json) 与实验源码已保留，
-不能把实验变更视为整场通过。恢复后未另跑物理整场；可复核的成功记录仍是上述 v67。
-演示默认关闭 live judge，正式判分器未改。
+Part1 保留一条默认整场路线：桥 A 等后轮越过末槽、落上东台后再交接，桥 B 沿 `x=5.65` 跨越。
+砂砾坑保留原 `require + rotate_hold` 对准器，入口改为 `x=5.84`；四轮上坑即切 `vt_locked12`，
+再沿东臂到角点转西，角点 lookahead 为 0.30。
+[当前源码 v100 整场证据](artifacts/route_fix/part1_gravel_full_v100_evidence.json)：开窗口、1× 实时，
+全部路线预检通过并返回起点，退出 0、0 次恢复、280.58 s；换模在首次满足四轮上坑判据的同一记录帧发生。
+这是关闭 live judge 的实体运动演示，未宣称正式满分或广泛扰动下的鲁棒性。
 Part2 当前唯一计划执行 **33 段**：平台至 30 cm、楼梯单级至 30 cm、坡至 35°、沟宽至
 30 cm、墙至 40 cm，逐档跨越较低实体及比赛梅花桩。40 cm 平台在加长助跑后仍摔倒，
 经用户确认暂时跳过，并在计划中明确记录为能力缺口；规则最高平台仍是 40 cm。
@@ -80,9 +73,10 @@ Part2 当前唯一计划执行 **33 段**：平台至 30 cm、楼梯单级至 30
 历史 [v56 开窗口 1× 全程视频](artifacts/route_fix/part2_full_live_v56_cli.mp4) 完成旧 25 段集成门限、
 退出状态 0，但 [支撑点回放为 24/25](artifacts/route_fix/part2_full_live_v56_eval.json)，末段 20 cm 墙
 未满足越墙后稳定保持；其中梅花桩成功投影 200 分。新版最佳连续前缀仍为 v82 / v83 的前 14 段，
-均在 30 cm 楼梯前对齐失败；最新 v84 的前四段通过严格回放，随后在 25 cm 平台卡住，
+均在 30 cm 楼梯前对齐失败；最近从原点试跑 v84 的前四段通过严格回放，随后在 25 cm 平台卡住，
 回放为 `not_on_platform`。新版 33 段整场尚未完成，
 最新状态见 [路线说明](docs/part2/ROUTE.md)。
+v91 / v92 已实测命令行恢复的出生点与正常对线；两次均在原路线门限退出 1，未视为成功演示。
 
 Part1 路线录制（可选）：
 

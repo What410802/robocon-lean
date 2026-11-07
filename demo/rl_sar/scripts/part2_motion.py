@@ -10,11 +10,16 @@ import os
 import time
 
 from part1_auto_route import RouteNode, TRANSFER_POLICY, wrap
+from part2_options import timeout_scale
 
 FLAT_TRANSIT_POLICY = "flat"
 FLAT_TRANSIT_SPEED = 0.50
 FLAT_MIN_DISTANCE = 4.0
 FLAT_BRAKE_RUNOUT = 1.20
+
+
+class _TimeoutBudget(float):
+    """An already-scaled duration passed between nested control primitives."""
 
 
 def transit_corners(points, origin=None, tolerance=0.15):
@@ -51,11 +56,45 @@ def transit_corners(points, origin=None, tolerance=0.15):
 class Part2Motion(RouteNode):
     def __init__(self):
         self._exit_code = 0
+        self._timeout_scale = timeout_scale(os.environ.get("PART2_TIMEOUT_SCALE", "1"))
         os.environ["PART1_ROUTE_STEPLOCK"] = "1"
         super().__init__()
 
+    def _timeout(self, seconds):
+        if isinstance(seconds, _TimeoutBudget):
+            return seconds
+        scale = getattr(self, "_timeout_scale", 1.0)
+        return _TimeoutBudget(float(seconds) * scale if scale else math.inf)
+
+    def _remaining(self, deadline, cap):
+        return _TimeoutBudget(max(0.0, min(self._timeout(cap), deadline - self._now())))
+
+    def rotate_hold(self, target_yaw, timeout_s=8.0):
+        self._guard_turn = True
+        try:
+            return super().rotate_hold(target_yaw, timeout_s=self._timeout(timeout_s))
+        finally:
+            self._guard_turn = False
+
+    def wait_stable_z(self, z_min, tilt_max=10.0, hold_s=0.4, timeout_s=10.0):
+        started, above_since = self._now(), None
+        while self._now() - started < self._timeout(timeout_s):
+            p, now = self.pose(), self._now()
+            if now - started > 1.0 and self.fallen():
+                return False
+            if p.z > z_min and p.tilt < tilt_max:
+                above_since = now if above_since is None else above_since
+                if now - above_since >= hold_s:
+                    return True
+            else:
+                above_since = None
+            self._hold(0.05)
+        return False
+
     def _tick(self, fallback_s: float = 0.02) -> None:
         """Advance one control period, independently of eval publication rate."""
+        if getattr(self, "_guard_turn", False) and self.fallen():
+            raise RuntimeError("fallen during flat transit turn")
         if self._steplock:
             start_sim = self._sim_t
             duration = max(0.0, float(fallback_s))
@@ -183,6 +222,7 @@ class Part2Motion(RouteNode):
         transit.  Crossing the endpoint plane inside the tolerance completes the
         segment; missing it stops with failure instead of circling back.
         """
+        timeout_s = self._timeout(timeout_s)
         active_policy = policy or TRANSFER_POLICY
         if policy is not None and policy != TRANSFER_POLICY:
             if policy != FLAT_TRANSIT_POLICY:

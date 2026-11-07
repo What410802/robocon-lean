@@ -173,6 +173,48 @@ class Part1HandoverChecks(unittest.TestCase):
         self.assertLess(plant.p.t, 0.5)
         self.assertEqual(plant.output, (0.0, 0.0, 0.0))
 
+    def test_bridge_a_requires_both_rear_wheels_on_exit_platform(self):
+        plant = HandoverPlant(5.56, 0.0, 0.0)
+        plant._feet = {"RL_foot": (5.27, 0.1, 0.3),
+                       "RR_foot": (5.19, -0.1, 0.3)}
+        self.assertFalse(plant.bridge_a_exit_clear(plant.pose()))
+        plant._feet["RR_foot"] = (5.27, -0.1, 0.3)
+        self.assertTrue(plant.bridge_a_exit_clear(plant.pose()))
+        plant.p.x = 5.28
+        self.assertFalse(plant.bridge_a_exit_clear(plant.pose()))
+
+    def test_gravel_gate_requires_each_actual_wheel_contact(self):
+        plant = HandoverPlant(5.84, -11.8, -math.pi / 2)
+        plant._feet = {f"{leg}_foot": (5.84, -11.8, 0.253)
+                       for leg in ("FL", "FR", "RL", "RR")}
+        contacts = [(f"{leg}_wheel_collision", "gravel_pit_b")
+                    for leg in ("FL", "FR", "RL", "RR")]
+        plant._contacts = tuple(contacts[:-1])
+        self.assertFalse(plant.gravel_entry_supported())
+        plant._contacts = tuple(contacts)
+        self.assertTrue(plant.gravel_entry_supported())
+
+    def test_gravel_connector_corrects_east_crab_without_turnback(self):
+        plant = HandoverPlant(5.90, -11.70, math.radians(-83),
+                              lateral_response=0.0, east_crab=0.019,
+                              yaw_deadzone=0.20, yaw_response=0.5)
+        self.assertTrue(plant.gravel_to_corner())
+        self.assertLess(abs(plant.p.x - 5.84), 0.09)
+        self.assertTrue(all(vx >= 0.0 and vy == 0.0
+                            for _, (vx, vy, wz) in plant.commands))
+        self.assertLess(max(p.x for p in plant.motion), 6.04)
+        self.assertEqual(plant.output, (0.0, 0.0, 0.0))
+
+    def test_bridge_b_fixed_crossing_corrects_measured_east_bias(self):
+        plant = HandoverPlant(5.72, -1.0, math.radians(-88.1))
+        plant._fixed_mode = "bridge"
+        plant.fixed_command = lambda vx, wz: plant.command(vx, 0.0, wz)
+        self.assertTrue(plant.drive_fixed(0.32, -math.pi / 2,
+                                         lambda p: p.y < -3.5, 20.0, x_hold=5.65))
+        self.assertLess(plant.commands[0][1][2], 0.0)
+        self.assertLess(abs(plant.p.x - 5.65), 0.02)
+        self.assertLess(abs(route.wrap(plant.p.yaw + math.pi / 2)), math.radians(1))
+
     def test_old_goto_negative_control_requests_large_reverse_turn(self):
         # Execute the old primitive for one tick: its atan2 target points north,
         # so the same measured pose requests +0.65 rad/s instead of reversing.

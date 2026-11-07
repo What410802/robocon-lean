@@ -135,12 +135,23 @@ pixi run -e demo demo-part2
 调试同一计划的子段：
 
 ```bash
+# 直接在 30 cm 楼梯前的平地对线点出生，正常对线后继续后续唯一计划
+pixi run -e demo demo-part2 resume_before:=stairs_30cm
+# 延长全部路线超时与停滞窗口（默认 1）；0 关闭这些计时退出，Ctrl+C 手动停止
+pixi run -e demo demo-part2 resume_before:=high_wall_30cm timeout_scale:=0
+# 仍可用环境变量只验证一段
 PART2_ROUTE_START=stairs_04cm PART2_ROUTE_ONLY=stairs_04cm \
 pixi run -e demo demo-part2 viewer:=false
 ```
 
-`START` 从指定段开始，launch 从该段的 `transit[0]` 或 `stand` 推导默认出生点；
+`resume_before` 与兼容变量 `START` 从指定段开始，出生点取该段的 `align_approach`，
+没有则取 `stand`；仅跳过所选第一段原本的进场走廊，在该点用衔接模型正常对线，再过障和继续后续原路线。
 `ONLY` 在指定段后停止。两者也接受从 1 开始的序号；显式 `spawn_*` 仍可覆盖。
+`timeout_scale` 必须是有限非负数，默认 1；例如 2 将路线超时与停滞窗口加倍，0 同时禁用
+转场、转向、对线、过障、恢复和站稳等待的计时退出。它不改变固定动作保持时长，也不取消
+入口精度、车道、支撑、倒地或遥测中断检查；有限行程/尝试次数与几何失败门限仍会结束不合格动作。
+无位姿启动等待和 `/eval_state` 中断看门狗保留，避免失联后无限运行。两项参数仅用于 Part2，
+段名错误或非法倍数会在启动物理节点前报错，参数不修改唯一计划定义。
 子段测试不代表从原点走完全部路线。旧几何选择变量 `PART2_*_LEVEL`、`PART2_PLUM_MODE`、
 `PART2_ROUTE_WALL` / `_VARIANT` 已移除，设置后会报错，以免旧 shell 环境悄悄换路线。
 专家/速度参数仍可调，不能改变跨越实体清单。
@@ -197,6 +208,8 @@ pixi run -e eval python tools/route/replay_field_part2.py \
 
 | 记录 | 路线集成门限 | 支撑点回放结果 |
 |---|---|---|
+| `part2_resume_wall40_v92` | `resume_before:=high_wall_40cm timeout_scale:=0` 开窗口 1×；出生 `(9.6,21)`，正常对线通过（横偏 4.2 cm、偏航 0.6°）；越墙后停车到 `x≈10.90`，超过原出口上限 `10.88`，`post=out`、退出状态 1 | [40 cm 墙支撑判据 success，投影 200 分](../../artifacts/route_fix/part2_resume_wall40_v92_eval.json)，但 `closed=false`、`--require-all` 仍退出 1；路线未成功闭合 |
+| `part2_resume_walls_v91` | `resume_before:=high_wall_30cm timeout_scale:=0` 开窗口 1×；出生 `(8.4,21)`，正常对线通过（横偏 4.1 cm、偏航 0.7°）；30 cm 墙集成 PASS，按原顺序进入 40 cm 墙时横偏 12.2 cm、偏航 −6.1°，被原 10 cm / 5° 入口门限拒绝；退出状态 1 | [30 cm 墙 `not_stable_after_crossing`，40 cm 墙缺过障记录](../../artifacts/route_fix/part2_resume_walls_v91_eval.json)；严格子段回放失败，不能将集成 PASS 当作判分成功 |
 | `part2_full_live_v84` | 从原点通过平台 5/10/15/20 cm 四段；25 cm 平台前轮上台、后轮卡在前沿，持续无前进后触发停滞，未倒地；整场失败 | [严格支撑点回放：前四段 success，25 cm 平台 `not_on_platform`](../../artifacts/route_fix/part2_full_live_v84_partial_eval.json)；[运行日志](../../artifacts/route_fix/part2_full_live_v84.log)；未完成 25 cm 平台及后续段 |
 | `part2_full_live_v83` | 前 14 段集成门限通过，30 cm 楼梯入口停车对齐后横偏仍为 19.3 cm；退出状态 1 | [所选前 14 段 14/14 success](../../artifacts/route_fix/part2_full_live_v83_partial_eval.json)；未进入 30 cm 楼梯，整场失败 |
 | `part2_full_live_v82` | 从原点连续完成平台六档、楼梯至 25 cm 共 14 段；30 cm 楼梯前横偏 12.2 cm、偏航 5.4° 超门限，未进入该障碍 | [14/33 success，19 段缺记录](../../artifacts/route_fix/part2_full_live_v82_eval.json)；完整回放检查失败，未放宽对齐门限 |
@@ -212,6 +225,11 @@ pixi run -e eval python tools/route/replay_field_part2.py \
 | `part2_plum_live_v37` | 1× 实时测试越过桩阵，出口切换后摔倒 | [支撑点回放失败](../../artifacts/route_fix/part2_plum_live_v37_eval.json)：`fell:tilt=76.5`，不能归因于全速加载延迟 |
 | `part2_plum_live_v49` | 1× 实时单段通过入口、桩阵、出口下降和后续两个转场点，退出码 0；采用上述南侧入口和 6.85 m 切换 | [1/1 success，200 分投影](../../artifacts/route_fix/part2_plum_live_v49_eval.json)；未改变正式支撑判据 |
 | `part2_full_v40` | 历史南→北平台走向：从原点连续完成前 19 段，梅花桩入口横漂超门限后停止 | [19/25 success](../../artifacts/route_fix/part2_full_v40_eval.json)，含全部 4 档平台、7 档楼梯、6 档斜坡及 2 档沟壑；不能代替新西→东平台方向验证 |
+
+`v91`/`v92` 只验证命令行恢复的出生点、正常对线和原安全门限；两次均未倒地，均退出 1。
+[同次日志、位姿与退出证据](../../artifacts/route_fix/part2_resume_cli_v91_v92_evidence.json) 保留两次独立运行的区别。
+这两次运行均在旧超时门限之前结束，不能据此宣称已物理验证超时禁用后的长时间等待；
+70 s 后恢复前进、倍数计时和失联看门狗由控制器测试另行验证。它们不增加从原点连续完成的段数。
 
 `v83` 加入 30 cm 楼梯前停车对齐后，仍因横偏 19.3 cm 超过 10 cm 门限而终止，
 偏航已回到 −0.5°；不能将朝向修正视为位置对齐成功。该次使用的 0.60 m 前进纠偏预算已耗尽。

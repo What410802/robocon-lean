@@ -25,6 +25,7 @@ os.environ.setdefault("PART1_TRANSFER_POLICY", "vt_locked12")
 os.environ.setdefault("PART1_ROUTE_JUDGE", "0")
 from part1_auto_route import BTN_A, BTN_RB, TRANSFER_POLICY, wrap
 from part2_motion import Part2Motion
+from part2_options import approach_point
 from part2_route_plan import AUDIT_SEGMENTS, LEGS as PLAN_LEGS, ROUTE_START, SKIPPED_TIERS
 
 
@@ -313,6 +314,7 @@ class Part2Route(Part2Motion):
         trained +/-0.7 range. A bounded position hold limits rollback during
         this short correction; alignment still checks the measured pose.
         """
+        timeout_s = self._timeout(timeout_s)
         p0 = self.pose()
         t0 = self._now()
         expert = self._current_policy != TRANSFER_POLICY
@@ -363,7 +365,7 @@ class Part2Route(Part2Motion):
         travel is capped so the expert runway is not eaten; the final in-place
         turn leaves only ~1-2 cm of rotation drift.
         """
-        t_end = self._now() + timeout_s
+        t_end = self._now() + self._timeout(timeout_s)
         origin = self.pose()
         unit_x, unit_y = math.cos(lane_yaw), math.sin(lane_yaw)
         along0 = (origin.x - lane_x) * unit_x + (origin.y - lane_y) * unit_y
@@ -378,8 +380,8 @@ class Part2Route(Part2Motion):
             theta = min(math.radians(25.0), max(math.radians(8.0), theta))
             heading = lane_yaw - math.copysign(theta, e)
             self._rotate_servo(heading,
-                               timeout_s=min(8.0, max(0.0, t_end - self._now() - 0.40)))
-            t_drive = min(12.0, max(0.0, t_end - self._now() - 6.0))
+                               timeout_s=self._remaining(t_end - 0.40, 8.0))
+            t_drive = self._remaining(t_end - 6.0, 12.0)
             t1 = self._now()
             while self._now() - t1 < t_drive:
                 p = self.pose()
@@ -398,7 +400,7 @@ class Part2Route(Part2Motion):
         # steer back to the lane heading
         if self._now() < t_end:
             self._rotate_servo(lane_yaw,
-                               timeout_s=min(8.0, max(0.0, t_end - self._now())))
+                               timeout_s=self._remaining(t_end, 8.0))
 
     def _creep_along(self, lane_x: float, lane_y: float, lane_yaw: float,
                      target_along: float, timeout_s: float,
@@ -411,7 +413,7 @@ class Part2Route(Part2Motion):
         """
         ux, uy = math.cos(lane_yaw), math.sin(lane_yaw)
         t0 = self._now()
-        while self._now() - t0 < timeout_s:
+        while self._now() - t0 < self._timeout(timeout_s):
             p = self.pose()
             along = (p.x - lane_x) * ux + (p.y - lane_y) * uy
             if along >= target_along:
@@ -440,8 +442,8 @@ class Part2Route(Part2Motion):
                 and self._current_policy == policy and leg["mode"] == "adaptive"):
             return self.align_continuation(leg)
         started = self._now()
-        deadline = started + (float(leg["align_deadline_s"]) if deadline_s is None
-                              else deadline_s)
+        deadline = started + self._timeout(float(leg["align_deadline_s"]) if deadline_s is None
+                                            else deadline_s)
         self.ensure_transfer()
         log = self.get_logger()
         yaw = float(leg["lane_yaw"])
@@ -462,18 +464,17 @@ class Part2Route(Part2Motion):
             # again before the staged runway even begins.
             if not staged or (distance > 0.18 and approach_progress < 0.0):
                 if not self.goto(approach, tol=0.10, speed=0.18,
-                                 timeout_s=min(deadline - self._now(),
-                                               max(12.0, 3.5 * distance / 0.18))):
+                                 timeout_s=self._remaining(deadline, max(12.0, 3.5 * distance / 0.18))):
                     log.warning("approach missed for %s" % leg["leg"])
         if self.fallen():
             raise RuntimeError("fallen during alignment at " + leg["leg"])
-        self._rotate_servo(yaw, timeout_s=max(0.0, min(20.0, deadline - self._now())))
+        self._rotate_servo(yaw, timeout_s=self._remaining(deadline, 20.0))
         along, lateral = lane_position(leg, self.pose())
         travel = min(float(leg["settle_forward"]),
                      max(0.0, float(leg["along_max"]) - along - 0.03))
         if abs(lateral) > xy_tol and travel > 0.03 and self._now() < deadline - 2:
             self._lane_settle(leg["lane_x"], leg["lane_y"], yaw,
-                              timeout_s=min(30.0, deadline - self._now()),
+                              timeout_s=self._remaining(deadline, 30.0),
                               max_travel=travel)
         along, _ = lane_position(leg, self.pose())
         if along < leg["along_min"] and not leg.get("no_creep"):
@@ -481,7 +482,7 @@ class Part2Route(Part2Motion):
             # leaving room for one measured correction and the stopping drift.
             self._creep_along(leg["lane_x"], leg["lane_y"], yaw,
                               -0.25 if staged else 0.0,
-                              timeout_s=max(0.0, min(16.0, deadline - self._now())))
+                              timeout_s=self._remaining(deadline, 16.0))
             if staged:
                 along, lateral = lane_position(leg, self.pose())
                 # Travel is measured before the S-turn; its stopping and
@@ -489,15 +490,15 @@ class Part2Route(Part2Motion):
                 travel = min(0.40, max(0.0, leg["along_max"] - along - 0.10))
                 if abs(lateral) > 0.5 * xy_tol and travel > 0.03:
                     self._lane_settle(leg["lane_x"], leg["lane_y"], yaw,
-                                      timeout_s=max(0.0, min(20.0, deadline - self._now())),
+                                      timeout_s=self._remaining(deadline, 20.0),
                                       max_travel=travel)
                 along, _ = lane_position(leg, self.pose())
                 if along < leg["along_min"]:
                     self._creep_along(leg["lane_x"], leg["lane_y"], yaw,
                                       float(leg["along_min"]) + 0.02,
-                                      timeout_s=max(0.0, min(10.0, deadline - self._now())))
+                                      timeout_s=self._remaining(deadline, 10.0))
         if abs(math.degrees(wrap(self.pose().yaw - yaw))) > yaw_tol:
-            self._rotate_servo(yaw, timeout_s=max(0.0, min(10.0, deadline - self._now())))
+            self._rotate_servo(yaw, timeout_s=self._remaining(deadline, 10.0))
         p = self.pose()
         along, lateral = lane_position(leg, p)
         yaw_err = math.degrees(wrap(p.yaw - yaw))
@@ -589,7 +590,7 @@ class Part2Route(Part2Motion):
         p0 = self.pose()
         best_along = ((p0.x - lane_x) * cos_l + (p0.y - lane_y) * sin_l)
         last_progress = t0
-        while self._now() - t0 < float(leg["cross_timeout"]):
+        while self._now() - t0 < self._timeout(float(leg["cross_timeout"])):
             p = self.pose()
             if self.fallen():
                 why = "fallen"
@@ -607,7 +608,7 @@ class Part2Route(Part2Motion):
             if along > best_along + CROSS_STALL_PROGRESS_M:
                 best_along = along
                 last_progress = now
-            elif now - last_progress >= float(leg.get("stall_window_s", CROSS_STALL_WINDOW_S)):
+            elif now - last_progress >= self._timeout(float(leg.get("stall_window_s", CROSS_STALL_WINDOW_S))):
                 why = "stall"
                 log.info("expert stall leg=%s after %.1fs along=%+.2f "
                          "(%.2fm behind best; no new %.2fm progress for %.1fs)"
@@ -718,7 +719,7 @@ class Part2Route(Part2Motion):
         t0 = self._now()
         prev = None
         driven = False
-        while self._now() - t0 < float(leg["cross_timeout"]):
+        while self._now() - t0 < self._timeout(float(leg["cross_timeout"])):
             p = self.pose()
             if self.fallen():
                 return False, "fallen", p
@@ -815,7 +816,7 @@ class Part2Route(Part2Motion):
         # Reverse in the lane frame. A goto behind the body would rotate it
         # 180 degrees before driving, consuming the gap and crossing a neighbour.
         t_reverse = self._now()
-        while self._now() - t_reverse < 14.0:
+        while self._now() - t_reverse < self._timeout(14.0):
             p = self.pose()
             remaining = (p.x - bx) * dirx + (p.y - by) * diry
             if remaining <= 0.10 or self.fallen():
@@ -894,11 +895,9 @@ class Part2Route(Part2Motion):
             if start_index < 0:
                 raise ValueError("PART2_ROUTE_START names no leg: " + raw_start)
             else:
-                entry = (LEGS[start_index]["transit"][0]
-                         if LEGS[start_index]["transit"]
-                         else LEGS[start_index]["stand"])
+                entry = approach_point(LEGS[start_index])
                 log.info("PART2_ROUTE_START=%s: starting at leg %d/%d %s "
-                         "(earlier legs skipped; first goto (%+.2f,%+.2f))"
+                         "(earlier legs and selected entry transit skipped; alignment approach (%+.2f,%+.2f))"
                          % (raw_start, start_index + 1, len(LEGS),
                             LEGS[start_index]["leg"], entry[0], entry[1]))
 
@@ -914,7 +913,8 @@ class Part2Route(Part2Motion):
             log.info("=== leg %d/%d %s (policy=%s, vx=%+.2f) ==="
                      % (index + 1, len(LEGS), leg["leg"], leg["policy"], leg["vx"]))
             hop_speed = float(leg.get("transit_speed", TRANSIT_SPEED))
-            self.transit_path(leg["transit"], speed=hop_speed)
+            if not (raw_start and index == start_index):
+                self.transit_path(leg["transit"], speed=hop_speed)
             aligned = self.align_to(leg, leg["policy"])
             if not aligned[0]:
                 raise RuntimeError(
@@ -971,7 +971,7 @@ class Part2Route(Part2Motion):
                 log.info("PART2_ROUTE_ONLY: stopping after leg %d (debug)" % (index + 1))
                 return
 
-        completion = "Part2 debug subset finished" if start_index else "Part2 route finished"
+        completion = "Part2 debug subset finished" if raw_start else "Part2 route finished"
         if self._exit_code:
             log.error("%s with failed legs; see FAIL records above" % completion)
             self.stop(0.5)

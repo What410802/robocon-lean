@@ -52,6 +52,7 @@ ROUTE_SCRIPT = ROOT / "rl_sar" / "scripts" / "part1_auto_route.py"
 PART2_ROUTE_SCRIPT = ROOT / "rl_sar" / "scripts" / "part2_auto_route.py"
 FULL_FIELD_SCENE = ROOT / "scenes" / "part2" / "full_field" / "part2_full_field.xml"
 PART2_ROUTE_PLAN = ROOT / "rl_sar" / "scripts" / "part2_route_plan.py"
+PART2_OPTIONS = runpy.run_path(str(ROOT / "rl_sar/scripts/part2_options.py"))
 
 
 def _unwrap_config(data):
@@ -127,6 +128,14 @@ def _route_settings(context):
     route = context.perform_substitution(LaunchConfiguration("route")).strip()
     if route not in ("", "part1", "part2"):
         raise RuntimeError(f"unknown route {route!r}; supported: 'part1', 'part2'")
+    resume = context.perform_substitution(LaunchConfiguration("resume_before", default="")).strip()
+    scale = context.perform_substitution(LaunchConfiguration("timeout_scale", default="1")).strip()
+    if route == "part2":
+        plan = runpy.run_path(str(PART2_ROUTE_PLAN))
+        PART2_OPTIONS["resolve_start"](plan["LEGS"], resume)
+        PART2_OPTIONS["timeout_scale"](scale)
+    elif resume or scale != "1":
+        raise RuntimeError("resume_before and timeout_scale are Part2-only arguments")
     part = route[-1] if route else context.perform_substitution(LaunchConfiguration("part"))
     transfer = context.perform_substitution(LaunchConfiguration("transfer_policy")).strip()
     transfer = transfer or os.environ.get("PART1_TRANSFER_POLICY", "").strip()
@@ -140,23 +149,15 @@ def _route_settings(context):
     return route, part, policy, transfer
 
 
-def _part2_route_defaults():
+def _part2_route_defaults(raw=None):
     plan = runpy.run_path(str(PART2_ROUTE_PLAN))
     scene = ROOT.parent / plan["SCENE_RELATIVE"]
     spawn = (*plan["ROUTE_START"], 0.675, 0.0)
-    raw = os.environ.get("PART2_ROUTE_START", "").strip()
+    raw = os.environ.get("PART2_ROUTE_START", "").strip() if raw is None else raw.strip()
     if raw:
         legs = plan["LEGS"]
-        selected = next((leg for leg in legs if raw.lower() == leg["leg"].lower()), None)
-        if selected is None:
-            try:
-                index = int(raw) - 1
-            except ValueError:
-                index = -1
-            selected = legs[index] if 0 <= index < len(legs) else None
-        if selected is None:
-            raise RuntimeError(f"invalid PART2_ROUTE_START={raw!r}; use a canonical leg name or 1..{len(legs)}")
-        entry = selected["transit"][0] if selected["transit"] else selected["stand"]
+        selected = legs[PART2_OPTIONS["resolve_start"](legs, raw)]
+        entry = PART2_OPTIONS["approach_point"](selected)
         spawn = (*entry, 0.675, selected["lane_yaw"])
     return scene, spawn
 
@@ -171,7 +172,7 @@ def _sim_params(context):
     eval_state_every = (10 if route else 1) if eval_raw.lower() == "auto" else int(eval_raw)
     # The Part2 route runs on the separately-saved route field.
     if route == "part2":
-        scene, spawn = _part2_route_defaults()
+        scene, spawn = _part2_route_defaults(context.perform_substitution(LaunchConfiguration("resume_before")))
         if explicit and Path(explicit).resolve() != scene.resolve():
             raise RuntimeError(f"route:=part2 uses its canonical scene {scene}; remove the scene override")
     # The auto route consumes /eval_state as its pose feedback. Judged runs explicitly use
@@ -224,7 +225,7 @@ def _sim_params(context):
         output="screen",
         parameters=[params],
     )]
-    if route == "part2" and (os.environ.get("PART2_ROUTE_START") or os.environ.get("PART2_ROUTE_ONLY")):
+    if route == "part2" and (context.perform_substitution(LaunchConfiguration("resume_before")).strip() or os.environ.get("PART2_ROUTE_ONLY")):
         nodes.insert(0, LogInfo(msg="Part2 debug subset: selected steps belong to the canonical plan; this run does not verify the full route."))
     return nodes
 
@@ -243,6 +244,8 @@ def _route_node(context, *args, **kwargs):
                  "PART1_ROUTE_STOP_ON_FAIL": "1" if stop_on_fail else "0"}
     if route == "part2":
         route_env["PART1_ROUTE_STEPLOCK"] = "1"
+        route_env["PART2_ROUTE_START"] = context.perform_substitution(LaunchConfiguration("resume_before")).strip()
+        route_env["PART2_TIMEOUT_SCALE"] = context.perform_substitution(LaunchConfiguration("timeout_scale")).strip()
     route_proc = ExecuteProcess(
         cmd=[sys.executable, str(script)],
         output="screen",
@@ -315,6 +318,10 @@ def generate_launch_description() -> LaunchDescription:
                                   description="policy used for route transfers/alignment: "
                                               "default vt_locked12 for Part1 and Part2; "
                                               "PART1_TRANSFER_POLICY supplies a default override"),
+            DeclareLaunchArgument("resume_before", default_value=os.environ.get("PART2_ROUTE_START", ""),
+                                  description="Part2: spawn before a canonical leg (name or 1-based index), align normally, then continue the same route"),
+            DeclareLaunchArgument("timeout_scale", default_value=os.environ.get("PART2_TIMEOUT_SCALE", "1"),
+                                  description="Part2 route timeout/stall multiplier; 0 disables them until manual stop; safety and telemetry watchdogs remain active"),
             DeclareLaunchArgument("stop_on_fail", default_value="true",
                                   description="stop the auto route (and this launch) at the first "
                                               "segment FAIL; pass false to keep going like an operator"),

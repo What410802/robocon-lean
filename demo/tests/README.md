@@ -11,7 +11,7 @@ ROS 相关脚本需要在 demo 环境里先构建并 `source demo/install/setup.
 | `check_part2_route.py` | 当前 33 段路线的实际尺寸、低档位覆盖、实体选择与转场净空 | `pixi run -e eval python demo/tests/check_part2_route.py` |
 | `check_part2_replay.py` | 精确障碍映射、向东跨墙支撑证据、低档位零分、缺段拒绝与每类最高分汇总 | `pixi run -e eval python demo/tests/check_part2_replay.py` |
 | `check_route_controller.py` | Part2 转场控制器的横漂、拐角、越过路点和失败终止回归 | `pixi run -e demo python demo/tests/check_route_controller.py` |
-| `check_part1_handover.py` | 实际 Part1 碎石交接运动：超越目标倒退、提前交接前进、保持朝向、倒地停止，并以旧 goto 大角度回头作负控制 | `pixi run -e demo python demo/tests/check_part1_handover.py` |
+| `check_part1_handover.py` | 实际 Part1 控制器 10 项检查：桥 A 后轮出口、桥 B 固定姿态循迹、砂砾四轮实际接触、前进纠偏、倒地停止及旧 goto 回头负控制 | `pixi run -e demo python demo/tests/check_part1_handover.py` |
 | `check_part2_controller.py` | 同步假模型执行当前 33 段控制循环，检查对线、方向、错误障碍和深度策略失败卸载 | `pixi run -e demo python demo/tests/check_part2_controller.py` |
 | `check_live_demo.py` | 两条演示路线默认策略、显式覆盖与 route/sim/RL 退出状态（不启动机器人仿真） | `pixi run -e demo python demo/tests/check_live_demo.py` |
 | `check_route_timing.py` | Part2 在 2 ms / 20 ms 反馈下相同的 50 Hz 控制与保持时长、事件唤醒竞争、失去反馈超时 | `pixi run -e demo python demo/tests/check_route_timing.py` |

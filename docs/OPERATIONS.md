@@ -56,21 +56,15 @@ pixi run -e demo demo-part1
 - `vt_locked12` 的策略仅输出 12 个腿关节动作；部署层在每次进入该策略时保存四个实测轮角，
   持续以该角度和零目标角速度做 PD 保持。力矩限幅通过降低增益实现，不移动锁轮目标；
   切到 16DoF 轮式专家或 Part1 固定动作后使用各自原有轮控制。
-- Part1 默认源码已恢复为冻结基线 `part2_full_live_v72_sources/demo/rl_sar/scripts/part1_auto_route.py`，
-  SHA256 为 `c556739c374e9cb40393cfaddedefa6aaf7a6de33cc0a3cefc1717c1e97a75a5`。
-  该源码与 v56/v72 快照哈希一致，保留 v55/v67 阶段的路线行为：桥 A 原交接门限、桥 B 原对线、低杆原路点，
-  砂砾坑入口 `x=5.70`、循迹 `x_hold=5.95`、专家门限 `y<-11.95`，再定向到角点转西。
-- [v67 开窗口 1× 整场](../artifacts/route_fix/part1_final_v67_evidence.json) 全部门限 PASS、0 次恢复、
-  退出状态 0，13109 帧、262.16 s 返回起点 `(3.561,-8.939,0.557)`；恢复源码后未重跑物理整场。
-  v55 与更早 full40 / 基线记录仍保留各自历史范围。
-- 本次请求的桥 A 延后交接、桥 B 精对线、低杆纠偏和四轮上坑即换模仍未解决。
-  v85 / v86 过两桥后低杆前对线失败，v87 / v88 在桥 B 对线失败。
-  [v88 实验源码及失败证据](../artifacts/route_fix/part1_final_calibration_v88_evidence.json) 保留，
-  所有这些新校准均未作为默认启用，不将失败校准当作已完成改进。
-- Part1 保留 1× 墙钟控制，保持 `realtime:=true`。快捷入口默认 `PART1_ROUTE_JUDGE=0`，
-  显式 `PART1_ROUTE_JUDGE=1` 启用原版 live judge；直接 ROS launch 的 judge 默认与正式 judge 未改。
-  历史 full40 视频的原版 judge 回放为 500 分；v67 未据此宣称正式得分，
-  实体运动完成不等于正式全通过，详见操作者手册 §2.1 / §4。
+- 当前只有一条默认整场路线。桥 A 等后轮越过末槽、落上东台后再交接；桥 B 沿 `x=5.65` 跨越。
+  砂砾坑保留原 `require + rotate_hold` 对准器，入口为 `(5.84,-10.20)`；四轮上坑即切锁轮衔接模型，
+  沿东臂向南后转西，角点 lookahead 为 0.30。
+- [当前源码 v100 整场证据](../artifacts/route_fix/part1_gravel_full_v100_evidence.json)：开窗口、1× 实时，
+  全部路线预检通过并返回起点，退出 0、0 次恢复、280.58 s。
+  砂砾局部调试使用 `PART1_ROUTE_ONLY=gravel`，复用整场同一个 `run_gravel()`，不是另一条路线。
+- 保持 `realtime:=true`。快捷入口默认 `PART1_ROUTE_JUDGE=0`，显式 `PART1_ROUTE_JUDGE=1` 启用原版 live judge。
+  以上是实体运动演示，未宣称正式满分；详细交接、接触审计和连续录像见
+  [Part1 操作者手册](../demo/docs/part1-auto-route-operator.md)。
 
 ## 2. Part 2：单关独立评测
 
@@ -92,13 +86,16 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=2 \
 ### 2.1 全场 1× 演示（唯一 33 段路线，含深度相机梅花桩）
 
 新版最佳连续前缀仍为 v82 / v83：平台六档与楼梯至 25 cm 共 14 段通过，30 cm 楼梯前对齐失败。
-最新 v84 的前四段通过严格回放，随后在 25 cm 平台卡住，回放为 `not_on_platform`。
+最近从原点试跑 v84 的前四段通过严格回放，随后在 25 cm 平台卡住，回放为 `not_on_platform`。
 完整 33 段尚无全部成功记录，40 cm 平台仍是明确跳过的能力缺口。
+v91 / v92 已实测命令行恢复的出生点与正常对线；两次均在原路线门限退出 1，未视为成功演示。
 
 ```bash
 pixi run -e demo demo-part2
 # 无窗口实时调试：
 pixi run -e demo demo-part2 viewer:=false
+# 从指定障碍前正常对线再继续；0 关闭路线超时/停滞退出，Ctrl+C 停止
+pixi run -e demo demo-part2 resume_before:=stairs_30cm timeout_scale:=0
 ```
 
 - 当前执行平台至 30 cm、楼梯单级至 30 cm、坡至 35°、沟宽至 30 cm、墙至 40 cm，包含全部较低实体。
@@ -113,8 +110,11 @@ pixi run -e demo demo-part2 viewer:=false
 - 自动路线默认按 1× 实时运行，实时和全速模式均按仿真时间同步 50 Hz 控制。
   `eval_state_every` 独立控制记录频率：快捷入口默认 10，判分 trace 显式传 1。
   第一段失败就停，跑完自动退出。
-- `PART2_ROUTE_START=<leg名或序号>` 从同一路线的指定段开始，launch 自动把出生点放在该段入口；
+- `resume_before:=<leg名或序号>` 从同一路线指定段的平地对线点出生；只跳过该段的进场走廊，
+  正常对线后继续后续原路线。兼容变量 `PART2_ROUTE_START` 语义相同；
   `PART2_ROUTE_ONLY=<leg名或序号>` 在指定段后停止。显式 `spawn_*` 仍可覆盖；子段调试不代表全场完成。
+- `timeout_scale:=2` 将 Part2 路线计时退出和停滞窗口加倍，默认 1；`timeout_scale:=0` 禁用它们，
+  可用 Ctrl+C 手动停止。入口精度、有限行程、车道、支撑、倒地和遥测看门狗仍生效；固定保持时长不变。
 
 ### 2.2 深度相机（梅花桩专家）
 

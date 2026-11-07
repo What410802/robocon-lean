@@ -88,6 +88,7 @@ class RouteNode(Node):
         self._buttons = [0] * 11
         self._pose = _Pose()
         self._feet = {}
+        self._contacts = ()
         self._have_pose = False
         self._recoveries = 0
         # Step-lock (PART1_ROUTE_STEPLOCK=1): control loops wait for the next
@@ -117,6 +118,7 @@ class RouteNode(Node):
         self._sim_t = 0.0
         self._last_pose_wall = 0.0
         self._joy_pub = self.create_publisher(Joy, "joy", QoSProfile(depth=1))
+        self._policy_pub = self.create_publisher(String, "policy_switch", QoSProfile(depth=1))
         self.create_subscription(
             String, "eval_state", self._on_eval,
             QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT),
@@ -229,6 +231,7 @@ class RouteNode(Node):
                     str(k): (float(v[0]), float(v[1]), float(v[2]))
                     for k, v in feet.items() if len(v) >= 3
                 }
+                self._contacts = tuple(tuple(pair) for pair in raw.get("contacts", ()))
                 if self._judge is not None:
                     try:
                         support = {
@@ -446,6 +449,67 @@ class RouteNode(Node):
             self._cli = f"switch {TRANSFER_POLICY}"
             self._corr = {}
             self._emit_plan()
+
+    def gravel_entry_supported(self) -> bool:
+        """Require actual four-wheel pit contact before the early handover."""
+        with self._lock:
+            feet, contacts = dict(self._feet), tuple(self._contacts)
+        for leg in ("FL", "FR", "RL", "RR"):
+            foot = feet.get(f"{leg}_foot")
+            if foot is None:
+                return False
+            x, y, z = foot
+            if not (5.3761 < x < 6.2961 and -12.96 < y < -11.04
+                    and 0.22 < z < 0.32):
+                return False
+            wheel = f"{leg}_wheel_collision"
+            if not any(wheel in pair and "gravel_pit_b" in pair for pair in contacts):
+                return False
+        return not self.fallen()
+
+    def bridge_a_exit_clear(self, p) -> bool:
+        # Last block ends at x=5.05; the exit platform starts at x=5.20.
+        # Base-only x=5.25 handed over with rear wheels still in that gap.
+        with self._lock:
+            rear = [self._feet.get(f"{leg}_foot") for leg in ("RL", "RR")]
+        return (p.x > 5.55 and abs(p.y) < 0.35
+                and all(foot is not None and foot[0] > 5.25 for foot in rear))
+
+    def gravel_transfer_now(self) -> bool:
+        """Brake with the connector as soon as all four wheels reach the top."""
+        self.command(0.0, 0.0, 0.0)
+        self._policy_pub.publish(String(data=TRANSFER_POLICY))
+        self._current_policy = TRANSFER_POLICY
+        self._cmd = "gravel_supported_handover"
+        self._cli = f"four wheels on pit; switch {TRANSFER_POLICY}; stand"
+        self._corr = {}
+        self._emit_plan()
+        self._hold(0.8)
+        return not self.fallen()
+
+    def gravel_to_corner(self, timeout_s: float = 14.0) -> bool:
+        """South corridor tracking with a fixed endpoint plane, no turnback."""
+        self._cmd = "gravel_locked_south"
+        self._cli = "locked connector south along x=5.84 to y=-12.50"
+        self._corr = {}
+        self._emit_plan()
+        deadline = self._now() + timeout_s
+        while self._now() < deadline and not self.fallen():
+            p = self.pose()
+            if p.y <= -12.45:
+                self.stop(0.2)
+                return not self.fallen()
+            # A shorter lookahead counters the measured eastward crab before
+            # the corner, leaving more room for the outer swinging wheel.
+            correction = max(-math.radians(20.0), min(math.radians(20.0),
+                             -math.atan2(p.x - 5.84, 0.30)))
+            err = wrap(-math.pi / 2.0 + correction - p.yaw)
+            wz = (math.copysign(max(0.25, min(0.35, 2.0 * abs(err))), err)
+                  if abs(err) > 0.02 else 0.0)
+            self.command(0.12, 0.0, wz)
+            self._tick()
+        self.stop(0.2)
+        return False
 
     def enter_fixed(self, kind: str) -> None:
         self._fixed_mode = kind
@@ -885,7 +949,8 @@ class RouteNode(Node):
 
     def drive_expert_heading(self, policy: str, vx: float, target_yaw: float,
                              until, timeout_s: float, x_hold=None,
-                             kp: float = 1.0, max_wz: float = 0.25) -> bool:
+                             kp: float = 1.0, max_wz: float = 0.25,
+                             stop_s: float = 0.6) -> bool:
         """Expert drive with optional yaw / cross-track hold.
 
         Used on the slope where row2p drifts east; small yaw corrections keep
@@ -907,14 +972,15 @@ class RouteNode(Node):
             self.command(vx, 0.0, wz)
             self._tick()
             if until(p):
-                self.stop(0.6)
+                self.stop(stop_s)
                 return True
             if self.fallen():
                 break
-        self.stop(0.6)
+        self.stop(stop_s)
         return False
 
-    def drive_fixed(self, x_cmd: float, target_yaw: float, until, timeout_s: float) -> bool:
+    def drive_fixed(self, x_cmd: float, target_yaw: float, until, timeout_s: float,
+                    x_hold=None) -> bool:
         self._cmd = f"fixed_drive(x={x_cmd:+.2f})"
         self._corr = {}
         mode = self._fixed_mode or "fixed"
@@ -923,8 +989,17 @@ class RouteNode(Node):
         t0 = self._now()
         while self._now() - t0 < timeout_s:
             p = self.pose()
-            err = wrap(target_yaw - p.yaw)
-            yaw_cmd = math.copysign(max(0.10, min(0.40, 1.5 * abs(err))), err) if abs(err) > 0.03 else 0.0
+            desired = target_yaw
+            if x_hold is not None:
+                # Southward crossing: an east error needs a westward heading.
+                # Actual-contact replay found the old heading-only crossing
+                # carried the right wheels onto the inner lip of band 0.
+                desired += max(-math.radians(6.0), min(math.radians(6.0),
+                               math.atan2(x_hold - p.x, 0.5)))
+            err = wrap(desired - p.yaw)
+            deadband = 0.01 if x_hold is not None else 0.03
+            yaw_cmd = (math.copysign(max(0.10, min(0.40, 1.5 * abs(err))), err)
+                       if abs(err) > deadband else 0.0)
             self.fixed_command(x_cmd, yaw_cmd)
             self._tick()
             if until(p):
@@ -1028,6 +1103,92 @@ class RouteNode(Node):
         self.stop(0.3)
         return False
 
+    def run_gravel(self) -> bool:
+        """Canonical gravel segment, shared by the course and focused replay."""
+        log = self.get_logger()
+        # Keep the original goto + in-place turn; only the entrance position
+        # changes to the measured centre of the east arm (x=5.8361 m).
+        self.set_leg("gravel")
+        self.require((5.84, -10.20), tol=0.10, timeout_s=10.0, speed=0.15)
+        self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)
+        p = self.pose()
+        log.info("gravel entrance align: x=%.2f y=%.2f yaw=%.1fdeg" %
+                 (p.x, p.y, math.degrees(p.yaw)))
+
+        # The expert only mounts the east arm. Actual four-wheel contact
+        # triggers the handover, without waiting for an extra body-y target.
+        # Handover on actual four-wheel support, without the old expert
+        # zero-command coast that exhausted the east edge margin.
+        ok_entry = self.drive_expert_heading(
+            "obstacle", 0.5, -math.pi / 2.0,
+            lambda p: self.gravel_entry_supported(), 12.0,
+            x_hold=5.84, kp=1.2, max_wz=0.35, stop_s=0.0)
+        p = self.pose()
+        log.info("gravel east-arm entry: %s at (%.2f,%.2f,%.1fdeg)" %
+                 ("PASS" if ok_entry else "FAIL", p.x, p.y, math.degrees(p.yaw)))
+        if not ok_entry:
+            self.report("gravel_pit", False, "east-arm entry failed")
+            return False
+        if not self.gravel_transfer_now():
+            self.report("gravel_pit", False, "supported handover fell")
+            return False
+
+        # Track the east arm's south axis under the locked connector. Heading
+        # correction uses the forward-motion sign; lateral stick authority is
+        # weak and holding the expert's drifting heading approaches the edge.
+        ok_fwd = self.gravel_to_corner()
+        self.stop(0.4)
+        p = self.pose()
+        log.info("gravel east-arm corner: %s at (%.2f,%.2f,%.1fdeg)" %
+                 ("PASS" if ok_fwd else "FAIL", p.x, p.y, math.degrees(p.yaw)))
+        if not ok_fwd or self.fallen():
+            self.report("gravel_pit", False, "east-arm corner alignment failed")
+            return False
+
+        # Turn west on the 0.15 m platform with position feedback.
+        ok_turn = self.rotate_hold(math.pi, timeout_s=20.0)
+        if not ok_turn:
+            ok_turn = self.rotate_hold(math.pi, timeout_s=20.0)
+        self.stop(0.3)
+        p = self.pose()
+        log.info("gravel west turn: %s yaw=%s at (%.2f,%.2f)" %
+                 ("PASS" if ok_turn else "FAIL", round(math.degrees(p.yaw), 1), p.x, p.y))
+        if not ok_turn or self.fallen():
+            self.report("gravel_pit", False, "west turn failed")
+            return False
+
+        # Bottom row is x in [4.336, 6.336]: move west to the descent
+        # staging point, keeping both sides on the one-metre-wide arm.
+        ok_west = self.goto((4.70, -12.50), tol=0.12, timeout_s=15.0, speed=0.18)
+        self.stop(0.4)
+        # full11: the expert was handed yaw≈159 deg (21 deg off west); its
+        # open-loop exit drifted north from y=-12.36 to y=-11.79 and fell off
+        # the pit's north edge.  Align to west with the position-loop policy
+        # before handing the descent to the expert.
+        self.face(math.pi)
+        self.stop(0.3)
+        # Per the full-course plan after bridge A: use the obstacle expert for
+        # the descent directly.  The 12-DoF descent was tried in full5 and
+        # failed; keeping the fallback branch only added a loss-of-position
+        # step, so the expert exit is now deterministic.
+        self.switch("obstacle")
+        # Continue past the pit edge: stopping at x=4.50 left the base
+        # straddling the 0.15 m lip (full12: FL/FR at z=0.10, RL/RR at z=0.25)
+        # and the 12-DoF recovery could not move.  Let the expert finish the
+        # descent to x<3.85 (clear floor) before switching.
+        ok_exit = self.drive_expert(
+            "obstacle", 0.5, math.pi, lambda p: p.x < 3.85, 12.0)
+        self.stop(0.4)
+        p = self.pose()
+        log.info("gravel exit: %s at (%.2f,%.2f,%.1fdeg)" %
+                 ("PASS" if ok_exit else "FAIL", p.x, p.y, math.degrees(p.yaw)))
+        ok = ok_entry and ok_fwd and ok_turn and ok_west and ok_exit
+        self.report("gravel_pit", ok,
+                    f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
+        self.ensure_transfer(announce=True)
+
+        return ok
+
     def _run(self) -> None:
         try:
             self._route()
@@ -1067,6 +1228,10 @@ class RouteNode(Node):
         self.stop(0.3)
         log.info("route start at (%.2f, %.2f, yaw %.2f)" % (self.pose().x, self.pose().y, self.pose().yaw))
         only = os.environ.get("PART1_ROUTE_ONLY", "").strip()
+        if only == "gravel":
+            self.run_gravel()
+            self.stop(0.5)
+            return
         if only == "transfer_bench":
             # Flat-area position-tracking benchmark for route-transfer models.
             # Each waypoint is tracked with the same closed-loop controller; we
@@ -1463,7 +1628,7 @@ class RouteNode(Node):
                 # Hand over ~0.45 m before the target.  Switching at full
                 # crossing speed overshot to x=7.1 (1.7 m handover drift, off the
                 # platform); slow the old expert to a crawl before switching.
-                if p.x > 5.25 and abs(p.y) < 0.35:
+                if self.bridge_a_exit_clear(p):
                     ok = True
                     break
                 if abs(p.y) > 0.85:
@@ -1618,7 +1783,8 @@ class RouteNode(Node):
         if not (5.58 <= p.x <= 5.72 and -1.5 <= p.y <= 0.1):
             log.warning("bridge B alignment failed; fixed action will report")
         self.enter_fixed("bridge")
-        ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -3.50, 20.0)
+        ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -3.50,
+                              20.0, x_hold=5.65)
         self.exit_fixed()
         self.report("bridge_bands", ok)
         self.ensure_transfer(announce=True)
@@ -1652,91 +1818,8 @@ class RouteNode(Node):
         self.report("height_bar", ok)
         self.ensure_transfer(announce=True)
 
-        # Position alignment at the gravel entrance face.  The east column is
-        # commanded straight south; without a planar correction the expert
-        # enters off-centre and the first climb drifts to an arm edge.
-        self.require((5.70, -10.20), tol=0.10, timeout_s=10.0, speed=0.15)
-        p = self.pose()
-        log.info("gravel entrance align: x=%.2f y=%.2f yaw=%.1fdeg" %
-                 (p.x, p.y, math.degrees(p.yaw)))
-
-        # 7) gravel L: expert climbs into the EAST arm, switch to 12-DoF at
-        # its middle; the 12-DoF connector then drives to the SE corner, turns
-        # west through the bottom row, and tries the descent.  The old route
-        # used the gravel expert for the whole L and put the left wheels
-        # outside the pit at the south-east corner.
-        self.set_leg("gravel")
-        self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)
-        # All four wheels are already on the east arm at y=-11.95. Reserve
-        # the measured ~0.57 m expert braking / handover distance before the
-        # -12.55 corner; the old -12.15 gate consumed the turning margin.
-        ok_entry = self.drive_expert_heading(
-            "obstacle", 0.5, -math.pi / 2.0,
-            lambda p: p.y < -11.95, 12.0,
-            x_hold=5.95, kp=1.2, max_wz=0.35)
-        p = self.pose()
-        log.info("gravel east-arm entry: %s at (%.2f,%.2f,%.1fdeg)" %
-                 ("PASS" if ok_entry else "FAIL", p.x, p.y, math.degrees(p.yaw)))
-        if not ok_entry:
-            self.report("gravel_pit", False, "east-arm entry failed")
+        if not self.run_gravel():
             return
-        self.ensure_transfer()
-
-        # Hold the entry heading and use signed forward/reverse motion. A
-        # braking overrun must not turn a nearby corner into a 180-degree
-        # point-pursuit command before the explicit clockwise west turn.
-        p_sw = self.pose()
-        ok_fwd = self._pose_move_to(p_sw.x, -12.55, p_sw.yaw,
-                                    tol=0.08, timeout_s=10.0, speed=0.12)
-        self.stop(0.4)
-        p = self.pose()
-        log.info("gravel east-arm corner: %s at (%.2f,%.2f,%.1fdeg)" %
-                 ("PASS" if ok_fwd else "FAIL", p.x, p.y, math.degrees(p.yaw)))
-        if not ok_fwd or self.fallen():
-            self.report("gravel_pit", False, "east-arm corner alignment failed")
-            return
-
-        # Turn west on the 0.15 m platform with position feedback.
-        ok_turn = self.rotate_hold(math.pi, timeout_s=20.0)
-        if not ok_turn:
-            ok_turn = self.rotate_hold(math.pi, timeout_s=20.0)
-        self.stop(0.3)
-        p = self.pose()
-        log.info("gravel west turn: %s yaw=%s at (%.2f,%.2f)" %
-                 ("PASS" if ok_turn else "FAIL", round(math.degrees(p.yaw), 1), p.x, p.y))
-        if not ok_turn or self.fallen():
-            self.report("gravel_pit", False, "west turn failed")
-            return
-
-        # Bottom row is x in [4.336, 6.336]: keep the base at 4.70 so the
-        # left wheel stays inside, then try the 12-DoF descent.
-        ok_west = self.goto((4.70, -12.50), tol=0.12, timeout_s=15.0, speed=0.18)
-        self.stop(0.4)
-        # full11: the expert was handed yaw≈159 deg (21 deg off west); its
-        # open-loop exit drifted north from y=-12.36 to y=-11.79 and fell off
-        # the pit's north edge.  Align to west with the position-loop policy
-        # before handing the descent to the expert.
-        self.face(math.pi)
-        self.stop(0.3)
-        # Per the full-course plan after bridge A: use the obstacle expert for
-        # the descent directly.  The 12-DoF descent was tried in full5 and
-        # failed; keeping the fallback branch only added a loss-of-position
-        # step, so the expert exit is now deterministic.
-        self.switch("obstacle")
-        # Continue past the pit edge: stopping at x=4.50 left the base
-        # straddling the 0.15 m lip (full12: FL/FR at z=0.10, RL/RR at z=0.25)
-        # and the 12-DoF recovery could not move.  Let the expert finish the
-        # descent to x<3.85 (clear floor) before switching.
-        ok_exit = self.drive_expert(
-            "obstacle", 0.5, math.pi, lambda p: p.x < 3.85, 12.0)
-        self.stop(0.4)
-        p = self.pose()
-        log.info("gravel exit: %s at (%.2f,%.2f,%.1fdeg)" %
-                 ("PASS" if ok_exit else "FAIL", p.x, p.y, math.degrees(p.yaw)))
-        ok = ok_entry and ok_fwd and ok_turn and ok_west and ok_exit
-        self.report("gravel_pit", ok,
-                    f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
-        self.ensure_transfer(announce=True)
 
         # 8) slalom keyframes: B start -> north of post3 -> south of post2 ->
         # corner / west of post2 -> east of post1 -> west of post0 -> north of
