@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "root": "demo/rl_sar/policy",
+  "format": "TorchScript",
+  "validation": "ZIP CRC and TorchScript data/constants/code records verified; no GPU execution",
+  "total_size_bytes": 18021686,
+  "files": [
+    {
+      "path": "black/himloco/best.pt",
+      "size_bytes": 991679,
+      "sha256": "a5979a6b56a820642ab5f33c6e885de51c5747099777c678c3a0897e71e8afa1"
+    },
+    {
+      "path": "blackW/flat/policy.pt",
+      "size_bytes": 1055359,
+      "sha256": "80b081bb4edcfbf5805925a2f62a61e1198a7c650c1444782d833e127f4f0cf6"
+    },
+    {
+      "path": "blackW/obstacle/policy.pt",
+      "size_bytes": 1055359,
+      "sha256": "75c603669f01f679332fbbed02797aa3eea3bf4d09147b229028b3f04bda0f6f"
+    },
+    {
+      "path": "blackW/plum_depth_final_v1/policy.pt",
+      "size_bytes": 1580628,
+      "sha256": "35e4fc6b7d63b06cac8d8328bc3c8354942a2cfade6e21134a4221b3a988c91d"
+    },
+    {
+      "path": "blackW/row2p_p40w40_v1/policy.pt",
+      "size_bytes": 1380886,
+      "sha256": "162659690d1de27b9916e8870c459d2f8dbc61169bece48f8e49c477d65ab67b"
+    },
+    {
+      "path": "blackW/s1d_trench_reward_v75_m100/policy.pt",
+      "size_bytes": 1380886,
+      "sha256": "25477330d3e179466cdb85d8a1ecbbe8fdc7fe1a8bae6e58a4da40dc97c03d15"
+    },
+    {
+      "path": "blackW/st30_ppo_st30_s100_600/policy.pt",
+      "size_bytes": 1380886,
+      "sha256": "43ddc7f559e50dda17d9d99542013edf2f902457084d64506ada370ca1f8eeef"
+    },
+    {
+      "path": "blackW/stair/policy.pt",
+      "size_bytes": 1055359,
+      "sha256": "b61ede507b2a5ea2b70ed19324dc0116d152f504e9ad8ac7ce3d55a02853255f"
+    },
+    {
+      "path": "blackW/vt_band_v1/policy.pt",
+      "size_bytes": 1380886,
+      "sha256": "5f5a07f532b9f556a7e1aa43635513ec712a1b77f833569b23417d70d5ce2372"
+    },
+    {
+      "path": "blackW/vt_edge_v1/policy.pt",
+      "size_bytes": 1380886,
+      "sha256": "b65be279d55428220176e4294fb12222245f4012acf722630db64bef3f204381"
+    },
+    {
+      "path": "blackW/vt_locked12/policy.pt",
+      "size_bytes": 1236214,
+      "sha256": "0492bc0e8bf02575437fc9e60015a355e759b02c95e05efa7de6e2ea9a11456a"
+    },
+    {
+      "path": "blackW/vt_pose_v1/policy.pt",
+      "size_bytes": 1380886,
+      "sha256": "151f26b776b143b36d189f9ba27bd446247c042b1cee13a62c69313a9ba859ec"
+    },
+    {
+      "path": "blackW/vt_track_v1/policy.pt",
+      "size_bytes": 1380886,
+      "sha256": "a599394225a62a1091a6b73a39c7a3859e59cac7b81b78e7a3bcb3586ad5736a"
+    },
+    {
+      "path": "blackW/vt_track_v2/policy.pt",
+      "size_bytes": 1380886,
+      "sha256": "c4c31186f1dd791c769dec53d94525c62a3ca80a2abf5b59daa465790408f927"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ Part2 越障能力测试，可无窗口全速回归，也可开窗口 + 手柄�
 
 - 机器人：**blackW**（16 DoF，轮腿式，Part1/Part2 主用）；black（12 DoF，历史对照）。
 - 物理：MuJoCo 3.11，2 ms 步长；控制 200 Hz、推理 50 Hz（`policy/<robot>/base.yaml`）。
-- 策略权重**不入库**：`policy.pt` / `best.pt` 本地按需补齐（见下）。
+- 策略权重已入库：14 份 `policy.pt` / `best.pt` 的大小与 SHA-256 见 [WEIGHTS.json](rl_sar/policy/WEIGHTS.json)。
 
 ## 目录
 
@@ -143,10 +143,10 @@ pixi run -e eval robocon-eval replay-part2 --trace artifacts/traces/trench_30cm.
   （规则不计时，没有任何计分时间上限）。
 - 一次只跑一个 launch 实例（`/joy`、`/eval_state` 会串台）；判分跑独占 CPU。
 
-## 策略与权重（本地）
+## 策略与权重
 
 策略目录：`rl_sar/policy/<robot>/<policy_name>/`，每个目录含 `config.yaml` + `manifest.json` +
-本地权重（`policy.pt`，不提交）。选中保留的 blackW 策略：
+已入库的权重（`policy.pt`；black 的 himloco 为 `best.pt`），校验清单见 [WEIGHTS.json](rl_sar/policy/WEIGHTS.json)。选中保留的 blackW 策略：
 
 `flat`、`stair`、`obstacle`、`row2p_p40w40_v1`、`st30_ppo_st30_s100_600`、
 `s1d_trench_reward_v75_m100`、`vt_band_v1`、`vt_locked12`、`vt_pose_v1`、`vt_edge_v1`、
@@ -167,7 +167,7 @@ pixi run -e eval demo-tests     # 契约/出生点 + Part1/Part2 场景 MuJoCo �
 pixi run -e eval python demo/tests/check_robot_manifests.py
 pixi run -e eval python demo/tests/check_policy_contracts.py
 pixi run -e eval python demo/tests/check_spawns.py
-pixi run -e demo bash demo/tests/smoke_policy_load.sh    # 需已构建 + 本地权重
+pixi run -e demo bash demo/tests/smoke_policy_load.sh    # 需已构建；使用仓库内权重
 pixi run -e demo bash demo/tests/smoke_policy_switch.sh
 pixi run -e eval python demo/tests/check_depth_inference.py \
     --policy demo/rl_sar/policy/blackW/plum_depth_final_v1  # 需先 RL_DEPTH_DEBUG=1 跑过一小段

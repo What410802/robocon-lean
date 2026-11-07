@@ -5,7 +5,7 @@ RoboCon 2026 足式机器人仿真赛题的最小可读仓库：**Part 1 障碍�
 demo；规则依据、判分细节和训练配方分别在 `docs/` 与各目录 README 中。
 
 > 状态：2026-11-02 已从旧比赛工作区迁移重建完成（新仓独立 git 历史，不引用旧仓）。
-> 仓库不带历史权重/旧 artifacts：权重按 `demo/rl_sar/policy/*/` 的配置重新训练/导出。
+> 仓库包含演示所需的 14 份策略权重；路径、大小与 SHA-256 见 [WEIGHTS.json](demo/rl_sar/policy/WEIGHTS.json)。旧 artifacts 不入库。
 > 同日已按本 README 在干净环境验证 `eval` / `demo` / `train` 三个 pixi 环境、colcon 构建、
 > 固定路线（含 `stop_on_fail`、live Part1 judge 门控）与路线录像。
 
