@@ -6,19 +6,19 @@ Two jobs:
 1. ``--dump``: load the route scene with MuJoCo and print every non-floor
    collision geom as a world-space XY AABB, grouped by terrain row (y band).
    ``terrain_label*`` / ``contype=0`` visual geoms are ignored.
-2. default: import the route's ``AUDIT_SEGMENTS`` polyline (the exact planned
-   path in ``demo/rl_sar/scripts/part2_auto_route.py``), compute the clearance
-   from every planned segment to every non-floor obstacle AABB and fail on
-   clearance below the route's requirement.
+2. default: import the route's ``AUDIT_SEGMENTS`` path and alignment envelopes
+   from ``demo/rl_sar/scripts/part2_route_plan.py``, compute their clearance
+   to every non-floor obstacle AABB and fail below the route's requirement.
 
 Clearance semantics (2-D, robot centre path vs obstacle AABB in the XY plane):
 
 * ``transit`` / ``align`` segments: strictly > ``--min-clear`` (0.45 m) to
   every obstacle.  These are corridor moves that must never touch anything.
-* ``approach`` / ``exit`` segments: the *target row* (obstacles whose bbox
-  contains the leg's lane y) is ignored, everything else must clear
-  ``--min-clear``.  The target itself is intentionally approached.
-* ``cross`` segments: the target row is ignored, everything else must clear
+* ``align_envelope`` rectangles: the entire filled alignment runway must
+  clear every obstacle by ``--min-clear``, including the expert's target.
+* ``approach`` / ``exit`` segments: only the explicitly named target geoms
+  are ignored; everything else must clear ``--min-clear``.
+* ``cross`` segments: only those named target geoms are ignored; all others must clear
   ``--min-clear``; additionally the segment is validated to start and end
   outside the crossed row and to pass over the target obstacle.
 * ``slot`` stand points: before an expert leg the robot centre must sit in the
@@ -28,9 +28,8 @@ Clearance semantics (2-D, robot centre path vs obstacle AABB in the XY plane):
   robot body (>= 0.5 m).  This catches "stand too close to the step" errors
   that would make the expert climb from a standstill.
 
-Usage (demo env, ROS sourced so the route module can be imported):
+Usage (demo or eval Python environment; ROS is not required):
 
-    source demo/install/setup.bash
     .pixi/envs/demo/bin/python tools/route/audit_part2_route.py --dump
     .pixi/envs/demo/bin/python tools/route/audit_part2_route.py
 """
@@ -47,7 +46,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 SCENE = ROOT / "demo/scenes/part2/full_field/part2_fixed_field.xml"
-ROUTE_SCRIPT = ROOT / "demo/rl_sar/scripts/part2_auto_route.py"
+ROUTE_SCRIPT = ROOT / "demo/rl_sar/scripts/part2_route_plan.py"
 
 ROBOT_PREFIXES = ("trunk", "FL_", "FR_", "RL_", "RR_", "imu_link", "d435_link")
 # Planar rows that the route is designed to use as obstacle rows.  Anything
@@ -165,11 +164,18 @@ def aabb_seg_distance(ob: Obstacle, ax: float, ay: float,
             point_seg_distance(ob.xmax, ob.ymin, ax, ay, bx, by),
             point_seg_distance(ob.xmax, ob.ymax, ax, ay, bx, by),
             point_seg_distance(ob.xmin, ob.ymax, ax, ay, bx, by)),
-        min(point_seg_distance(ax, ay, ob.xmin, ob.ymin, ob.xmax, ob.ymin),
-            point_seg_distance(ax, ay, ob.xmax, ob.ymin, ob.xmax, ob.ymax),
-            point_seg_distance(ax, ay, ob.xmax, ob.ymax, ob.xmin, ob.ymax),
-            point_seg_distance(ax, ay, ob.xmin, ob.ymax, ob.xmin, ob.ymin)),
+        min(point_seg_distance(px, py, ex0, ey0, ex1, ey1)
+            for px, py in ((ax, ay), (bx, by))
+            for ex0, ey0, ex1, ey1 in edges),
     )
+
+
+def aabb_rect_distance(ob: Obstacle, bounds) -> float:
+    """2-D distance to a filled XY rectangle, including contained obstacles."""
+    (xmin, ymin), (xmax, ymax) = bounds
+    dx = max(xmin - ob.xmax, ob.xmin - xmax, 0.0)
+    dy = max(ymin - ob.ymax, ob.ymin - ymax, 0.0)
+    return math.hypot(dx, dy)
 
 
 def _segments_cross(ax, ay, bx, by, cx, cy, dx, dy) -> bool:
@@ -198,18 +204,6 @@ def _segments_cross(ax, ay, bx, by, cx, cy, dx, dy) -> bool:
     return False
 
 
-def _crossed_targets(obstacles: list[Obstacle], cross_pts):
-    """Obstacles the crossing segment from ``cross_pts``[0] to [1] passes over.
-
-    A geom belongs to the crossed target if its XY AABB is within
-    ``target_slack`` (0.5 m) of the crossing segment; neighbouring obstacles of
-    the same row are farther away and stay subject to the clearance check.
-    """
-    (ax, ay), (bx, by) = cross_pts
-    return [ob for ob in obstacles
-            if aabb_seg_distance(ob, ax, ay, bx, by) < 0.50]
-
-
 # --------------------------------------------------------------------------
 # Audit of the planned route polyline
 # --------------------------------------------------------------------------
@@ -225,15 +219,30 @@ def audit(segments: list[dict], obstacles: list[Obstacle], min_clear: float) -> 
         crossed: list[Obstacle] = []
         ignore_names: set[str] = set()
         note = ""
-        if seg.get("cross_pts"):
-            crossed = _crossed_targets(obstacles, seg["cross_pts"])
-            if kind in ("approach", "cross", "exit"):
-                ignore_names = {ob.name for ob in crossed}
+        target_names = set(seg.get("target_geoms", ()))
+        crossed = [ob for ob in obstacles if ob.name in target_names]
+        missing = target_names - {ob.name for ob in crossed}
+        if missing or (kind not in ("transit", "align_envelope") and not target_names):
+            failures += 1
+            print(f"[FAIL] {name:30s} kind={kind:8s} "
+                  f"missing explicit target geoms: {sorted(missing) or '<none specified>'}")
+            continue
+        if kind in ("approach", "cross", "exit", "slot"):
+            ignore_names = target_names
         if kind == "transit":
             ignore_names = set()
         ok = True
         clearance = 1e9
-        if kind == "slot":
+        if kind == "align_envelope":
+            bounds = seg["bounds"]
+            clearance, nearest = min(
+                ((aabb_rect_distance(ob, bounds), ob.name) for ob in obstacles),
+                default=(math.inf, None))
+            ok = clearance > min_clear
+            (xmin, ymin), (xmax, ymax) = bounds
+            note = (f" bounds=({xmin:.2f},{ymin:.2f})..({xmax:.2f},{ymax:.2f})"
+                    f" nearest={nearest}")
+        elif kind == "slot":
             sx, sy = pts[0]
             if not crossed:
                 ok = False
@@ -243,7 +252,6 @@ def audit(segments: list[dict], obstacles: list[Obstacle], min_clear: float) -> 
                 runup = min(aabb_seg_distance(ob, sx, sy, sx, sy) for ob in crossed)
                 neighbour_pool = [ob for ob in obstacles
                                   if ob.name not in ignore_names
-                                  and abs(ob.zmax) > 0.05
                                   and aabb_seg_distance(ob, sx, sy, sx, sy) <= 1.5]
                 lateral = min((aabb_seg_distance(ob, sx, sy, sx, sy)
                                for ob in neighbour_pool), default=1e9)
@@ -274,6 +282,7 @@ def audit(segments: list[dict], obstacles: list[Obstacle], min_clear: float) -> 
                     length = math.hypot(dx, dy)
                     if length < 1e-6:
                         ok = False
+                        ux = uy = 0.0
                         note += " CROSS_ZERO_LENGTH"
                     else:
                         ux, uy = dx / length, dy / length
@@ -326,9 +335,9 @@ def _load_route_module():
     scripts = str(ROUTE_SCRIPT.parent)
     if scripts not in sys.path:
         sys.path.insert(0, scripts)
-    spec = importlib.util.spec_from_file_location("part2_auto_route", ROUTE_SCRIPT)
+    spec = importlib.util.spec_from_file_location("part2_route_plan", ROUTE_SCRIPT)
     mod = importlib.util.module_from_spec(spec)
-    sys.modules["part2_auto_route"] = mod
+    sys.modules["part2_route_plan"] = mod
     spec.loader.exec_module(mod)  # type: ignore[union-attr]
     return mod
 

@@ -109,7 +109,8 @@ class Terrain:
 
 
 class FakeRouteSim(Node):
-    def __init__(self, scene: Path, rate: float, spawn=(3.7, -9.0, 0.0)) -> None:
+    def __init__(self, scene: Path, rate: float, spawn=(3.7, -9.0, 0.0),
+                 speedup: float = 1.0) -> None:
         super().__init__("fake_route_sim")
         self.terrain = Terrain(scene)
         self.rate = rate
@@ -123,7 +124,7 @@ class FakeRouteSim(Node):
         qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
         self.create_subscription(Joy, "/joy", self._on_joy, qos)
         self.pub = self.create_publisher(String, "/eval_state", qos)
-        self.create_timer(self.dt, self._step)
+        self.create_timer(self.dt / speedup, self._step)
 
     def _on_joy(self, msg: Joy) -> None:
         self.axes = list(msg.axes) + [0.0] * max(0, 8 - len(msg.axes))
@@ -199,13 +200,17 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--scene", default=str(DEFAULT_SCENE))
     ap.add_argument("--rate", type=float, default=50.0)
+    ap.add_argument("--speedup", type=float, default=1.0,
+                    help="publish faster without changing the integration step")
     ap.add_argument("--spawn-x", type=float, default=3.7)
     ap.add_argument("--spawn-y", type=float, default=-9.0)
     ap.add_argument("--spawn-yaw", type=float, default=0.0)
     args = ap.parse_args()
+    if args.rate != 50.0 or not 0 < args.speedup <= 50:
+        ap.error("route step-lock requires --rate 50 and --speedup in (0, 50]")
     rclpy.init()
     node = FakeRouteSim(Path(args.scene), args.rate,
-                        (args.spawn_x, args.spawn_y, args.spawn_yaw))
+                        (args.spawn_x, args.spawn_y, args.spawn_yaw), args.speedup)
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:

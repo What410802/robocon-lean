@@ -137,8 +137,9 @@ struct ModelParams
     double stiffness;
     torch::Tensor action_scale;
     std::vector<int> wheel_indices;
-    // Locked-wheel (12-DoF point-foot) mode: wheel actions ignored, wheel joints
-    // held at default q with rl_kp/rl_kd; ordinary wheel mode keeps velocity.
+    // Locked-wheel (12-DoF point-foot) mode: capture measured wheel angles once
+    // per RL entry / policy switch and hold them with dq_des=0 and rl_kp/rl_kd.
+    // Ordinary wheel policies retain velocity control.
     bool lock_wheels = false;
     // Optional depth camera (policy config.yaml "depth:" block).  A depth policy
     // is called as model.forward(obs, [1x1xHxW depth]) and never reads the
@@ -206,6 +207,11 @@ public:
     void InitOutputs();
     void InitControl();
     void InitRL(std::string robot_path);
+    void InitWheelLock();
+    bool WheelLockActive() const;
+    void ApplyWheelLockTargets(std::vector<double> &q_des, std::vector<double> &dq_des,
+                               std::vector<double> &kp, std::vector<double> &kd,
+                               std::vector<double> &tau_ff) const;
 
     // rl functions
     virtual torch::Tensor Forward() = 0;
@@ -238,7 +244,7 @@ public:
     // (used by our training env) backfills the first frame into every history slot.
     // Prefill once per RL entry so deployment matches the training observation.
     bool history_prefilled = false;
-    torch::Tensor locked_wheel_q;
+    std::vector<double> locked_wheel_q;
     bool locked_wheel_ready = false;
 
     // others

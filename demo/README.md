@@ -38,6 +38,52 @@ source demo/install/setup.bash
 ## 跑一个演示
 
 ```bash
+# 现场自动演示：自动 source 工作区、站立并沿唯一的路线运行
+pixi run -e demo demo-part1
+pixi run -e demo demo-part2
+
+# 无窗口调试仍按 1× 实时运行
+pixi run -e demo demo-part2 viewer:=false
+```
+
+自动路线默认关闭实体手柄输入，第一段失败会退出整个 launch。Part2 的 33 段障碍规格、
+路线定义和梅花桩剩余风险见 [Part2 路线说明](../docs/part2/ROUTE.md)。
+`route:=part1|part2` 会选择对应的场景、RL part 与衔接策略；不需要把 Part2 伪装成 Part1。
+Part1 默认使用 `vt_locked12` 衔接；Part2 长直线使用 `flat`，转向与精对线使用 `vt_locked12`。
+按顺序运行两个入口，上一场退出后再启动下一场；不要同时启动两条路线。
+
+Part1 砂砾坑入口本次向东修正前的 [v67 开窗口 1× 整场](../artifacts/route_fix/part1_final_v67_evidence.json)
+全部路线门限 PASS、0 次恢复、退出状态 0，13109 帧、262.16 s 返回起点
+`(3.561, -8.939, 0.557)`。
+此前 [v55 真锁轮与砂砾坑局部修正整场](../artifacts/route_fix/part1_fixed_wheels_v55_evidence.json)
+也已完成，保留作历史证据。进入 `vt_locked12` 时保存实测轮角并保持零目标轮速；
+砂砾坑提前切换，保留刹停距离、固定航向对线并明确顺时针转西，原路线拓扑保留。
+**Part1 默认入口已恢复 v55/v67 阶段保留源码（与 v56/v72 快照哈希一致）**（SHA256 `c556739c…`）。
+原桥梁对线、低杆路点和砂砾坑 `x=5.70` 入口恢复；此次延后桥 A 交接、桥 B 精对线、
+低杆纠偏与四轮上坑即换模仍未解决，未默认启用。
+[v88 失败记录与实验源码](../artifacts/route_fix/part1_final_calibration_v88_evidence.json) 保留供继续调试。
+恢复后未重跑整场，成功证据仍是 v67；不把失败校准当作当前已验证的改进。
+历史 [full40 视频](../artifacts/route/locked12_full40_operator.mp4) 和
+[约 354 s 无窗口基线复跑](../artifacts/route_fix/part1_baseline_recheck_evidence.json)
+完成于此次真锁轮修复之前，仍保留为当时的实体运动成功证据。
+上述演示关闭 live judge，不代表正式判分全通过。
+Part2 当前唯一计划执行 33 段，包含平台至 30 cm、楼梯单级至 30 cm、坡至 35°、沟宽至 30 cm、
+墙至 40 cm 的全部较低实体和比赛梅花桩。40 cm 平台加长助跑后仍失败，经用户确认暂时跳过，
+明确记录为能力缺口；规则平台上限仍是 40 cm。历史
+[v56 开窗口 1× 全程视频](../artifacts/route_fix/part2_full_live_v56_cli.mp4) 完成旧 25 段集成门限、
+退出状态 0；[严格支撑点回放 24/25](../artifacts/route_fix/part2_full_live_v56_eval.json)，末墙
+`not_stable_after_crossing`，梅花桩成功投影 200 分。新版最佳连续前缀仍为 v82 / v83 的前 14 段，
+均在 30 cm 楼梯前对齐失败；最新 v84 的前四段通过严格回放，随后在 25 cm 平台卡住，
+回放为 `not_on_platform`。新版 33 段整场尚未完成。
+需要保留现场运行证据时，同时设置 `PART1_RECORD_PATH` 和 `PART1_RECORD_PLAN_PATH`，
+结束后按 [视频工具说明](../tools/video/README.md) 渲染简版视频。
+
+人工驾驶或独立单关在 demo 环境里运行：
+
+```bash
+pixi shell -e demo
+source demo/install/setup.bash
+
 # Part1：官方 Part1 场景，开窗口，手柄可用
 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
     policy_name:=row2p_p40w40_v1 joy:=true viewer:=true realtime:=true
@@ -49,18 +95,6 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=2 \
 # Part2 官方整场人工查看/驾驶（不用于判分）
 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=2 \
     full_field:=true policy_name:=row2p_p40w40_v1 joy:=true
-
-# Part1 一键自动整场（演示/回归）
-ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
-    policy_name:=vt_pose_v1 route:=part1 viewer:=false realtime:=true
-
-# Part2 一键自动整场（六类全开：平台/楼梯/斜坡/沟壑/梅花桩/高墙；约 20 min 1×）
-PART1_ROUTE_JUDGE=0 \
-PART1_RECORD_PATH=$PWD/artifacts/part2_route3/real_v27_states.jsonl \
-PART1_RECORD_PLAN_PATH=$PWD/artifacts/part2_route3/real_v27_plan.jsonl \
-ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route:=part2 \
-    policy_name:=vt_locked12 transfer_policy:=vt_locked12 \
-    viewer:=false realtime:=true eval_state_every:=10 stop_on_fail:=true
 
 # black（12 DoF，历史对照）
 ros2 launch rl_sar rl_sim_all.launch.py robot:=black part:=1 policy_name:=himloco
@@ -79,12 +113,15 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=black part:=1 policy_name:=himloc
 - `/policy_switch`（`std_msgs/msg/String`）：payload 为 policy 目录名，`rl_sim` 直接加载
   TorchScript（实测 ~3 ms），供自动路线切换深度专家/下降专家；手柄键位不变。
 
-无头/自动化一律 `viewer:=false realtime:=false`（全速）；**1x 实时演示**用
-`viewer:=false realtime:=true`。
+独立策略无头冒烟可用 `viewer:=false realtime:=false`（全速）。自动路线按 1× 实时运行，
+launch 默认 `realtime:=true`；Part1 保留原视频的 1× 墙钟控制，Part2 在实时与全速模式中均按仿真时间同步 50 Hz 控制。
+`demo-part1` 默认 `PART1_ROUTE_JUDGE=0` 运行实体运动演示；显式设为 `1` 启用原版 live judge。
+正式判分器保持原样，视频完成不等于正式全通过（见 [Part1 操作者手册](docs/part1-auto-route-operator.md)）。
+`eval_state_every` 独立控制记录频率：现场快捷入口默认 10，判分 trace 显式传 1（每 2 ms 一帧）。
 
 ## 判分 trace（2 ms 采样）
 
-判分只看 trace：`eval_state_every` 默认 **1**（每个 2 ms 物理帧一帧 `/eval_state`）：
+判分只看 trace：显式传 `eval_state_every:=1`（每个 2 ms 物理帧一帧 `/eval_state`；独立关卡默认 1，自动路线默认 10）：
 
 ```bash
 # 终端 A：无窗口实时跑一关，按物理帧采样
@@ -112,7 +149,7 @@ pixi run -e eval robocon-eval replay-part2 --trace artifacts/traces/trench_30cm.
 本地权重（`policy.pt`，不提交）。选中保留的 blackW 策略：
 
 `flat`、`stair`、`obstacle`、`row2p_p40w40_v1`、`st30_ppo_st30_s100_600`、
-`s1d_trench_reward_v75_m100`、`vt_band_v1`、`vt_pose_v1`、`vt_edge_v1`、
+`s1d_trench_reward_v75_m100`、`vt_band_v1`、`vt_locked12`、`vt_pose_v1`、`vt_edge_v1`、
 `plum_depth_final_v1`（深度相机梅花桩专家，含 `depth.json` 契约）；
 black：`himloco`（`best.pt`）。固定动作姿态在 `policy/blackW/behaviors/`。
 训练导出一个新策略 = 把 `config.yaml`/`manifest.json`/`policy.pt` 拷进对应目录（见 `train/README.md`）。

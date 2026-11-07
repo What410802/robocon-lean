@@ -144,6 +144,7 @@ class RouteNode(Node):
                 self.get_logger().warning(f"route judge unavailable: {exc}")
         self.get_logger().info("part1_auto_route: virtual gamepad on /joy (waiting for /eval_state)")
         self._finished = threading.Event()
+        self._exit_code = 0
         self._thread = threading.Thread(target=self._run, name="route", daemon=True)
         self._thread.start()
 
@@ -577,6 +578,9 @@ class RouteNode(Node):
         self.ensure_transfer()
         t0 = self._now()
         while self._now() - t0 < timeout_s:
+            if self.fallen():
+                self.stop(0.25)
+                return False
             p = self.pose()
             dx, dy = tx - p.x, ty - p.y
             dyaw = wrap(target_yaw - p.yaw)
@@ -705,6 +709,7 @@ class RouteNode(Node):
             log.info(line)
             return
         log.error(line)
+        self._exit_code = 1
         if self._stop_on_fail:
             raise RuntimeError(line)
 
@@ -1027,13 +1032,14 @@ class RouteNode(Node):
         try:
             self._route()
         except Exception as exc:  # noqa: BLE001
+            self._exit_code = 1
             self.get_logger().error(f"part1_auto_route aborted: {exc}")
             self.stop(0.5)
         finally:
             # Release the main spin loop and let launch shut the sim nodes down.
             # The watchdog also covers a hung rclpy teardown after an abort.
             self._finished.set()
-            threading.Timer(2.0, lambda: os._exit(0)).start()
+            threading.Timer(2.0, lambda: os._exit(self._exit_code)).start()
 
     def _route(self) -> None:
         log = self.get_logger()
@@ -1661,27 +1667,34 @@ class RouteNode(Node):
         # outside the pit at the south-east corner.
         self.set_leg("gravel")
         self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)
-        # Best run so far (full12): 0.5 m/s expert to y<-12.15 with x_hold
-        # 5.95; then the 12-DoF goto to the bottom-row centre.  Slower or
-        # pre-biased entries over/under-shot (full14-17); revert to this preset.
+        # All four wheels are already on the east arm at y=-11.95. Reserve
+        # the measured ~0.57 m expert braking / handover distance before the
+        # -12.55 corner; the old -12.15 gate consumed the turning margin.
         ok_entry = self.drive_expert_heading(
             "obstacle", 0.5, -math.pi / 2.0,
-            lambda p: p.y < -12.15, 12.0,
+            lambda p: p.y < -11.95, 12.0,
             x_hold=5.95, kp=1.2, max_wz=0.35)
         p = self.pose()
         log.info("gravel east-arm entry: %s at (%.2f,%.2f,%.1fdeg)" %
                  ("PASS" if ok_entry else "FAIL", p.x, p.y, math.degrees(p.yaw)))
+        if not ok_entry:
+            self.report("gravel_pit", False, "east-arm entry failed")
+            return
         self.ensure_transfer()
 
-        # Go straight south from the expert's actual x: full22 entered at
-        # x=5.54 and the lateral goto to 5.72 turned the 12-DoF policy west off
-        # the arm.  Only the y waypoint needs to move.
+        # Hold the entry heading and use signed forward/reverse motion. A
+        # braking overrun must not turn a nearby corner into a 180-degree
+        # point-pursuit command before the explicit clockwise west turn.
         p_sw = self.pose()
-        ok_fwd = self.goto((p_sw.x, -12.55), tol=0.10, timeout_s=10.0, speed=0.15)
+        ok_fwd = self._pose_move_to(p_sw.x, -12.55, p_sw.yaw,
+                                    tol=0.08, timeout_s=10.0, speed=0.12)
         self.stop(0.4)
         p = self.pose()
         log.info("gravel east-arm corner: %s at (%.2f,%.2f,%.1fdeg)" %
                  ("PASS" if ok_fwd else "FAIL", p.x, p.y, math.degrees(p.yaw)))
+        if not ok_fwd or self.fallen():
+            self.report("gravel_pit", False, "east-arm corner alignment failed")
+            return
 
         # Turn west on the 0.15 m platform with position feedback.
         ok_turn = self.rotate_hold(math.pi, timeout_s=20.0)
@@ -1691,6 +1704,9 @@ class RouteNode(Node):
         p = self.pose()
         log.info("gravel west turn: %s yaw=%s at (%.2f,%.2f)" %
                  ("PASS" if ok_turn else "FAIL", round(math.degrees(p.yaw), 1), p.x, p.y))
+        if not ok_turn or self.fallen():
+            self.report("gravel_pit", False, "west turn failed")
+            return
 
         # Bottom row is x in [4.336, 6.336]: keep the base at 4.70 so the
         # left wheel stays inside, then try the 12-DoF descent.
@@ -1771,7 +1787,7 @@ def main() -> int:
             pass
         if rclpy.ok():
             rclpy.shutdown()
-    return 0
+    return node._exit_code
 
 
 if __name__ == "__main__":

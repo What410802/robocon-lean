@@ -625,10 +625,9 @@ void PublishFeedback(SimNode* node, const mjData* d, const ActuatorIndex& idx,
         state.cur[k] = 0.0;
     }
     // 协方差一律留 0：仿真是确定性、无噪声的（要"有噪声的 IMU"就等电机非理想项那一轮再加）。
-    node->PublishMotorState(state);
-
     if (!imu.ok())
     {
+        node->PublishMotorState(state);
         return;
     }
     Imu out;
@@ -647,6 +646,10 @@ void PublishFeedback(SimNode* node, const mjData* d, const ActuatorIndex& idx,
     out.linear_acceleration.y = d->sensordata[imu.acc + 1];
     out.linear_acceleration.z = d->sensordata[imu.acc + 2];
     node->PublishImu(out);
+    // /motor_state triggers the policy/control tick. Make this step's IMU
+    // available first; publishing it afterwards always exposed an older frame.
+    // Separate DDS topics still require no assumption of atomic delivery.
+    node->PublishMotorState(state);
 }
 
 /// 物理线程主体：装现场 → 递给界面 → 一步一循环。返回值 = 进程退出码（0 正常 / 1 装配失败）。

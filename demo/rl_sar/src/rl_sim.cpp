@@ -14,6 +14,7 @@
 #include <iomanip>
 
 #include "command_limit.hpp"
+#include "feedback_control.hpp"
 #include "input_map.hpp"
 
 #include <torch/utils.h> // torch::set_num_threads (libtorch >= 2.x no longer pulls it in via torch/script.h)
@@ -199,6 +200,11 @@ void RL_Sim::SetCommand(const RobotCommand<double> *command)
     std::vector<double> kp(command->motor_command.kp);
     std::vector<double> kd(command->motor_command.kd);
     std::vector<double> tau_ff(command->motor_command.tau);
+    if (this->WheelLockActive())
+    {
+        this->ApplyWheelLockTargets(q_des, dq_des, kp, kd, tau_ff);
+        lim.position_holds = this->params.wheel_indices;
+    }
     const command_limit::Counts limited = command_limit::Apply(q_des, dq_des, kp, kd, tau_ff,
                                                               lim_state, lim, this->params.dt);
     this->limited_q_des_prev = q_des;
@@ -262,6 +268,9 @@ void RL_Sim::SwitchPolicy(const std::string &policy_name)
     this->rl_init_done = false;
     try
     {
+        // A /policy_switch callback can occur between control ticks. Capture
+        // the newest feedback, not the previous inference's observation.
+        this->GetState(&this->robot_state);
         const auto switch_start = std::chrono::steady_clock::now();
         this->InitRL(this->robot_name + "/" + policy_name);
         const auto switch_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -319,7 +328,7 @@ std::uint32_t RL_Sim::KeyboardMask() const
     }
 }
 
-void RL_Sim::RobotControl()
+void RL_Sim::RobotControl(bool defer_publish)
 {
     // Resolve the input edges once per cycle (input_map.hpp): an edge is a pure function of this cycle
     // and the previous one, so it fires exactly once and never has to be "consumed" — that replaces the
@@ -394,7 +403,7 @@ void RL_Sim::RobotControl()
 
         this->GetState(&this->robot_state);
         this->StateController(&this->robot_state, &this->robot_command);
-        this->SetCommand(&this->robot_command);
+        if (!defer_publish) this->SetCommand(&this->robot_command);
 
         if (this->status_period_ms > 0)
         {
@@ -520,6 +529,14 @@ void RL_Sim::ControlStep(double sim_time)
     // with it) until the two ends starved each other - see UPSTREAM.md §2 item 18.
     const double control_period = this->params.dt;
 
+    if (sim_time < this->last_control_sim_time && this->WheelLockActive())
+    {
+        // A reset starts a new episode. Capture the reset feedback once; a
+        // dropped-frame gap or an ordinary control tick must never recapture.
+        this->GetState(&this->robot_state);
+        this->InitWheelLock();
+        this->InitOutputs();
+    }
     if (this->last_control_sim_time < 0.0 || sim_time < this->last_control_sim_time
         || sim_time - this->last_control_sim_time > 10.0 * control_period)
     {
@@ -537,12 +554,12 @@ void RL_Sim::ControlStep(double sim_time)
     while (sim_time - this->last_control_sim_time >= control_period)
     {
         this->last_control_sim_time += control_period;
-        this->RobotControl();
-        if (++this->cycles_since_inference >= this->params.decimation)
-        {
-            this->cycles_since_inference = 0;
-            this->RunModel();
-        }
+        const bool inference_due = ++this->cycles_since_inference >= this->params.decimation;
+        if (inference_due) this->cycles_since_inference = 0;
+        feedback_control::Step(*this, inference_due,
+            [this](bool deferred) { this->RobotControl(deferred); },
+            [this]() { this->RunModel(); },
+            [this]() { this->SetCommand(&this->robot_command); });
     }
 }
 

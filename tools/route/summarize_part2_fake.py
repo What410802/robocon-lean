@@ -17,13 +17,13 @@ import sys
 PAT_SWITCH = re.compile(
     r"expert switch leg=(\S+) policy=(\S+) .*actual=\(x=([+\-\d.]+),y=([+\-\d.]+),"
     r"yaw=([+\-\d.]+)deg\) e=([+\-\d.]+) along=([+\-\d.]+) "
-    r"yaw_err=([+\-\d.]+)deg (\w+)")
+    r"yaw_err=([+\-\d.]+)deg .*?(OK|ALIGN_FAIL)")
 PAT_LEG = re.compile(
     r"(\S+): (PASS|FAIL) policy=(\S+) vx=([+\-\d.]+) end=\(([+\-\d.]+),([+\-\d.]+),"
     r"yaw=([+\-\d.]+)deg\) gate=(\w+) post=(\w+).*")
 PAT_START = re.compile(r"route start at")
 PAT_LEGS = re.compile(r"=== leg (\d+)/(\d+) (\S+) ")
-PAT_DONE = re.compile(r"Part2 route finished|PART2_ROUTE_ONLY")
+PAT_DONE = re.compile(r"Part2 route finished: (\d+)/(\d+) legs PASS")
 
 
 def main() -> int:
@@ -76,7 +76,9 @@ def main() -> int:
         print(f"{leg:24s} {v:7s} {r['policy']:31s} {r['vx']:+5.2f} {corr}  "
               f"({r['x']:+.2f},{r['y']:+.2f},{r['yaw']:+.1f}deg) "
               f"gate={r['gate']} post={r['post']}")
-    finished = bool(PAT_DONE.search(text))
+    completion = PAT_DONE.search(text)
+    finished = bool(completion and completion.group(1) == completion.group(2)
+                    and len(results) == int(completion.group(2)))
     print(f"\nlegs: {npass} PASS / {nfail} FAIL; route_finished={finished}"
           + (f"; plan sim span={total:.1f}s" if total else ""))
     if not results:

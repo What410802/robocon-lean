@@ -25,6 +25,7 @@
   `ControlStatus`。
 - **`rl_sim` 的 ROS 2 适配**：上游 ROS 1/真机 SDK 分支重写为 ROS 2 节点；新增 policy 热切换、
   命令安全限幅（`command_limit.hpp`）、`/eval_state` 遥测、robot.yaml 契约预检。
+  Part2 的推理与动作发布顺序由本仓修复，见下方 2026-11-07 改动记录。
 - **策略工程化**：`policy/<robot>/{base.yaml,knobs.hpp,fsm.hpp,behaviors/}` 的团队策略/specialist
   配置与固定动作姿态。
 - **深度相机（本轮新增，上游没有）**：`quadruped_ros2/include/quadruped_ros2/depth_camera.hpp`
@@ -70,3 +71,19 @@ FL_wheel_collision   FR_wheel_collision   RL_wheel_collision   RR_wheel_collisio
   是相对**主场景文件**目录解析的），`scenes/` 下不再复制 mesh。
 - **主办方标签纹理入库**：`scenes/part2/full_field/labels/`（85 张 PNG，约 2.2 MB），只服务
   整场人工查看场景 `full_field:=true`；单关判分场景不需要它们。
+
+## 5. 2026-11-07：Part2 动作时序修复
+
+以下为本仓对部署运行时的改动，不属于上游原始实现。
+
+- **推理 tick 的动作发布顺序**（`rl_sar/src/rl_sim.cpp`）：旧 `ControlStep()` 先调用
+  `RobotControl()`，消费并发布旧动作队列，再调用 `RunModel()` 生成新动作；新动作因此额外晚一个
+  5 ms 控制 tick 才能发送。新 Part2 路径在 RL 推理 tick 延后动作发布，先完成推理并消费新动作
+  队列，再执行该 tick 的限幅与发布。每个控制 tick 仍只限幅、发布一次，不重复处理输入边沿，
+  也不重复执行 FSM `CheckChange()`。Part1 保留原来的动作执行顺序。
+- **同帧反馈的发布顺序**（`quadruped_ros2/src/sim_node.cpp`）：先发布当前物理帧的 IMU，
+  再发布会触发控制回调的 `MotorState`，减少控制端读到上一帧 IMU 的机会。这个共享仿真反馈调整
+  不构成跨 topic 的同步屏障；DDS 不保证两条 topic 严格同步到达。
+
+本条记录说明动作与反馈的时序修复，不代表物理通行验证已经通过；未改动机器人或地形物理参数、
+策略模型、限矩规则或轮锁逻辑。

@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <stdexcept>
 #include <vector>
 
 namespace command_limit
@@ -52,6 +53,9 @@ struct Limits
     /// limits are a *model* parameter and are documented, not enforced here (safety-limits.md section 4).
     std::vector<double> q_lower;
     std::vector<double> q_upper;
+    /// Captured continuous-joint holds. Preserve q_des and dq_des=0; limit the
+    /// implied torque by reducing gains rather than moving either target.
+    std::vector<int> position_holds;
 };
 
 /// Per-joint measured state + the previous command, both in policy order.
@@ -104,6 +108,29 @@ inline Counts Apply(std::vector<double> &q_des, std::vector<double> &dq_des,
         {
             dq_des[i] = std::copysign(lim.dq_max, dq_des[i]);
             ++counts.dq_des;
+        }
+
+        if (std::find(lim.position_holds.begin(), lim.position_holds.end(),
+                      static_cast<int>(i)) != lim.position_holds.end())
+        {
+            if (i >= state.q.size() || i >= state.dq.size())
+                throw std::invalid_argument("position hold requires measured q and dq");
+            // A wheel captured at policy entry must not slew from an old
+            // velocity policy's q_des, track measured q, or request measured
+            // dq under a large damping load. Keep the position/zero-speed
+            // contract and fit its PD effort inside the torque budget.
+            dq_des[i] = 0.0;
+            tau_ff[i] = 0.0;
+            const double effort = kp[i] * std::abs(q_des[i] - state.q[i])
+                                + kd[i] * std::abs(state.dq[i]);
+            if (effort > lim.tau)
+            {
+                const double scale = std::max(0.0, lim.tau) / effort;
+                kp[i] *= scale;
+                kd[i] *= scale;
+                ++counts.torque;
+            }
+            continue;
         }
 
         // 3. slew: how far may the target move in one control cycle?

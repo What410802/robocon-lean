@@ -214,6 +214,39 @@ int main()
         ExpectNear("implied torque within the cap", std::abs(tau_implied), 20.0, 1e-6);
     }
 
+    std::printf("9. captured wheel targets survive slew, window and torque limiting\n");
+    for (double speed : {0.0, 4.0, -40.0})
+    {
+        Rig r;
+        r.lim.position_holds = {0};
+        r.lim.q_lower = {-0.5};
+        r.lim.q_upper = {0.5};
+        r.q_des = {19.75};
+        r.dq_des = {7.0};
+        r.kp = {80.0};
+        r.kd = {3.0};
+        r.tau = {12.0};
+        r.state.q = {19.25};
+        r.state.dq = {speed};
+        const Counts c = r.Apply();
+        ExpectNear("captured unwrapped q is fixed", r.q_des[0], 19.75);
+        ExpectNear("desired wheel speed is zero", r.dq_des[0], 0.0);
+        ExpectNear("feedforward is zero", r.tau[0], 0.0);
+        const double effort = r.kp[0] * 0.5 + r.kd[0] * std::abs(speed);
+        Expect("PD effort stays inside torque budget", effort <= r.lim.tau + 1e-9);
+        Expect("torque limit reduces gains only", c.torque == 1 && c.slew == 0 && c.window == 0);
+        ExpectNear("relative P/D gains preserved", r.kp[0] / r.kd[0], 80.0 / 3.0);
+    }
+    {
+        Rig r;
+        r.lim.position_holds = {0};
+        r.state.q.clear();
+        bool rejected = false;
+        try { r.Apply(); }
+        catch (const std::invalid_argument &) { rejected = true; }
+        Expect("hold rejects missing measured state", rejected);
+    }
+
     if (g_failures == 0)
     {
         std::printf("result: all checks passed\n");

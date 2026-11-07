@@ -8,20 +8,23 @@ Examples (from the repo root, after `source demo/install/setup.bash`):
 The MuJoCo window is ON by default (viewer:=true, matching sim_node and the legacy entry
 launches). The default camera follows the robot base (`follow_camera:=true`, like the review
 videos; `Ctrl+F` or `follow_camera:=false` switches to the fixed iso view). It degrades to
-headless automatically when DISPLAY/WAYLAND_DISPLAY is absent. For headless/automated runs pass
-`viewer:=false realtime:=false` (all demo/tests/*.sh do).
+headless automatically when DISPLAY/WAYLAND_DISPLAY is absent. Live demos default to real time.
+For headless Part2 tests pass `viewer:=false realtime:=false`. Part2 synchronizes 50 Hz
+control with simulation timestamps. Part1 retains its recorded 1x wall-clock controller.
 
-`eval_state_every` defaults to 1: one /eval_state sample per 2 ms physics frame, i.e. the
-judged trace rate. Pass `eval_state_every:=10` (50 Hz) for interactive / IO-light runs and
-`0` to disable /eval_state.
+`eval_state_every` defaults to auto: 10 (50 Hz) for automatic routes, 1 (every 2 ms
+physics frame) otherwise. Pass `eval_state_every:=1` for judged traces and `0` to disable
+/eval_state (automatic routes retain the 50 Hz feedback they need).
 
-`scene:=` overrides the part/level default. Spawn comes from robot.yaml for Part1 and from
-`scenes/part2/part2_official_levels.json` for blackW Part2; explicit spawn_* args override.
+`scene:=` overrides the part/level default. An automatic route selects its own part and scene.
+Spawn comes from robot.yaml for Part1 and from `scenes/part2/part2_official_levels.json` for
+blackW Part2; explicit spawn_* args override.
 """
 
 from pathlib import Path
 import json
 import os
+import runpy
 import sys
 
 import yaml
@@ -31,6 +34,7 @@ from launch.actions import (
     DeclareLaunchArgument,
     EmitEvent,
     ExecuteProcess,
+    LogInfo,
     OpaqueFunction,
     RegisterEventHandler,
 )
@@ -47,7 +51,7 @@ ROBOT_ROOT = ROOT / "robots"
 ROUTE_SCRIPT = ROOT / "rl_sar" / "scripts" / "part1_auto_route.py"
 PART2_ROUTE_SCRIPT = ROOT / "rl_sar" / "scripts" / "part2_auto_route.py"
 FULL_FIELD_SCENE = ROOT / "scenes" / "part2" / "full_field" / "part2_full_field.xml"
-PART2_ROUTE_SCENE = ROOT / "scenes" / "part2" / "full_field" / "part2_fixed_field.xml"
+PART2_ROUTE_PLAN = ROOT / "rl_sar" / "scripts" / "part2_route_plan.py"
 
 
 def _unwrap_config(data):
@@ -67,6 +71,9 @@ def _validate_contract(robot: str, policy: str) -> None:
         raise RuntimeError(f"policy config missing: {policy_path} (policy={policy!r})")
     man = yaml.safe_load(robot_path.read_text()) or {}
     cfg = _unwrap_config(yaml.safe_load(policy_path.read_text()) or {})
+    model = policy_path.parent / cfg.get("model_name", "policy.pt")
+    if not model.is_file():
+        raise RuntimeError(f"policy weights missing: {model}; export/copy the local weights before launching")
     depth = cfg.get("depth") or {}
     if depth.get("enabled"):
         # Depth policies are command-free (54 x 6) and declare their own contract.
@@ -116,26 +123,66 @@ def _part2_defaults(robot: str, level: str):
     return ROOT / man["scene_roots"]["part2"] / e["scene"], tuple(spawn)
 
 
+def _route_settings(context):
+    route = context.perform_substitution(LaunchConfiguration("route")).strip()
+    if route not in ("", "part1", "part2"):
+        raise RuntimeError(f"unknown route {route!r}; supported: 'part1', 'part2'")
+    part = route[-1] if route else context.perform_substitution(LaunchConfiguration("part"))
+    transfer = context.perform_substitution(LaunchConfiguration("transfer_policy")).strip()
+    transfer = transfer or os.environ.get("PART1_TRANSFER_POLICY", "").strip()
+    transfer = transfer or "vt_locked12"
+    policy = context.perform_substitution(LaunchConfiguration("policy_name")).strip()
+    policy = policy or (transfer if route else "flat")
+    if route:
+        robot = context.perform_substitution(LaunchConfiguration("robot"))
+        if robot != "blackW":
+            raise RuntimeError(f"automatic routes require robot:=blackW; got {robot!r}")
+    return route, part, policy, transfer
+
+
+def _part2_route_defaults():
+    plan = runpy.run_path(str(PART2_ROUTE_PLAN))
+    scene = ROOT.parent / plan["SCENE_RELATIVE"]
+    spawn = (*plan["ROUTE_START"], 0.675, 0.0)
+    raw = os.environ.get("PART2_ROUTE_START", "").strip()
+    if raw:
+        legs = plan["LEGS"]
+        selected = next((leg for leg in legs if raw.lower() == leg["leg"].lower()), None)
+        if selected is None:
+            try:
+                index = int(raw) - 1
+            except ValueError:
+                index = -1
+            selected = legs[index] if 0 <= index < len(legs) else None
+        if selected is None:
+            raise RuntimeError(f"invalid PART2_ROUTE_START={raw!r}; use a canonical leg name or 1..{len(legs)}")
+        entry = selected["transit"][0] if selected["transit"] else selected["stand"]
+        spawn = (*entry, 0.675, selected["lane_yaw"])
+    return scene, spawn
+
+
 def _sim_params(context):
     robot = context.perform_substitution(LaunchConfiguration("robot"))
-    part = context.perform_substitution(LaunchConfiguration("part"))
+    route, part, policy, transfer = _route_settings(context)
     level = context.perform_substitution(LaunchConfiguration("level"))
     explicit = context.perform_substitution(LaunchConfiguration("scene"))
-    policy = context.perform_substitution(LaunchConfiguration("policy_name"))
     full_field = context.perform_substitution(LaunchConfiguration("full_field")).strip().lower()
-    route = context.perform_substitution(LaunchConfiguration("route")).strip()
-    eval_state_every = int(context.perform_substitution(LaunchConfiguration("eval_state_every")))
+    eval_raw = context.perform_substitution(LaunchConfiguration("eval_state_every")).strip()
+    eval_state_every = (10 if route else 1) if eval_raw.lower() == "auto" else int(eval_raw)
     # The Part2 route runs on the separately-saved route field.
     if route == "part2":
-        scene = PART2_ROUTE_SCENE
-        spawn = (0.0, 0.0, 0.675, 0.0)
-    # The auto route consumes /eval_state as its pose feedback. Judged runs keep the default
-    # (1 = every 2 ms physics frame); an explicit `eval_state_every:=0` still enables the
+        scene, spawn = _part2_route_defaults()
+        if explicit and Path(explicit).resolve() != scene.resolve():
+            raise RuntimeError(f"route:=part2 uses its canonical scene {scene}; remove the scene override")
+    # The auto route consumes /eval_state as its pose feedback. Judged runs explicitly use
+    # 1 (every 2 ms physics frame); an explicit `eval_state_every:=0` still enables the
     # route's 50 Hz feedback instead of leaving it without pose input.
     if route and eval_state_every == 0:
         eval_state_every = 10
     _validate_contract(robot, policy)
-    if route == "part2" and not explicit:
+    if route:
+        _validate_contract(robot, transfer)
+    if route == "part2":
         pass  # scene/spawn already selected above
     elif explicit:
         scene, spawn = Path(explicit), (None, None, None, None)
@@ -170,34 +217,37 @@ def _sim_params(context):
                 params[key] = float(arg)
         else:
             params[key] = float(value)
-    return [Node(
+    nodes = [Node(
         package="quadruped_ros2",
         executable="sim_node",
         name="sim_node",
         output="screen",
         parameters=[params],
     )]
+    if route == "part2" and (os.environ.get("PART2_ROUTE_START") or os.environ.get("PART2_ROUTE_ONLY")):
+        nodes.insert(0, LogInfo(msg="Part2 debug subset: selected steps belong to the canonical plan; this run does not verify the full route."))
+    return nodes
 
 
 def _route_node(context, *args, **kwargs):
-    route = context.perform_substitution(LaunchConfiguration("route")).strip()
+    route, _, _, transfer = _route_settings(context)
     if not route:
         return []
-    if route not in ("part1", "part2"):
-        raise RuntimeError(f"unknown route {route!r}; supported: 'part1', 'part2'")
     script = PART2_ROUTE_SCRIPT if route == "part2" else ROUTE_SCRIPT
     if not script.is_file():
         raise RuntimeError(f"route script missing: {script}")
-    transfer = context.perform_substitution(LaunchConfiguration("transfer_policy")).strip() or "vt_pose_v1"
     stop_on_fail = context.perform_substitution(LaunchConfiguration("stop_on_fail")).strip().lower() \
         not in ("0", "false", "no", "off")
+    route_env = {**os.environ,
+                 "PART1_TRANSFER_POLICY": transfer,
+                 "PART1_ROUTE_STOP_ON_FAIL": "1" if stop_on_fail else "0"}
+    if route == "part2":
+        route_env["PART1_ROUTE_STEPLOCK"] = "1"
     route_proc = ExecuteProcess(
         cmd=[sys.executable, str(script)],
         output="screen",
         name="part2_auto_route" if route == "part2" else "part1_auto_route",
-        env={**os.environ,
-             "PART1_TRANSFER_POLICY": transfer,
-             "PART1_ROUTE_STOP_ON_FAIL": "1" if stop_on_fail else "0"},
+        env=route_env,
     )
     # When the route process exits (all PASS, or the first FAIL with stop_on_fail),
     # shut the whole launch down instead of leaving the sim running until timeout.
@@ -210,18 +260,30 @@ def _route_node(context, *args, **kwargs):
     ]
 
 
+def _rl_node(context):
+    _, part, policy, _ = _route_settings(context)
+    return [Node(
+        package="rl_sar",
+        executable="rl_sim",
+        name="rl_sim_node",
+        output="screen",
+        emulate_tty=True,
+        condition=IfCondition(LaunchConfiguration("rl")),
+        parameters=[{"robot_name": LaunchConfiguration("robot"),
+                     "policy_name": policy, "part": int(part)}],
+    )]
+
+
 def generate_launch_description() -> LaunchDescription:
-    rl = LaunchConfiguration("rl")
     joy = LaunchConfiguration("joy")
-    robot = LaunchConfiguration("robot")
-    policy_name = LaunchConfiguration("policy_name")
     return LaunchDescription(
         [
             DeclareLaunchArgument("robot", default_value="blackW"),
             DeclareLaunchArgument("part", default_value="1"),
             DeclareLaunchArgument("level", default_value="high_platform_10cm",
                                   description="Part2 level key (see scenes/part2/part2_official_levels.json)"),
-            DeclareLaunchArgument("policy_name", default_value="flat"),
+            DeclareLaunchArgument("policy_name", default_value="",
+                                  description="initial policy (default: route transfer policy, or flat without a route)"),
             DeclareLaunchArgument("scene", default_value="", description="explicit scene xml override"),
             DeclareLaunchArgument(
                 "full_field", default_value="false",
@@ -232,8 +294,9 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("start", default_value="raw"),
             DeclareLaunchArgument("publish_every", default_value="1",
                                   description="publish /motor_state every N physics steps (500/N Hz)"),
-            DeclareLaunchArgument("eval_state_every", default_value="1",
-                                  description="publish /eval_state every N physics steps: 1 = one sample "
+            DeclareLaunchArgument("eval_state_every", default_value="auto",
+                                  description="auto = 10 for routes, 1 otherwise; publish /eval_state "
+                                              "every N physics steps: 1 = one sample "
                                               "per 2 ms physics frame (judged trace); 10 = 50 Hz for "
                                               "interactive runs; 0 = off"),
             DeclareLaunchArgument("depth", default_value="auto",
@@ -245,11 +308,13 @@ def generate_launch_description() -> LaunchDescription:
                                               "(10 = 50 Hz, the policy rate)"),
             DeclareLaunchArgument("route", default_value="",
                                   description="auto route: 'part1' or 'part2' starts the "
-                                              "closed-loop course demo "
+                                              "closed-loop course demo and selects its part/scene "
+                                              "(Part1: 1x wall clock; Part2: 50 Hz simulation time); "
                                               "(if eval_state_every:=0 is passed it is raised to 10)"),
-            DeclareLaunchArgument("transfer_policy", default_value="vt_pose_v1",
+            DeclareLaunchArgument("transfer_policy", default_value="",
                                   description="policy used for route transfers/alignment: "
-                                              "vt_pose_v1|vt_track_v1|vt_locked12|flat|stair|obstacle|row2p_p40w40_v1"),
+                                              "default vt_locked12 for Part1 and Part2; "
+                                              "PART1_TRANSFER_POLICY supplies a default override"),
             DeclareLaunchArgument("stop_on_fail", default_value="true",
                                   description="stop the auto route (and this launch) at the first "
                                               "segment FAIL; pass false to keep going like an operator"),
@@ -266,9 +331,10 @@ def generate_launch_description() -> LaunchDescription:
                 description="camera looks at the robot base every frame (like the review videos); "
                             "false = fixed iso view. Ctrl+F toggles it in the window"),
             DeclareLaunchArgument(
-                "realtime", default_value="false",
+                "realtime", default_value="true",
                 description="headless pacing only: false = full speed (ignored when the window is open, "
-                            "window mode is wall-clock); automation passes false"),
+                            "window mode is wall-clock); keep true for Part1. Part2 always uses "
+                            "50 Hz simulation-time control; eval_state_every is preserved"),
             DeclareLaunchArgument("joy", default_value="false"),
             DeclareLaunchArgument("rl", default_value="true"),
             DeclareLaunchArgument("device", default_value=""),
@@ -286,15 +352,6 @@ def generate_launch_description() -> LaunchDescription:
                 parameters=[{"device": LaunchConfiguration("device")}],
             ),
             OpaqueFunction(function=_route_node),
-            Node(
-                package="rl_sar",
-                executable="rl_sim",
-                name="rl_sim_node",
-                output="screen",
-                emulate_tty=True,
-                condition=IfCondition(rl),
-                parameters=[{"robot_name": robot, "policy_name": policy_name,
-                             "part": ParameterValue(LaunchConfiguration("part"), value_type=int)}],
-            ),
+            OpaqueFunction(function=_rl_node),
         ]
     )

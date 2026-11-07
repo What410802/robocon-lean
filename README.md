@@ -44,23 +44,52 @@ pixi run -e eval eval-pytest
 # 2) 构建 ROS 2 运行时（首次几分钟）
 pixi run -e demo demo-build
 
-# 3) 跑一关 Part1（无窗口、实时）
-source demo/install/setup.bash
-ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
-    policy_name:=row2p_p40w40_v1 viewer:=false realtime:=true
+# 3) Part1 现场自动演示（开窗口、实时、自动站立并运行路线）
+pixi run -e demo demo-part1
 
-# 4) 跑一关 Part2（单关场景由 terrain/ 生成）
-ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=2 \
-    level:=high_platform_40cm policy_name:=row2p_p40w40_v1 viewer:=false realtime:=true
+# 4) Part2 现场自动演示（33 段，逐档越障，包含梅花桩）
+pixi run -e demo demo-part2
+
+# 无窗口仍按 1× 实时运行
+pixi run -e demo demo-part2 viewer:=false
 ```
 
-# 5) Part 1 固定路线自检 + 录像（可选；约 4–6 min）
-source demo/install/setup.bash
+以上演示依次运行，一次只开一个 launch。两个快捷入口均自动 source 工作区，默认开窗口、
+1× 实时和 50 Hz 位姿记录，无需操作手柄；Part1 使用 `vt_locked12` 衔接，Part2 长直线使用
+`flat`、转向与精对线使用 `vt_locked12`。上一场自动退出后再启动下一场。
+
+Part1 砂砾坑入口本次向东修正前的 [v67 开窗口 1× 整场](artifacts/route_fix/part1_final_v67_evidence.json)
+已完成：全部路线门限 PASS、0 次恢复、退出状态 0，13109 帧、262.16 s 返回起点
+`(3.561, -8.939, 0.557)`。
+此前真锁轮与砂砾坑局部修正后的 [v55 整场](artifacts/route_fix/part1_fixed_wheels_v55_evidence.json)
+也已完成，保留为历史证据。
+历史 [full40 视频](artifacts/route/locked12_full40_operator.mp4) 和
+[约 354 s 基线复跑](artifacts/route_fix/part1_baseline_recheck_evidence.json) 也完成实体运动，
+这两份 full40 / 基线记录早于真锁轮修复；v55 和 v67 均已使用真锁轮。当前保留原路线拓扑，
+继续修正桥梁交接、砂砾坑切换余量与转弯对线。
+**Part1 默认入口已恢复 v55/v67 阶段保留源码（与 v56/v72 快照哈希一致）。** 冻结副本与恢复文件的 SHA256
+均为 `c556739c…`；该基线保留原桥 A / 桥 B 对线、低杆路点与砂砾坑 `x=5.70` 入口。
+本次请求的延后桥 A 换模、桥 B 精对线、低杆纠偏、四轮上坑即换模仍未解决，均未作为默认启用。
+[v88 校准失败记录](artifacts/route_fix/part1_final_calibration_v88_evidence.json) 与实验源码已保留，
+不能把实验变更视为整场通过。恢复后未另跑物理整场；可复核的成功记录仍是上述 v67。
+演示默认关闭 live judge，正式判分器未改。
+Part2 当前唯一计划执行 **33 段**：平台至 30 cm、楼梯单级至 30 cm、坡至 35°、沟宽至
+30 cm、墙至 40 cm，逐档跨越较低实体及比赛梅花桩。40 cm 平台在加长助跑后仍摔倒，
+经用户确认暂时跳过，并在计划中明确记录为能力缺口；规则最高平台仍是 40 cm。
+按此前约定本轮不做 45° 坡。
+历史 [v56 开窗口 1× 全程视频](artifacts/route_fix/part2_full_live_v56_cli.mp4) 完成旧 25 段集成门限、
+退出状态 0，但 [支撑点回放为 24/25](artifacts/route_fix/part2_full_live_v56_eval.json)，末段 20 cm 墙
+未满足越墙后稳定保持；其中梅花桩成功投影 200 分。新版最佳连续前缀仍为 v82 / v83 的前 14 段，
+均在 30 cm 楼梯前对齐失败；最新 v84 的前四段通过严格回放，随后在 25 cm 平台卡住，
+回放为 `not_on_platform`。新版 33 段整场尚未完成，
+最新状态见 [路线说明](docs/part2/ROUTE.md)。
+
+Part1 路线录制（可选）：
+
+```bash
 PART1_RECORD_PATH=$PWD/artifacts/route/states.jsonl \
 PART1_RECORD_PLAN_PATH=$PWD/artifacts/route/plan.jsonl \
-ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route:=part1 \
-    policy_name:=vt_pose_v1 transfer_policy:=vt_track_v2 \
-    viewer:=false realtime:=true eval_state_every:=10 stop_on_fail:=true
+pixi run -e demo demo-part1 viewer:=false
 pixi run -e eval python tools/video/replay_route_video.py \
     artifacts/route/states.jsonl artifacts/route/route.mp4 artifacts/route/plan.jsonl
 ```
@@ -69,6 +98,7 @@ pixi run -e eval python tools/video/replay_route_video.py \
 空等；要像操作员一样继续就传 `stop_on_fail:=false`。路线 PASS 只是 precheck，官方分用
 `demo/tests/record_eval_trace.py` 同时录 trace 后 `pixi run -e eval robocon-eval replay-part1`
 判定（两者差异见 `demo/docs/part1-auto-route-operator.md` §2.1）。
+Part2 同次运行录制与仅含 `> CLI:` 标注的整场视频命令见 [视频工具说明](tools/video/README.md)。
 
 判分跑必须记录 2 ms trace（`eval_state_every:=1`），然后：
 
@@ -93,8 +123,7 @@ pixi run -e eval robocon-eval replay-part2 --trace <trace.jsonl>
   （数据流/坐标系/判分链路）、`docs/OPERATIONS.md`（手柄/自动路线/录制/判分操作手册）
 - **Part 2**：`docs/part2/EXPERTS.md`（各地形专家选型、证据、入场对齐容差；六类最高档判分侧
   **1200/1300**，含本轮新增的深度相机梅花桩专家）、
-  `docs/part2/ROUTE.md`（修正版全场自动路线 v3：六类全开、深度相机梅花桩组合穿越、高墙默认开、
-  转场/对齐/净空审计；整场 1× 运行命令见 §8）
+  `docs/part2/ROUTE.md`（唯一 33 段自动路线：所选最高规格及全部低档、转场/对齐/净空审计与运行命令）
 - **训练**：`docs/training/VT-RECIPE.md`（速度跟随衔接模型配方/训练记录/验收）、
   `train/README.md`（训练任务、导出、改造入口、权重管理）
 - **判分**：`eval/SPEC.md`（人读版单一标准）

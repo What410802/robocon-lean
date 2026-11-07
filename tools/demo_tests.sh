@@ -22,6 +22,8 @@ run() {
 run "$python" demo/tests/check_robot_manifests.py
 run "$python" demo/tests/check_policy_contracts.py
 run "$python" demo/tests/check_spawns.py
+run "$python" demo/tests/check_part2_route.py
+run "$python" demo/tests/check_part2_replay.py
 
 # MuJoCo load smoke for the two judge scenes.
 "$python" - <<'PY' || fail=1

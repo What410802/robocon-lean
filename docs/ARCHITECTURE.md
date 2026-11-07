@@ -94,7 +94,7 @@ sequenceDiagram
 
 - 判分跑 **`eval_state_every:=1`（2 ms 一帧）**；普通演示可调大省 IO。
 - Part1 可用手柄或 `route:=part1` 自动路线；Part2 只允许 RL，不能固定动作。Part2 全场演示
-  `route:=part2` 一次启动走完六类（梅花桩 = 深度专家穿越 + 轮式专家下降，见
+  `route:=part2` 一次启动跨越六类的全部低难度障碍（梅花桩 = 深度专家穿越 + 轮式专家下降，见
   [`part2/ROUTE.md`](part2/ROUTE.md)）。
 - 深度相机（plum 深度专家）：`sim_node` 用 EGL 离屏渲染场景里的 `depth_cam`（64x48、公制平面
   深度、只画 geom group 0），每 `depth_every` 步发布 `/depth_cam`（默认 50 Hz，先于同一步

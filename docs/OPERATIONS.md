@@ -44,21 +44,33 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
 ### Part1 一键自动整场（演示/回归）
 
 ```bash
-ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
-    policy_name:=vt_pose_v1 route:=part1 viewer:=false realtime:=true
+pixi run -e demo demo-part1
 ```
 
-- `route:=part1` 起 `part1_auto_route` 虚拟手柄节点，自动完成站立→进 RL→逐段走完全场；
-  **`realtime:=true` 必须显式传**（否则仿真全速跑，路线控制器会被甩开）。
-- 路线依赖策略：`vt_pose_v1`、`vt_edge_v1`、`row2p_p40w40_v1`、`st30_ppo_st30_s100_600`、
+- `demo-part1` 使用统一 launch 的 `route:=part1`，自动完成站立→进 RL→逐段走路线。
+  默认开窗口、按 1× 实时运行并使用 `vt_locked12` 衔接；无窗口加 `viewer:=false`。
+- 路线依赖策略：`vt_locked12`、`vt_edge_v1`、`row2p_p40w40_v1`、`st30_ppo_st30_s100_600`、
   `obstacle` + `behaviors/{low_bar_drive,bridge_drive}.yaml`。
-- 速度衔接模型推荐 `vt_track_v2`（四轮共面/跟随奖励；训练/验收见 `docs/training/VT-RECIPE.md` §4.2）：
-  `ros2 launch ... transfer_policy:=vt_track_v2`（直接跑脚本时用环境变量
-  `PART1_TRANSFER_POLICY=vt_track_v2`）；`vt_track_v1` 保留作对照。v2 平移偏保守（支撑矩形
-  比 0.63），首次使用先跑 `tools/tracking/position_harness.py` 并在 controller 里把速度指令
-  上调约 20%，或调整 `--max-vx`。
-- 已知弱项：桥 A 西台 1.0×1.0 m 原地 90° 转向需要约 1.1×1.1 m 净空（几何限制，不是策略问题），
-  S 弯/返程精度不足。MPC 接入方案见 `tools/mpc/README.md`。
+- 调试其它衔接模型时显式传 `transfer_policy:=...`；也接受 `PART1_TRANSFER_POLICY`。
+  `vt_track_v2` 的历史训练/验收见 `docs/training/VT-RECIPE.md` §4.2。
+- `vt_locked12` 的策略仅输出 12 个腿关节动作；部署层在每次进入该策略时保存四个实测轮角，
+  持续以该角度和零目标角速度做 PD 保持。力矩限幅通过降低增益实现，不移动锁轮目标；
+  切到 16DoF 轮式专家或 Part1 固定动作后使用各自原有轮控制。
+- Part1 默认源码已恢复为冻结基线 `part2_full_live_v72_sources/demo/rl_sar/scripts/part1_auto_route.py`，
+  SHA256 为 `c556739c374e9cb40393cfaddedefa6aaf7a6de33cc0a3cefc1717c1e97a75a5`。
+  该源码与 v56/v72 快照哈希一致，保留 v55/v67 阶段的路线行为：桥 A 原交接门限、桥 B 原对线、低杆原路点，
+  砂砾坑入口 `x=5.70`、循迹 `x_hold=5.95`、专家门限 `y<-11.95`，再定向到角点转西。
+- [v67 开窗口 1× 整场](../artifacts/route_fix/part1_final_v67_evidence.json) 全部门限 PASS、0 次恢复、
+  退出状态 0，13109 帧、262.16 s 返回起点 `(3.561,-8.939,0.557)`；恢复源码后未重跑物理整场。
+  v55 与更早 full40 / 基线记录仍保留各自历史范围。
+- 本次请求的桥 A 延后交接、桥 B 精对线、低杆纠偏和四轮上坑即换模仍未解决。
+  v85 / v86 过两桥后低杆前对线失败，v87 / v88 在桥 B 对线失败。
+  [v88 实验源码及失败证据](../artifacts/route_fix/part1_final_calibration_v88_evidence.json) 保留，
+  所有这些新校准均未作为默认启用，不将失败校准当作已完成改进。
+- Part1 保留 1× 墙钟控制，保持 `realtime:=true`。快捷入口默认 `PART1_ROUTE_JUDGE=0`，
+  显式 `PART1_ROUTE_JUDGE=1` 启用原版 live judge；直接 ROS launch 的 judge 默认与正式 judge 未改。
+  历史 full40 视频的原版 judge 回放为 500 分；v67 未据此宣称正式得分，
+  实体运动完成不等于正式全通过，详见操作者手册 §2.1 / §4。
 
 ## 2. Part 2：单关独立评测
 
@@ -75,34 +87,41 @@ ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=2 \
 - 一关一个场景，`level`/`scene` 在 launch 时选定，手柄只切模型不切关卡。
 - 官方地图整场人工检查：`full_field:=true`（人工驾驶用，**不用于判分**）。
 - 关卡 `seconds` 只是 120 s 安全超时（规则不计时）。
-- 连续走完六类的"一次启动"全场 demo 是非计分演示（**已实现**，见下），计分仍按单关独立。
+- 全场自动路线依次跨越所选最高规格及每类全部较低实体（见下），计分仍按单关独立。
 
-### 2.1 全场 1× 演示（六类全开，含深度相机梅花桩）
+### 2.1 全场 1× 演示（唯一 33 段路线，含深度相机梅花桩）
+
+新版最佳连续前缀仍为 v82 / v83：平台六档与楼梯至 25 cm 共 14 段通过，30 cm 楼梯前对齐失败。
+最新 v84 的前四段通过严格回放，随后在 25 cm 平台卡住，回放为 `not_on_platform`。
+完整 33 段尚无全部成功记录，40 cm 平台仍是明确跳过的能力缺口。
 
 ```bash
-source demo/install/setup.bash
-export ROS_LOCALHOST_ONLY=1 ROS_DOMAIN_ID=57
-PART1_ROUTE_JUDGE=0 \
-PART1_RECORD_PATH=$PWD/artifacts/part2_route3/real_v27_states.jsonl \
-PART1_RECORD_PLAN_PATH=$PWD/artifacts/part2_route3/real_v27_plan.jsonl \
-timeout 3000 ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 route:=part2 \
-    policy_name:=vt_locked12 transfer_policy:=vt_locked12 \
-    viewer:=false realtime:=true eval_state_every:=10 stop_on_fail:=true
+pixi run -e demo demo-part2
+# 无窗口实时调试：
+pixi run -e demo demo-part2 viewer:=false
 ```
 
-- 路线顺序：平台 20（S→N）→ 楼梯 20 → 斜坡 30 → 沟壑 20 → 梅花桩（深度专家穿越 + 轮式专家
-  下降）→ 高墙 20（bar5，默认开）。默认档/切换项/判分投影见 [`part2/ROUTE.md`](part2/ROUTE.md)。
-- `part:=1`：`route:=part2` 只覆盖场景/spawn；启动序列需要 A=StandUp（`part:=2` 时该键按规则无效）。
-- `realtime:=true` 必须；整场约 20 min 墙钟（1200–1400 s 仿真），跑完路线自己退出。
-- 单段调试：`PART2_ROUTE_ONLY=<leg名或序号>` + 合适的 `spawn_x/spawn_y`。
-- 路线逐段判分投影：`pixi run -e eval python tools/route/replay_field_part2.py --tag real_v27`。
+- 当前执行平台至 30 cm、楼梯单级至 30 cm、坡至 35°、沟宽至 30 cm、墙至 40 cm，包含全部较低实体。
+  平台规则上限仍为 40 cm；长助跑重试仍失败后，经用户确认暂跳过此档，计划通过 `SKIPPED_TIERS`
+  明确记录能力缺口，不能算作通过。
+  按此前约定本轮不做 45° 坡，也不额外跨越 40° 练习坡；比赛梅花桩为 20 cm 六桩。
+  路线、实际规格及验证状态见 [`part2/ROUTE.md`](part2/ROUTE.md)。
+  唯一路线数据在 `demo/rl_sar/scripts/part2_route_plan.py`；启动器、净空审计与运行时读取同一份数据。
+- `route:=part2` 自动选择 Part2 场景、RL `part=2`；长直线使用 `flat`，转向与精对线使用
+  `vt_locked12`。A 站立在两个 part 都可用，
+  Part2 仍禁止固定动作过障。
+- 自动路线默认按 1× 实时运行，实时和全速模式均按仿真时间同步 50 Hz 控制。
+  `eval_state_every` 独立控制记录频率：快捷入口默认 10，判分 trace 显式传 1。
+  第一段失败就停，跑完自动退出。
+- `PART2_ROUTE_START=<leg名或序号>` 从同一路线的指定段开始，launch 自动把出生点放在该段入口；
+  `PART2_ROUTE_ONLY=<leg名或序号>` 在指定段后停止。显式 `spawn_*` 仍可覆盖；子段调试不代表全场完成。
 
 ### 2.2 深度相机（梅花桩专家）
 
 - `sim_node` 自动检测场景里的 `depth_cam`（blackW 的 `d435_link`），EGL 离屏渲染 64x48 公制
   平面深度并发布 `/depth_cam`（50 Hz，`depth_every:=10`；`depth:=auto|on|off`）。
 - 离线自检：`demo/install/quadruped_ros2/lib/quadruped_ros2/sim_node --depth-self-test <scene.xml>`；
-  与 eval 侧 Python 渲染逐位对拍用 `tools/` 的 depth_parity 脚本逻辑（见 ROUTE.md §6.3）。
+  与 eval 侧 Python 渲染逐位对拍用 `tools/` 的 depth_parity 脚本逻辑。
 - 深度策略的 C++ 推理与 Python 同输入对拍：
   `RL_DEPTH_DEBUG=1 RL_DEPTH_DEBUG_MAX=6` 跑一小段后，
   `pixi run -e eval python demo/tests/check_depth_inference.py --policy demo/rl_sar/policy/blackW/plum_depth_final_v1`。
@@ -151,9 +170,7 @@ pixi run -e eval python tools/record_video.py \
 source demo/install/setup.bash
 PART1_RECORD_PATH=$PWD/artifacts/route/states.jsonl \
 PART1_RECORD_PLAN_PATH=$PWD/artifacts/route/plan.jsonl \
-ros2 launch rl_sar rl_sim_all.launch.py robot:=blackW part:=1 \
-    route:=part1 policy_name:=vt_pose_v1 transfer_policy:=vt_track_v2 \
-    viewer:=false realtime:=true eval_state_every:=10 stop_on_fail:=true
+pixi run -e demo demo-part1 viewer:=false
 # 结束后（或 timeout 后）用 eval env 离线渲染，叠加路线/目标/四轮矩形：
 pixi run -e eval python tools/video/replay_route_video.py \
     artifacts/route/states.jsonl artifacts/route/route.mp4 artifacts/route/plan.jsonl
@@ -173,19 +190,26 @@ pixi run -e eval python tools/video/replay_route_video.py \
 
 ```bash
 MUJOCO_GL=egl pixi run -e eval python tools/video/replay_route_video.py \
-    artifacts/part2_route3/real_v27_states.jsonl artifacts/part2_route3/real_v27_route.mp4 \
-    artifacts/part2_route3/real_v27_plan.jsonl \
-    --scene demo/scenes/part2/full_field/part2_fixed_field.xml
+    artifacts/part2_route/states.jsonl artifacts/part2_route/route.mp4 \
+    artifacts/part2_route/plan.jsonl \
+    --scene demo/scenes/part2/full_field/part2_fixed_field.xml --cli-only
 ```
 
-`real_v27_*` 是六类全开的整场 1× 运行（命令见 §2.1）；视频/overview/判分投影见
-`docs/part2/ROUTE.md` §8。
+录制时设置 `PART1_RECORD_PATH=$PWD/artifacts/part2_route/states.jsonl` 和
+`PART1_RECORD_PLAN_PATH=$PWD/artifacts/part2_route/plan.jsonl` 再运行 §2.1 的启动命令。
+回放不会重新计算物理；旧版 `real_v27_*` 只记录每类一段，不能证明当前路线的全部障碍覆盖。
+`--cli-only` 在画面外只保留 `> CLI:` 标注；完整命令和局部样片见 [视频工具说明](../tools/video/README.md)。
+
+现有 [v56 全程视频](../artifacts/route_fix/part2_full_live_v56_cli.mp4) 是旧 25 段计划的单次
+开窗口 1× 记录，时长 20 min 20.4 s：集成门限 25/25、退出状态 0，
+[支撑点回放 24/25](../artifacts/route_fix/part2_full_live_v56_eval.json)，最后 20 cm 墙未满足稳定保持。
+该录像用于复盘旧版完整实体运动，新版 33 段验证状态以路线文档为准。
 
 ## 5. 自检与排错
 
 | 现象 | 原因/处理 |
 |---|---|
-| 开局乱跑/漂出场地 | 忘了 `realtime:=true`（全速模式） |
+| 想按 1× 现场演示 | 保持默认 `realtime:=true`；Part1 使用原墙钟控制，Part2 支持仿真时间全速回归 |
 | `no /eval_state` | launch 没带 `route:=part1` 或 `eval_state_every:=0` |
 | `policy switch failed` | 策略目录缺 `config.yaml`/`policy.pt`，或 obs/action 契约不符 |
 | MuJoCo 场景加载失败 | 先跑 `pixi run -e eval demo-tests`；检查 `demo/install/setup.bash` 是否 source |

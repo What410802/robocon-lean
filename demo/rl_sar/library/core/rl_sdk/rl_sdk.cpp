@@ -125,9 +125,22 @@ void RL::InitObservations()
 
 void RL::InitOutputs()
 {
+    torch::Tensor drop;
+    while (this->output_dof_pos_queue.try_pop(drop)) {}
+    while (this->output_dof_vel_queue.try_pop(drop)) {}
+    while (this->output_dof_tau_queue.try_pop(drop)) {}
     this->output_dof_tau = torch::zeros({1, this->params.num_of_dofs});
     this->output_dof_pos = this->params.default_dof_pos;
     this->output_dof_vel = torch::zeros({1, this->params.num_of_dofs});
+    if (this->params.lock_wheels && this->locked_wheel_ready)
+    {
+        // Do not mutate default_dof_pos through the tensor alias above.
+        this->output_dof_pos = this->output_dof_pos.clone();
+        for (int i : this->params.wheel_indices)
+        {
+            this->output_dof_pos[0][i] = this->locked_wheel_q[i];
+        }
+    }
 }
 
 void RL::InitControl()
@@ -180,10 +193,59 @@ void RL::InitRL(std::string robot_path)
     std::string model_path = std::string(CMAKE_CURRENT_SOURCE_DIR) + "/policy/" + robot_path + "/" + this->params.model_name;
     this->model = torch::jit::load(model_path);
 
+    this->InitWheelLock();
     this->InitObservations();
     this->InitOutputs();
     this->InitControl();
+}
+
+void RL::InitWheelLock()
+{
     this->locked_wheel_ready = false;
+    this->locked_wheel_q.clear();
+    if (!this->params.lock_wheels)
+    {
+        return;
+    }
+    this->locked_wheel_q = this->robot_state.motor_state.q;
+    for (int i : this->params.wheel_indices)
+    {
+        if (i < 0 || i >= this->params.num_of_dofs
+            || static_cast<std::size_t>(i) >= this->locked_wheel_q.size()
+            || !std::isfinite(this->locked_wheel_q[i])
+            || this->params.rl_kp[0][i].item<double>() <= 0.0)
+        {
+            throw std::runtime_error("invalid measured wheel angle or position gain at RL entry");
+        }
+    }
+    this->locked_wheel_ready = true;
+}
+
+bool RL::WheelLockActive() const
+{
+    return this->rl_init_done && this->params.lock_wheels && this->locked_wheel_ready
+        && this->fsm.current_state_
+        && this->fsm.current_state_->GetStateName() == "RLFSMStateRL_Locomotion";
+}
+
+void RL::ApplyWheelLockTargets(std::vector<double> &q_des, std::vector<double> &dq_des,
+                              std::vector<double> &kp, std::vector<double> &kd,
+                              std::vector<double> &tau_ff) const
+{
+    if (!this->WheelLockActive())
+    {
+        return;
+    }
+    // Also apply before the first inference after a switch: the FSM may still
+    // contain the previous 16-DoF policy's wheel-velocity command then.
+    for (int i : this->params.wheel_indices)
+    {
+        q_des[i] = this->locked_wheel_q[i];
+        dq_des[i] = 0.0;
+        kp[i] = this->params.rl_kp[0][i].item<double>();
+        kd[i] = this->params.rl_kd[0][i].item<double>();
+        tau_ff[i] = 0.0;
+    }
 }
 
 void RL::ComputeOutput(const torch::Tensor &actions, torch::Tensor &output_dof_pos, torch::Tensor &output_dof_vel, torch::Tensor &output_dof_tau)
@@ -198,24 +260,10 @@ void RL::ComputeOutput(const torch::Tensor &actions, torch::Tensor &output_dof_p
         {
             if (!this->locked_wheel_ready)
             {
-                this->locked_wheel_q = this->obs.dof_pos.clone();
-                this->locked_wheel_ready = true;
+                throw std::runtime_error("wheel lock was not captured at RL entry");
             }
-            // Hold the switch angle, then bleed toward zero at 0.50 rad/s
-            // (0.010 rad per 50 Hz policy step) instead of the 5.4 rad/s
-            // torque-limit slew that tips the body.  A strictly frozen target
-            // makes the deployed policy stand still (PolicyRunner does not
-            // reproduce it); bounded bleed keeps the policy responsive while
-            // still avoiding the tipping reaction.  Measured high-wall
-            // handover: z 0.52-0.56 m, yaw responds, no fall.
-            const double rate = 0.50 * 0.02;
-            double qw = this->locked_wheel_q[0][i].item<double>();
-            if (qw > rate) qw -= rate;
-            else if (qw < -rate) qw += rate;
-            else qw = 0.0;
-            this->locked_wheel_q[0][i] = qw;
             pos_actions_scaled[0][i] =
-                qw - this->params.default_dof_pos[0][i];
+                this->locked_wheel_q[i] - this->params.default_dof_pos[0][i];
             vel_actions_scaled[0][i] = 0.0;
         }
         else

@@ -45,7 +45,7 @@ private:
     void GetState(RobotState<double> *state) override;
     void SetCommand(const RobotCommand<double> *command) override;
     void RunModel();
-    void RobotControl();
+    void RobotControl(bool defer_publish = false);
     void SwitchPolicy(const std::string &policy_name);
 
     // input: the raw frame is stored here, resolved to intents once per cycle (input_map.hpp, S3.5)

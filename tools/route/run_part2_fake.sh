@@ -3,9 +3,8 @@
 #
 #   tools/route/run_part2_fake.sh [tag]
 #
-# FAKE_RATE=<hz> sets the fake sim rate (default 50 = real feedback cadence);
-# --rate 200 keeps the same sim-time route semantics and runs ~4x faster in
-# wall time, which is fine for logic/PASS checks.
+# FAKE_SPEEDUP scales wall-clock publishing speed (default 10); the integration
+# step stays 20 ms, matching the route's step-lock cadence.
 #
 # Starts tools/route/fake_kinematic_route_sim.py (kinematic, no dynamics) on the
 # real route field and runs demo/rl_sar/scripts/part2_auto_route.py against it
@@ -29,7 +28,7 @@ if pgrep -af "ros2 launch|rl_sim_node|sim_node" | grep -v pgrep >/dev/null; then
   exit 3
 fi
 .pixi/envs/demo/bin/python tools/route/fake_kinematic_route_sim.py \
-    --scene "$SCENE" --rate "${FAKE_RATE:-50}" --spawn-x 0 --spawn-y 0 --spawn-yaw 0 \
+    --scene "$SCENE" --rate 50 --speedup "${FAKE_SPEEDUP:-10}" --spawn-x 0 --spawn-y 0 --spawn-yaw 0 \
     > "$OUT/${TAG}_sim.log" 2>&1 &
 SIM=$!
 sleep 1

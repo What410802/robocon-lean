@@ -103,5 +103,7 @@ eval = ["eval"]
 #   pixi run -e demo  demo-build
 eval-pytest = "python -m pytest eval/tests -q"
 demo-build = "bash tools/build.sh"
+demo-part1 = "bash tools/live_demo.sh part1"
+demo-part2 = "bash tools/live_demo.sh part2"
 demo-tests = "bash tools/demo_tests.sh"
 env-check = "python tools/check_env.py"
