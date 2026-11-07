@@ -59,9 +59,10 @@ pixi run -e demo demo-part1
 - 当前只有一条默认整场路线。桥 A 等后轮越过末槽、落上东台后再交接；桥 B 沿 `x=5.65` 跨越。
   砂砾坑保留原 `require + rotate_hold` 对准器，入口为 `(5.84,-10.20)`；四轮上坑即切锁轮衔接模型，
   沿东臂向南后转西，角点 lookahead 为 0.30。
-- [当前源码 v100 整场证据](../artifacts/route_fix/part1_gravel_full_v100_evidence.json)：开窗口、1× 实时，
-  全部路线预检通过并返回起点，退出 0、0 次恢复、280.58 s。
-  砂砾局部调试使用 `PART1_ROUTE_ONLY=gravel`，复用整场同一个 `run_gravel()`，不是另一条路线。
+- 限高杆保留 `(5.70,-8.20)` 目标，降至低姿态后静止差速精对正；停稳 0.3 s 再复核偏角小于 1°才前进。
+  [当前源码 v104 整场证据](../artifacts/route_fix/part1_lowbar_full_v104_evidence.json)：开窗口、1× 实时，
+  全部路线预检通过并返回起点，退出 0、0 次恢复、263.80 s；实际过杆偏角约 0.69°、无机器人杆柱接触记录。
+  局部调试 `PART1_ROUTE_ONLY=height_bar` / `gravel` 复用各自整场函数，不另定义路线；需配合对应平地出生点。
 - 保持 `realtime:=true`。快捷入口默认 `PART1_ROUTE_JUDGE=0`，显式 `PART1_ROUTE_JUDGE=1` 启用原版 live judge。
   以上是实体运动演示，未宣称正式满分；详细交接、接触审计和连续录像见
   [Part1 操作者手册](../demo/docs/part1-auto-route-operator.md)。

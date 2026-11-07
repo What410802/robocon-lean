@@ -39,7 +39,7 @@ pixi run -e demo demo-part1
 | 4 | 积木桥 A（西台→东台） | row2p（失败自动重试 3 种入口） |
 | 5 | 桥 A 东台定心 → 桥 B 窄带 | 台上相对转 -90° → `bridge_drive` 固定动作 0.32 |
 | 6 | 长坡直行向南 | row2p（**退出条件含 z<0.54**：必须到平地才交还） |
-| 7 | 限高杆 | `low_bar_drive` 固定动作 |
+| 7 | 限高杆 | `low_bar_drive` 降姿后静止精对正，再固定动作通过 |
 | 8 | 砂砾坑 L 形 | 主办方 `obstacle` 北进东臂；衔接模型定向到角点、顺时针转西并西出 |
 | 9 | S 弯 7 关键帧 | 衔接模型低速绕杆 |
 | 10 | 返回起点 | 衔接模型 |
@@ -57,7 +57,12 @@ pixi run -e demo demo-part1
 省去旧专家零指令滑行阶段，不再额外等车身达到固定 y 门限。
 随后衔接模型沿南向车道前进到 `y≈-12.50`，再顺时针转西；当前 lookahead 从 0.45 调至 0.30，
 该小修已完成 v99 局部与 v100 整场验证。
-低杆保持原路点与固定动作。早期 v85–v88 的窄容差桥 B / 低杆精对线未重新启用；
+限高杆保留原路点 `(5.70,-8.20)` 与正南目标；切入低姿态后短脉冲差速纠偏，
+停稳 0.3 s 后再次确认偏角小于 1°才前进。原锁轮对准约有 3°残差，降姿态还可增加约 6°；
+小差速指令受轮胎静摩擦影响，不能在行驶中及时消除。
+[v102 / v103 局部实测](../../artifacts/route_fix/part1_lowbar_alignment_v102_v103_evidence.json)
+过杆偏角为 1.28° / 1.12°，无记录到的机器人与杆柱接触。
+早期 v85–v88 的窄容差桥 B / 低杆进场精对线未重新启用；
 历史实验保存在 `artifacts/route_fix/`，不作为现场快捷入口提供。
 
 **边缘恢复（自动）**：每段落位前，节点检查四轮着地面。若在平地上四轮分处两个高度面
@@ -130,9 +135,17 @@ pixi run -e eval robocon-eval replay-part1 --trace artifacts/route/part1_judge_t
 
 ## 4. 预期结果与时间线
 
-- **当前源码 v100 整场已完成**：[完整证据](../../artifacts/route_fix/part1_gravel_full_v100_evidence.json)。
+- **当前源码 v104 整场已完成**：[完整证据](../../artifacts/route_fix/part1_lowbar_full_v104_evidence.json)。
+  开窗口、1× 实时，全部路线预检通过、返回起点、退出 0、0 次恢复；13190 帧、263.80 s，
+  末帧 `(3.5585,-8.9372,0.5571)`，源码 SHA256 `16da364e…` 与默认入口一致。
+  限高杆低姿态精对正后偏角 0.54°，实际过杆偏角 0.69°，没有记录到机器人碰梁或柱，横杆中心高度保持不变。
+  [同次实跑限高杆片段](../../artifacts/route_fix/part1_lowbar_full_v104_cli.mp4) 保留 t=123–134 s，场景外仅显示 `> CLI:`。
+  沙砾坑首次满足四轮上坑判据与换模同在 t=137.84 s；下个记录帧 t=137.86 s 已应用锁轮 MIT。
+  这是关闭 live judge 的实体演示，未据此宣称正式满分或广泛扰动下鲁棒。
+
+- **上个已提交版本 v100 整场已完成**：[完整证据](../../artifacts/route_fix/part1_gravel_full_v100_evidence.json)。
   开窗口、1× 实时，全部 15 条路线预检通过、返回起点、退出 0、0 次恢复；14029 帧、280.58 s，
-  末帧 `(3.5720,-8.9211,0.5558)`，源码 SHA256 `3bf5db2c…` 与默认入口一致。
+  末帧 `(3.5720,-8.9211,0.5558)`，该次源码 SHA256 `3bf5db2c…`。
   四轮上坑判据首次满足与换模均为 t=154.56 s；t=154.58 s 的首个后续记录帧已为四轮锁轮 MIT，
   四个轮角目标随后 0.8 s 均固定。车身同期南移 18.03 cm、东移 2.96 cm，是锁轮下制动与姿态收敛。
   角点西转出现的坑接触均为顶面，接触点最小余量 8.50 cm；悬空左后轮的完整水平投影最薄仅 2.11 mm，
@@ -155,7 +168,7 @@ pixi run -e eval robocon-eval replay-part1 --trace artifacts/route/part1_judge_t
   悬空左后轮上缘水平投影外伸 2.96 mm；该轮最低点仍在坑内、当帧无坑接触，不能解释为承重点跌出。
 - 随后仅将角点 lookahead 从 0.45 改为 0.30，[v99 局部审计](../../artifacts/route_fix/gravel_contact_audit/v99/summary.json)
   对应砂砾全段通过、退出 0，最薄实际接触点 / 完整轮胎投影余量改善至 10.00 / 1.72 cm。
-  该小修随后在上述 v100 当前源码整场通过；该局部对比不代替独立的整场证据。
+  该小修随后在上述 v100 整场通过；该局部对比不代替独立的整场证据。
 - 较早 v90 / v94 / v95 的入口有界纠偏失败，已删除该辅助，保留原 `require + rotate_hold`。
   v93 未改动的西北坡失败；v94 增加的桥 B 进场转向使左前轮侧碰内缘，亦已撤回。
 - 调整前的 [v67 整场](../../artifacts/route_fix/part1_final_v67_evidence.json)：
@@ -179,7 +192,7 @@ pixi run -e eval robocon-eval replay-part1 --trace artifacts/route/part1_judge_t
   避免 `/joy` 与 `/eval_state` 串台。
 - 现场扰动和机器负载仍影响重复性；原路线拓扑保留，本次修正桥梁交接、车道反馈与砂砾局部控制。
 - 单段重跑（调试用）：`PART1_ROUTE_ONLY=t_stairs`（可选 `slope_hold` / `bridge_A_rel` /
-  `height_bar` / `bridge_bands_east` / `gravel` 等；`gravel` 复用整场同一个函数）。
+  `height_bar` / `bridge_bands_east` / `gravel` 等；`height_bar` 与 `gravel` 均复用整场同一个函数）。
 
 ## 5. 常见问题
 

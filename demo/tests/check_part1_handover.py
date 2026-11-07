@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Part 1 gravel handover regressions against the actual route primitives.
+"""Part 1 handover and low-bar alignment regressions against route primitives.
 
 Run with `pixi run -e demo python demo/tests/check_part1_handover.py`.
-Only command/feedback I/O is replaced by ideal body-frame integration at 50 Hz;
-no ROS node or physics is started. These tests establish steering behavior,
-not policy dynamics, wheel locking, or terrain support.
+Only command/feedback I/O is replaced by body-frame integration at 50 Hz,
+with optional deadzone, delayed rebound, and fall fixtures. No ROS node or
+physics is started. These tests establish steering and stopping behavior,
+not policy dynamics, wheel locking, tyre forces, or terrain support.
 """
 from __future__ import annotations
 
@@ -83,6 +84,28 @@ class HandoverPlant(route.RouteNode):
     def _hold(self, seconds):
         for _ in range(math.ceil(max(0.0, seconds) / 0.02)):
             self._tick()
+
+
+class LowBarPlant(HandoverPlant):
+    """A fixed-drive I/O fixture with scrub deadzone and one delayed rebound."""
+
+    def __init__(self, yaw_deg, *, rebound_at=None, rebound_deg=0.0, **kwargs):
+        super().__init__(5.70, -8.12, math.radians(yaw_deg),
+                         yaw_deadzone=0.60, yaw_response=0.40, **kwargs)
+        self.p.z = 0.28
+        self.rebound_at = rebound_at
+        self.rebound_deg = rebound_deg
+        self.rebounds = 0
+
+    def fixed_command(self, vx, wz=0.0):
+        self.command(vx, 0.0, wz)
+
+    def _tick(self, fallback_s=0.02):
+        super()._tick(fallback_s)
+        if (self.rebound_at is not None and not self.rebounds
+                and self.p.t >= self.rebound_at):
+            self.p.yaw = route.wrap(self.p.yaw + math.radians(self.rebound_deg))
+            self.rebounds += 1
 
 
 class Part1HandoverChecks(unittest.TestCase):
@@ -214,6 +237,53 @@ class Part1HandoverChecks(unittest.TestCase):
         self.assertLess(plant.commands[0][1][2], 0.0)
         self.assertLess(abs(plant.p.x - 5.65), 0.02)
         self.assertLess(abs(route.wrap(plant.p.yaw + math.pi / 2)), math.radians(1))
+
+    def test_low_bar_overcomes_scrub_deadzone_in_both_directions(self):
+        for initial_yaw in (-96.0, -84.0):
+            with self.subTest(initial_yaw=initial_yaw):
+                plant = LowBarPlant(initial_yaw)
+                self.assertTrue(plant.align_low_bar())
+                turning = [command for _, command in plant.commands if command[2]]
+                self.assertTrue(turning)
+                self.assertGreater(turning[0][2] * (-90.0 - initial_yaw), 0.0)
+                self.assertTrue(all(abs(command[2]) >= plant.yaw_deadzone
+                                    for command in turning))
+                self.assertTrue(all(command[:2] == (0.0, 0.0)
+                                    for _, command in plant.commands))
+                self.assertLess(abs(route.wrap(plant.p.yaw + math.pi / 2)),
+                                math.radians(1.0))
+                self.assertEqual((plant.p.x, plant.p.y), (5.70, -8.12))
+                self.assertEqual(plant.output, (0.0, 0.0, 0.0))
+
+    def test_low_bar_rechecks_heading_after_delayed_braking_rebound(self):
+        # Initially inside the gate, but the stopped chassis recoils outside
+        # it during the observation interval. A pre-stop yaw check is unsafe.
+        plant = LowBarPlant(-90.5, rebound_at=0.20, rebound_deg=-2.0)
+        self.assertTrue(plant.align_low_bar())
+        self.assertEqual(plant.rebounds, 1)
+        turning = [(t, command) for t, command in plant.commands if command[2]]
+        self.assertTrue(turning)
+        self.assertGreaterEqual(turning[0][0], 0.30 - 1e-9)
+        self.assertLess(abs(route.wrap(plant.p.yaw + math.pi / 2)),
+                        math.radians(1.0))
+        last_turn = max(t for t, command in plant.commands if command[2])
+        self.assertGreaterEqual(plant.p.t - last_turn, 0.30)
+        self.assertEqual(plant.output, (0.0, 0.0, 0.0))
+
+    def test_low_bar_fall_never_reports_alignment_or_issues_further_turns(self):
+        for name, initial_yaw, kwargs in (
+                ("already fallen", -96.0, {"fallen": True}),
+                ("during stable check", -90.5, {"fall_at": 0.10}),
+                ("during pulse", -96.0, {"fall_at": 0.10})):
+            with self.subTest(case=name):
+                plant = LowBarPlant(initial_yaw, **kwargs)
+                self.assertFalse(plant.align_low_bar())
+                fallen_at = kwargs.get("fall_at", 0.0)
+                self.assertTrue(all(command == (0.0, 0.0, 0.0)
+                                    for t, command in plant.commands
+                                    if t >= fallen_at))
+                self.assertLess(plant.p.t, 0.8)
+                self.assertEqual(plant.output, (0.0, 0.0, 0.0))
 
     def test_old_goto_negative_control_requests_large_reverse_turn(self):
         # Execute the old primitive for one tick: its atan2 target points north,

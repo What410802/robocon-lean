@@ -63,8 +63,9 @@ pixi run -e demo demo-part2 resume_before:=stairs_30cm timeout_scale:=0
 Part1 保留一条默认整场路线：桥 A 等后轮越过末槽、落上东台后再交接，桥 B 沿 `x=5.65` 跨越。
 砂砾坑保留原 `require + rotate_hold` 对准器，入口改为 `x=5.84`；四轮上坑即切 `vt_locked12`，
 再沿东臂到角点转西，角点 lookahead 为 0.30。
-[当前源码 v100 整场证据](artifacts/route_fix/part1_gravel_full_v100_evidence.json)：开窗口、1× 实时，
-全部路线预检通过并返回起点，退出 0、0 次恢复、280.58 s；换模在首次满足四轮上坑判据的同一记录帧发生。
+限高杆在降至低姿态后重新精对正，停稳复核偏角小于 1°才前进。
+[当前源码 v104 整场证据](artifacts/route_fix/part1_lowbar_full_v104_evidence.json)：开窗口、1× 实时，
+全部路线预检通过并返回起点，退出 0、0 次恢复、263.80 s；实际过杆偏角约 0.69°，无机器人杆柱接触记录。
 这是关闭 live judge 的实体运动演示，未宣称正式满分或广泛扰动下的鲁棒性。
 Part2 当前唯一计划执行 **33 段**：平台至 30 cm、楼梯单级至 30 cm、坡至 35°、沟宽至
 30 cm、墙至 40 cm，逐档跨越较低实体及比赛梅花桩。40 cm 平台在加长助跑后仍摔倒，

@@ -1103,6 +1103,56 @@ class RouteNode(Node):
         self.stop(0.3)
         return False
 
+    def align_low_bar(self, timeout_s: float = 8.0) -> bool:
+        """Check south alignment after lowering, before crossing the bar."""
+        self._cmd = "align_low_bar"
+        self._cli = "mode low_bar; align south slowly"
+        self._corr = {}
+        self._emit_plan()
+        started = self._now()
+        while self._now() - started < timeout_s and not self.fallen():
+            p = self.pose()
+            err = wrap(-math.pi / 2.0 - p.yaw)
+            if abs(err) < math.radians(1.0):
+                self.fixed_command(0.0, 0.0)
+                self._hold(0.3)
+                if (not self.fallen() and
+                        abs(wrap(-math.pi / 2.0 - self.pose().yaw)) < math.radians(1.0)):
+                    return True
+                continue
+            # Brief differential bursts overcome static tyre scrub; brake and
+            # measure again before the next small correction.
+            rate = max(0.80, min(1.20, 6.0 * abs(err)))
+            self.fixed_command(0.0, math.copysign(rate, err))
+            self._hold(0.10 if abs(err) < math.radians(3.0) else 0.20)
+            self.fixed_command(0.0, 0.0)
+            self._hold(0.20)
+        self.fixed_command(0.0, 0.0)
+        self._hold(0.2)
+        return False
+
+    def run_height_bar(self) -> bool:
+        """One canonical southbound approach and low-bar crossing."""
+        self.set_leg("height_bar")
+        self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)
+        self.require((5.70, -8.20), tol=0.08, timeout_s=12.0,
+                     recover=False, speed=0.15)
+        self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)
+        self.enter_fixed("low_bar")
+        ok_align = self.align_low_bar()
+        p = self.pose()
+        self.get_logger().info("height_bar lowered alignment: %s x=%.3f y=%.3f yaw=%.2fdeg" %
+                               ("PASS" if ok_align else "FAIL", p.x, p.y,
+                                math.degrees(p.yaw)))
+        if not ok_align:
+            self.report("height_bar", False, "lowered heading alignment failed")
+            return False
+        ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -10.2, 15.0)
+        self.exit_fixed()
+        self.report("height_bar", ok)
+        self.ensure_transfer(announce=True)
+        return ok
+
     def run_gravel(self) -> bool:
         """Canonical gravel segment, shared by the course and focused replay."""
         log = self.get_logger()
@@ -1437,11 +1487,8 @@ class RouteNode(Node):
             self.stop(0.5)
             return
         if only == "height_bar":
-            self.face(math.pi / 2.0)
-            self.enter_fixed("low_bar")
-            ok = self.drive_fixed(0.32, math.pi / 2.0, lambda p: p.y > -8.0, 15.0)
-            self.exit_fixed()
-            log.info(f"height_bar-only: {'PASS' if ok else 'FAIL'} at ({self.pose().x:.2f},{self.pose().y:.2f})")
+            self.run_height_bar()
+            self.stop(0.5)
             return
 
         # ---------------------------------------------------------------- course
@@ -1802,21 +1849,8 @@ class RouteNode(Node):
             x_hold=5.70, kp=0.8, max_wz=0.18)
         self.report("long slope straight S", ok, f"at ({self.pose().x:.2f},{self.pose().y:.2f})")
         self.ensure_transfer(announce=True)
-        self.set_leg("height_bar")
-        # The old single require((5.70,-8.20)) picked a diagonal target
-        # heading; the video showed >90 deg of yaw during the move, then
-        # face(-pi/2) pulled back ~110 deg and left a lateral error that hit
-        # the east post.  Face south first, then the goto to (5.70,-8.20) has
-        # almost the same heading and only a small lateral correction.
-        self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)
-        self.require((5.70, -8.20), tol=0.08, timeout_s=12.0,
-                     recover=False, speed=0.15)
-        self.rotate_hold(-math.pi / 2.0, timeout_s=12.0)
-        self.enter_fixed("low_bar")
-        ok = self.drive_fixed(0.32, -math.pi / 2.0, lambda p: p.y < -10.2, 15.0)
-        self.exit_fixed()
-        self.report("height_bar", ok)
-        self.ensure_transfer(announce=True)
+        if not self.run_height_bar():
+            return
 
         if not self.run_gravel():
             return
