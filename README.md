@@ -114,6 +114,8 @@ pixi run -e eval robocon-eval replay-part2 --trace <trace.jsonl>
 
 ## 文档索引
 
+- **队内赛答辩**：[七分钟讲稿与展示文稿](docs/defense/README.md)（可编辑PPTX、PDF、离线展示版、视频与证据来源）。
+
 - **通用**：`docs/RULES-BASIS.md`（规则原文/实现约定/资产哈希）、`docs/ARCHITECTURE.md`
   （数据流/坐标系/判分链路）、`docs/OPERATIONS.md`（手柄/自动路线/录制/判分操作手册）
 - **Part 2**：`docs/part2/EXPERTS.md`（各地形专家选型、证据、入场对齐容差；六类最高档判分侧

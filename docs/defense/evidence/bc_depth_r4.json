@@ -1,0 +1,10 @@
+{
+ "frames": 1228800,
+ "val_action_mse": 0.01566033880226314,
+ "val_action_rmse": 0.12514127537412723,
+ "teacher_action_std": 2.766117811203003,
+ "data": "[PosixPath('artifacts/plum/data/bc_row1_r0'), PosixPath('artifacts/plum/data/bc_row1_r1'), PosixPath('artifacts/plum/data/bc_row1_r2'), PosixPath('artifacts/plum/data/bc_row1_r3'), PosixPath('artifacts/plum/data/bc_row1_r4')]",
+ "init_from": null,
+ "resume": "artifacts/plum/bc/bc_depth_r3.pt",
+ "cnn_latent_dim": 64
+}

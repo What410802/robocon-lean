@@ -1,0 +1,106 @@
+[
+  {
+    "id": "platform40",
+    "source": "/home/bis/RoboCon/artifacts/vtaudit-20261031/videos/part2/vt_mode_v2__adaptive_vx0.5__high_platform_40cm__success.mp4",
+    "source_sha256": "fca17eac894f785153556c60a8d80ef4b2d99659a7482d2e809bfd1492e28704",
+    "file": "media/platform40.mp4",
+    "sha256": "fca17eac894f785153556c60a8d80ef4b2d99659a7482d2e809bfd1492e28704",
+    "source_video_start_s": 0,
+    "duration_s": 6.94,
+    "scope": "历史独立单关；adaptive vx基准0.5；成功以sidecar/campaign为据",
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "width": 1280,
+          "height": 420
+        }
+      ],
+      "format": {
+        "duration": "6.940000"
+      }
+    }
+  },
+  {
+    "id": "wall40",
+    "source": "/home/bis/RoboCon/artifacts/vtaudit-20261031/videos/part2/vt_mode_v2__adaptive_vx0.5__high_wall_40cm__success.mp4",
+    "source_sha256": "356efc865ed56d4ddc890fd3f7a1f9170315dbb566f13c9ec3e5bc2a51a96ed0",
+    "file": "media/wall40.mp4",
+    "sha256": "356efc865ed56d4ddc890fd3f7a1f9170315dbb566f13c9ec3e5bc2a51a96ed0",
+    "source_video_start_s": 0,
+    "duration_s": 5.76,
+    "scope": "历史独立单关；adaptive vx基准0.5；视频HUD末帧仍running",
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "width": 1280,
+          "height": 420
+        }
+      ],
+      "format": {
+        "duration": "5.760000"
+      }
+    }
+  },
+  {
+    "id": "plum_handover",
+    "source": "/home/bis/robocon-lean/artifacts/route_fix/part2_full_live_v56_cli.mp4",
+    "source_sha256": "3c7cbd1ef01ed42ab5d7dbba03496cae86860e6a9ee6cfe40de4c105822a83ea",
+    "file": "media/plum_handover.mp4",
+    "sha256": "b3f075e54044bfdd5bc3cb2360b4a890cf25c323be3eb4de970ffa9bf240a479",
+    "source_video_start_s": 1054,
+    "duration_s": 8.44,
+    "scope": "旧25段v56同次连续片段；六桩；深度专家→出口轮式专家；该段严格投影success200",
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "width": 640,
+          "height": 544
+        }
+      ],
+      "format": {
+        "duration": "8.440000"
+      }
+    }
+  },
+  {
+    "id": "lowbar",
+    "source": "/home/bis/robocon-lean/artifacts/route_fix/part1_lowbar_full_v104_cli.mp4",
+    "source_sha256": "08e64afe19b4f7a7c24a3524663c0f33913853eec6e6e64fa20906f75a869e66",
+    "file": "media/lowbar.mp4",
+    "sha256": "08e64afe19b4f7a7c24a3524663c0f33913853eec6e6e64fa20906f75a869e66",
+    "source_video_start_s": 0,
+    "duration_s": 11.04,
+    "scope": "当前源码Part1 v104全程片段；仅路线预检，judge关闭；源仿真123–134s",
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "width": 640,
+          "height": 544
+        }
+      ],
+      "format": {
+        "duration": "11.040000"
+      }
+    }
+  },
+  {
+    "id": "capability_reel",
+    "file": "media/capability_reel.mp4",
+    "sha256": "983fdeafa5a158c64d7bf98066c91a1b02977fbf9180735a05d5d0c2c4660dbe",
+    "duration_s": 21.16,
+    "composition": [
+      "platform40",
+      "wall40",
+      "plum_handover"
+    ],
+    "scope": "三段独立证据的顺序展示；不是一次连续通过三个障碍；只加页外标题和等比例黑边，无加速"
+  }
+]

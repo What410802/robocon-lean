@@ -1,0 +1,399 @@
+{
+  "scope": "Final current-source full Part1 physical live demo at 1x with viewer, including post-lowering low-bar alignment. Route prechecks only; live judge off, no official score certification or broad robustness claim.",
+  "launch": {
+    "entrypoint": "bash tools/live_demo.sh part1 viewer:=true realtime:=true",
+    "environment": "demo environment PATH and MUJOCO_GL=egl; canonical launcher used directly after pixi wrapper stalled without launching physics",
+    "provenance": "Root launch record; viewer/realtime also printed by sim_node in log."
+  },
+  "source_path": "artifacts/route_fix/part1_lowbar_full_v104_source.py",
+  "source_sha256": "16da364e7d9857b480190880ecbb10b40f200bba62ccd4e6ab2b712aad26377d",
+  "current_source_sha256": "16da364e7d9857b480190880ecbb10b40f200bba62ccd4e6ab2b712aad26377d",
+  "source_matches_current_worktree": true,
+  "artifacts": {
+    "states": "artifacts/route_fix/part1_lowbar_full_v104_states.jsonl",
+    "plan": "artifacts/route_fix/part1_lowbar_full_v104_plan.jsonl",
+    "source": "artifacts/route_fix/part1_lowbar_full_v104_source.py",
+    "log": "artifacts/route_fix/part1_lowbar_full_v104.log",
+    "focused_lowbar_comparison": "artifacts/route_fix/part1_lowbar_alignment_v102_v103_evidence.json",
+    "lowbar_cli_video": "artifacts/route_fix/part1_lowbar_full_v104_cli.mp4"
+  },
+  "exit_code": 0,
+  "exit_evidence": "Root confirmed outer shell session 79556 exit_code 0. Route finished, return_start PASS, and all processes finished cleanly in log.",
+  "live_judge_enabled": false,
+  "official_scoring_claim": false,
+  "realtime": true,
+  "viewer": true,
+  "sampling_resolution_s": 0.02,
+  "frame_count": 13190,
+  "first_recorded_sim_t_s": 0.02,
+  "last_recorded_sim_t_s": 263.8,
+  "sim_process_exit_t_s": 263.924,
+  "initial_base_m": [
+    3.70106245,
+    -8.999999,
+    0.67212719
+  ],
+  "final_base_m": [
+    3.55853733,
+    -8.93715533,
+    0.557105005
+  ],
+  "wheel_recoveries": 0,
+  "all_prechecks_pass": true,
+  "prechecks": [
+    "high_wall: PASS supports_crossed=4/4 side_bypass=False",
+    "t_stairs (S up / N down): PASS",
+    "NW ramp: PASS at (1.81,0.14,z=0.73,yaw=91.2deg)",
+    "bridge_blocks: PASS",
+    "bridge A east centre spin: PASS at (5.71,-0.45)",
+    "bridge_bands: PASS",
+    "long slope straight S: PASS at (5.63,-7.58)",
+    "height_bar: PASS",
+    "gravel east-arm entry: PASS at (5.79,-11.49,-84.8deg)",
+    "gravel east-arm corner: PASS at (5.88,-12.50,-97.2deg)",
+    "gravel west turn: PASS yaw=-178.7 at (5.91,-12.54)",
+    "gravel exit: PASS at (3.55,-12.49,177.0deg)",
+    "gravel_pit: PASS at (3.55,-12.49)",
+    "slalom keyframes: PASS arc path 255 pts",
+    "return_start: PASS"
+  ],
+  "low_bar": {
+    "geometry": {
+      "source": "demo/robots/blackW/scene_part1.xml",
+      "source_sha256": "faa869817f741d4df4df092f64cc4b4e1bfa54d04731b0c84af71de6ccc408c8",
+      "beam_axis_center_nominal_m": [
+        5.7,
+        -9.0,
+        0.325
+      ],
+      "beam_radius_m": 0.015,
+      "beam_bottom_nominal_z_m": 0.31,
+      "post_inner_x_interval_m": [
+        5.2250000000000005,
+        6.175
+      ],
+      "clear_opening_width_m": 0.9499999999999993,
+      "centerline_x_m": 5.7,
+      "approach_target_m": [
+        5.7,
+        -8.2
+      ],
+      "target_yaw_deg": -90.0,
+      "approach_target_is_north_of_bar_m": 0.8000000000000007,
+      "interpretation": "The target x=5.70 is the opening center; south heading -90 deg crosses the bar y=-9 perpendicularly. No geometry target change is needed. 0.325 m is the beam axis height, not its lower surface."
+    },
+    "plan_events": [
+      {
+        "t": 116.72,
+        "leg": "height_bar",
+        "cmd": "ensure_transfer",
+        "cli": "switch vt_locked12",
+        "corr": {},
+        "target": null
+      },
+      {
+        "t": 116.72,
+        "leg": "height_bar",
+        "cmd": "rotate_hold(-1.57)",
+        "cli": "turn_hold(+1deg)",
+        "corr": {},
+        "target": null
+      },
+      {
+        "t": 117.06,
+        "leg": "height_bar",
+        "cmd": "goto((5.70,-8.20))",
+        "cli": "move(fwd=+0.71m,left=+0.07m,turn=+6deg)",
+        "corr": {},
+        "target": null
+      },
+      {
+        "t": 123.0,
+        "leg": "height_bar",
+        "cmd": "rotate_hold(-1.57)",
+        "cli": "turn_hold(+17deg)",
+        "corr": {},
+        "target": null
+      },
+      {
+        "t": 124.3,
+        "leg": "height_bar",
+        "cmd": "enter_fixed(low_bar)",
+        "cli": "switch mode low_bar",
+        "corr": {},
+        "target": null
+      },
+      {
+        "t": 125.46,
+        "leg": "height_bar",
+        "cmd": "align_low_bar",
+        "cli": "mode low_bar; align south slowly",
+        "corr": {},
+        "target": null
+      },
+      {
+        "t": 125.74,
+        "leg": "height_bar",
+        "cmd": "fixed_drive(x=+0.32)",
+        "cli": "mode low_bar; forward +0.32m/s",
+        "corr": {},
+        "target": null
+      },
+      {
+        "t": 132.72,
+        "leg": "height_bar",
+        "cmd": "fixed_drive(x=+0.32)",
+        "cli": "switch mode walk",
+        "corr": {},
+        "target": null
+      },
+      {
+        "t": 133.46,
+        "leg": "height_bar",
+        "cmd": "ensure_transfer",
+        "cli": "switch vt_locked12",
+        "corr": {},
+        "target": null
+      }
+    ],
+    "final_upright_turn_start_sample": {
+      "t_s": 123,
+      "base_m": [
+        5.75302334,
+        -8.15436655,
+        0.559261211
+      ],
+      "yaw_deg": -106.56481461158307,
+      "error_from_south_deg": -16.564814611583074,
+      "tilt_deg": 2.456949716967774
+    },
+    "final_upright_alignment_sample": {
+      "t_s": 124.3,
+      "base_m": [
+        5.75255331,
+        -8.16420694,
+        0.55593444
+      ],
+      "yaw_deg": -92.82884182168826,
+      "error_from_south_deg": -2.8288418216882607,
+      "tilt_deg": 2.5147074383320733
+    },
+    "low_pose_ready_sample": {
+      "t_s": 125.46,
+      "base_m": [
+        5.77067757,
+        -8.11606613,
+        0.283554362
+      ],
+      "yaw_deg": -89.51771830999718,
+      "error_from_south_deg": 0.48228169000282195,
+      "tilt_deg": 0.06883408954655251
+    },
+    "fixed_drive_start_sample": {
+      "t_s": 125.74,
+      "base_m": [
+        5.77071278,
+        -8.1159405,
+        0.283347504
+      ],
+      "yaw_deg": -89.45905521728496,
+      "error_from_south_deg": 0.5409447827150516,
+      "tilt_deg": 0.06384585048322597
+    },
+    "first_base_at_or_south_of_bar_line_sample": {
+      "t_s": 128.74,
+      "base_m": [
+        5.78136185,
+        -9.00231855,
+        0.282135072
+      ],
+      "yaw_deg": -89.3110824800273,
+      "error_from_south_deg": 0.6889175199727027,
+      "tilt_deg": 0.2736902062598434
+    },
+    "linearly_interpolated_base_bar_line": {
+      "t_s": 128.73234434357093,
+      "x_m": 5.781333374785912,
+      "y_m": -9.0,
+      "yaw_deg": -89.31092364964734,
+      "error_from_south_deg": 0.6890763503526709
+    },
+    "fixed_drive_exit_before_raising_sample": {
+      "t_s": 132.72,
+      "base_m": [
+        5.79519017,
+        -10.2079635,
+        0.282485334
+      ],
+      "yaw_deg": -89.39610935620766,
+      "error_from_south_deg": 0.6038906437923328,
+      "tilt_deg": 0.19369889228522016
+    },
+    "lowering_yaw_delta_deg": 3.3111235116910827,
+    "alignment_duration_from_plan_samples_s": 0.28000000000000114,
+    "fixed_drive_yaw_range_deg": [
+      -89.45905521728496,
+      -89.30343022643562
+    ],
+    "fixed_drive_max_tilt_deg": 0.35926798139879235,
+    "beam_center_z_range_during_fixed_drive_m": [
+      0.324986754,
+      0.324986754
+    ],
+    "recorded_robot_beam_or_post_contacts": [],
+    "recorded_robot_beam_or_post_contact_count": 0,
+    "historical_stage_comparison": {
+      "v98": {
+        "upright_alignment_yaw_deg": -92.65421013924446,
+        "low_pose_ready_yaw_deg": -98.74923167877401,
+        "drive_start_yaw_deg": -98.74923167877401,
+        "bar_line_yaw_deg": -97.02980080884605,
+        "bar_line_x_m": 5.66619122,
+        "exit_yaw_deg": -96.61202631222451,
+        "source_sha256": "4dba2060b6fd8dbe192178f6bc1cbc56e6c4b1f7294c9eb5d3b476f63319ff40"
+      },
+      "v100": {
+        "upright_alignment_yaw_deg": -92.98490232062981,
+        "low_pose_ready_yaw_deg": -93.43985321952705,
+        "drive_start_yaw_deg": -93.43985321952705,
+        "bar_line_yaw_deg": -93.0773886420089,
+        "bar_line_x_m": 5.66969434,
+        "exit_yaw_deg": -93.10119263783245,
+        "source_sha256": "3bf5db2c6fe5fe0e050839ad37be87760b6b6d9197c320bc0c59a11ee2574c23"
+      },
+      "v102": {
+        "upright_alignment_yaw_deg": -92.54045899841476,
+        "low_pose_ready_yaw_deg": -94.98044479459296,
+        "drive_start_yaw_deg": -90.9975589343642,
+        "bar_line_yaw_deg": -91.28006023997638,
+        "bar_line_x_m": 5.75514334,
+        "exit_yaw_deg": -91.28004432594784,
+        "source_sha256": "8eb5bfff6d5f6467088bd9a775e36c950fcdbd4cc68edcf6e80e2c422074b983"
+      },
+      "v103": {
+        "upright_alignment_yaw_deg": -92.74040537017393,
+        "low_pose_ready_yaw_deg": -96.28132994304202,
+        "drive_start_yaw_deg": -90.81129121941528,
+        "bar_line_yaw_deg": -91.1187975711588,
+        "bar_line_x_m": 5.75596331,
+        "exit_yaw_deg": -91.11890026455285,
+        "source_sha256": "16da364e7d9857b480190880ecbb10b40f200bba62ccd4e6ab2b712aad26377d"
+      }
+    },
+    "interpretation": "In this full run lowering already left yaw inside the 1 deg gate; the alignment primitive verified the stopped heading rather than needing a differential burst. Base crossing the bar line is at yaw -89.31 deg (0.69 deg from south). The sampled beam axis height remains unchanged. Focused v102/v103 provide the separate active-pulse evidence.",
+    "video": {
+      "path": "artifacts/route_fix/part1_lowbar_full_v104_cli.mp4",
+      "source_sim_interval_s": [
+        123.0,
+        134.0
+      ],
+      "frames": 276,
+      "fps": 25,
+      "duration_s": 11.04,
+      "resolution_px": [
+        640,
+        544
+      ],
+      "description": "Continuous segment from the same full v104 run; outside the scene only CLI annotations. Root exported after all physics processes finished."
+    }
+  },
+  "gravel_handover": {
+    "entry_gate": "Each wheel collision has an actual gravel_pit_b contact pair; wheel body origins in x(5.3761,6.2961), y(-12.96,-11.04), z(.22,.32), and not fallen; no extra base-y gate.",
+    "shared_gravel_function": "Focused selector and full course invoke the same run_gravel().",
+    "lookahead_m": 0.3,
+    "first_supported_t_s": 137.84,
+    "handover_t_s": 137.84,
+    "delay_after_first_supported_frame_s": 0.0,
+    "same_recorded_frame": true,
+    "first_effective_locked_mit_t_s": 137.86,
+    "recorded_lock_effect_delay_s": 0.020000000000010232,
+    "sampling_resolution_s": 0.02,
+    "settle_start_base_m": [
+      5.79162139,
+      -11.4943526,
+      0.690817014
+    ],
+    "settle_end_t_s": 138.62,
+    "settle_end_base_m": [
+      5.80984511,
+      -11.6451454,
+      0.70232107
+    ],
+    "settle_base_delta_m": [
+      0.018223719999999943,
+      -0.1507928000000014,
+      0.01150405600000004
+    ],
+    "max_settle_tilt_deg": 5.999150317588048,
+    "wheels": {
+      "FL": {
+        "first_locked_mit": {
+          "ff": 0,
+          "kp": 59.1975087,
+          "kd": 2.21990658,
+          "q_target": 199.891359,
+          "dq_target": 0
+        },
+        "measured_q_at_gate_sample": 199.750238,
+        "delta_from_gate_sample_rad": 0.14112099999999828,
+        "target_max_deviation_during_settle_rad": 0.0,
+        "actual_dq_first_locked_frame_rad_s": 10.2054528,
+        "actual_dq_end_settle_rad_s": 0.331864135
+      },
+      "FR": {
+        "first_locked_mit": {
+          "ff": 0,
+          "kp": 71.091184,
+          "kd": 2.6659194,
+          "q_target": -200.243408,
+          "dq_target": 0
+        },
+        "measured_q_at_gate_sample": -200.136867,
+        "delta_from_gate_sample_rad": -0.10654099999999289,
+        "target_max_deviation_during_settle_rad": 0.0,
+        "actual_dq_first_locked_frame_rad_s": -8.31816191,
+        "actual_dq_end_settle_rad_s": 0.241938576
+      },
+      "RL": {
+        "first_locked_mit": {
+          "ff": 0,
+          "kp": 75.5105125,
+          "kd": 2.83164422,
+          "q_target": 198.874034,
+          "dq_target": 0
+        },
+        "measured_q_at_gate_sample": 198.761912,
+        "delta_from_gate_sample_rad": 0.11212199999999939,
+        "target_max_deviation_during_settle_rad": 0.0,
+        "actual_dq_first_locked_frame_rad_s": 6.99439375,
+        "actual_dq_end_settle_rad_s": 0.0764149255
+      },
+      "RR": {
+        "first_locked_mit": {
+          "ff": 0,
+          "kp": 63.3323951,
+          "kd": 2.37496482,
+          "q_target": -198.193146,
+          "dq_target": 0
+        },
+        "measured_q_at_gate_sample": -198.067677,
+        "delta_from_gate_sample_rad": -0.1254690000000096,
+        "target_max_deviation_during_settle_rad": 0.0,
+        "actual_dq_first_locked_frame_rad_s": -9.31411298,
+        "actual_dq_end_settle_rad_s": -0.00166847616
+      }
+    },
+    "wheel_sampling_interpretation": "delta_from_gate_sample_rad is fixed q_target minus wheel position in the 50 Hz gate sample. Actual C++ capture occurs when policy switches within the next recording interval while wheels may still rotate, so this delta does not measure capture error. Zero target_max_deviation_during_settle_rad is the evidence that captured targets remain fixed.",
+    "interpretation": "The first supported sample and handover intent share t=137.84 s; all wheel position-hold MIT targets are visible at the next 20 ms sample. No new heavy corner collision reconstruction was performed for v104."
+  },
+  "limits": [
+    "50 Hz state/contact samples do not prove absence of contacts at every 2 ms physics step; no contact-force trace or fresh geometry replay was used.",
+    "The bar-line metric refers to the base crossing y=-9, with the first sampled crossing and optional adjacent-sample interpolation both reported.",
+    "The stationary alignment gate checks the heading again after its configured 0.3 s zero-command observation; plan timestamps are sampled and do not measure that implementation interval precisely.",
+    "A single successful complete run plus two focused starts does not establish broad perturbation robustness. Previous v100 thin gravel corner clearance remains historical evidence, not a geometric bound for v104."
+  ],
+  "regression_validation": {
+    "command": ".pixi/envs/demo/bin/python demo/tests/check_part1_handover.py",
+    "result": "13 tests PASS"
+  }
+}

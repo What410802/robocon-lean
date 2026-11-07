@@ -1,0 +1,27 @@
+{
+  "run": "part2_full_live_v56",
+  "entry": "pixi run -e demo demo-part2 viewer:=true realtime:=true",
+  "environment": {
+    "ROS_DOMAIN_ID": "91",
+    "PART1_RECORD_PATH": "artifacts/route_fix/part2_full_live_v56_states.jsonl",
+    "PART1_RECORD_PLAN_PATH": "artifacts/route_fix/part2_full_live_v56_plan.jsonl"
+  },
+  "route_subset": null,
+  "git_base": "0d3595c3d9c31099911bfb345c1ffd9c22c855e4",
+  "uncommitted": true,
+  "sha256": {
+    "demo/rl_sar/scripts/part1_auto_route.py": "c556739c374e9cb40393cfaddedefa6aaf7a6de33cc0a3cefc1717c1e97a75a5",
+    "demo/rl_sar/scripts/part2_auto_route.py": "79414f08e9d86f0b3239c0896e07c705e1150bd6e56a2401ed0bcfe7f887347e",
+    "demo/rl_sar/scripts/part2_motion.py": "89b71351a0245d885c8d33ca673c7b8806b5dd318c7b6b5323cc5298da4d70a4",
+    "demo/rl_sar/scripts/part2_route_plan.py": "714839ac2d67dfe8dee8506fe7f6361c39dc62b383c47f2dee50c105274bb646",
+    "demo/rl_sar/library/core/rl_sdk/rl_sdk.cpp": "522b6a05e5182c12838d1098fed19d0278b549e2788b469d1b13b659c2d4c1e5",
+    "demo/rl_sar/src/rl_sim.cpp": "f667aafd876475ce04416e412bd4a10c17b88707e60df44b9cacac0d5477cab9",
+    "demo/rl_sar/include/command_limit.hpp": "3972244db672ec6440d3bd0fd927ec12bb84760572e6d5902c5ee889eb69e2a5",
+    "demo/install/rl_sar/lib/rl_sar/rl_sim": "401b2e5fa51ba8d48306c2b5b5acaed2cf1e24d94e008c6174f53d28d2efda4c",
+    "demo/rl_sar/policy/blackW/vt_locked12/policy.pt": "0492bc0e8bf02575437fc9e60015a355e759b02c95e05efa7de6e2ea9a11456a",
+    "demo/rl_sar/policy/blackW/row2p_p40w40_v1/policy.pt": "162659690d1de27b9916e8870c459d2f8dbc61169bece48f8e49c477d65ab67b",
+    "demo/rl_sar/policy/blackW/st30_ppo_st30_s100_600/policy.pt": "43ddc7f559e50dda17d9d99542013edf2f902457084d64506ada370ca1f8eeef",
+    "demo/rl_sar/policy/blackW/plum_depth_final_v1/policy.pt": "35e4fc6b7d63b06cac8d8328bc3c8354942a2cfade6e21134a4221b3a988c91d",
+    "demo/rl_sar/policy/blackW/vt_band_v1/policy.pt": "5f5a07f532b9f556a7e1aa43635513ec712a1b77f833569b23417d70d5ce2372"
+  }
+}

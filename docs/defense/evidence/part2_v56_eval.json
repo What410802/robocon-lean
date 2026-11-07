@@ -1,0 +1,1215 @@
+{
+  "states": "artifacts/route_fix/part2_full_live_v56_states.jsonl",
+  "plan": "artifacts/route_fix/part2_full_live_v56_plan.jsonl",
+  "legs": [
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.575,
+        "max_x": 2.435,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.001,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "high_platform_05cm",
+      "level": "field_high_platform_05cm",
+      "category": "high_platform",
+      "frames": 249,
+      "window": [
+        32.92,
+        37.88
+      ],
+      "observation_end": 37.88,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "platform_05cm"
+      ],
+      "field_bbox": [
+        [
+          3.0,
+          -0.8,
+          0.0
+        ],
+        [
+          4.5,
+          0.8,
+          0.05
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.645,
+        "max_x": 2.603,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.004,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "high_platform_10cm",
+      "level": "high_platform_10cm",
+      "category": "high_platform",
+      "frames": 238,
+      "window": [
+        37.88,
+        42.62
+      ],
+      "observation_end": 42.62,
+      "tail_s": 0.0,
+      "score": 10,
+      "judge_scope": "official_profile_projection",
+      "closed": true,
+      "target_geoms": [
+        "platform_10cm"
+      ],
+      "field_bbox": [
+        [
+          6.0,
+          -0.8,
+          0.0
+        ],
+        [
+          7.5,
+          0.8,
+          0.1
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.699,
+        "max_x": 1.764,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.004,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "high_platform_15cm",
+      "level": "field_high_platform_15cm",
+      "category": "high_platform",
+      "frames": 243,
+      "window": [
+        42.62,
+        47.46
+      ],
+      "observation_end": 47.46,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "platform_15cm"
+      ],
+      "field_bbox": [
+        [
+          9.0,
+          -0.8,
+          0.0
+        ],
+        [
+          10.5,
+          0.8,
+          0.15
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.735,
+        "max_x": 2.412,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.007,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "high_platform_20cm",
+      "level": "high_platform_20cm",
+      "category": "high_platform",
+      "frames": 315,
+      "window": [
+        47.46,
+        53.74
+      ],
+      "observation_end": 53.74,
+      "tail_s": 0.0,
+      "score": 50,
+      "judge_scope": "official_profile_projection",
+      "closed": true,
+      "target_geoms": [
+        "platform_20cm"
+      ],
+      "field_bbox": [
+        [
+          12.0,
+          -0.8,
+          0.0
+        ],
+        [
+          13.5,
+          0.8,
+          0.2
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.765,
+        "max_x": 6.687,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.006,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "stairs_04cm",
+      "level": "field_stairs_04cm",
+      "category": "stairs",
+      "frames": 563,
+      "window": [
+        169.64,
+        180.88
+      ],
+      "observation_end": 180.88,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "stairs_04cm_up_1",
+        "stairs_04cm_up_2",
+        "stairs_04cm_up_3",
+        "stairs_04cm_up_4",
+        "stairs_04cm_up_5",
+        "stairs_04cm_up_6",
+        "stairs_04cm_landing",
+        "stairs_04cm_down_1",
+        "stairs_04cm_down_2",
+        "stairs_04cm_down_3",
+        "stairs_04cm_down_4",
+        "stairs_04cm_down_5",
+        "stairs_04cm_down_6"
+      ],
+      "field_bbox": [
+        [
+          3.0,
+          2.3,
+          0.0
+        ],
+        [
+          7.4,
+          3.7,
+          0.24
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.89,
+        "max_x": 7.44,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.008,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "stairs_06cm",
+      "level": "field_stairs_06cm",
+      "category": "stairs",
+      "frames": 665,
+      "window": [
+        180.88,
+        194.16
+      ],
+      "observation_end": 194.16,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "stairs_06cm_up_1",
+        "stairs_06cm_up_2",
+        "stairs_06cm_up_3",
+        "stairs_06cm_up_4",
+        "stairs_06cm_up_5",
+        "stairs_06cm_up_6",
+        "stairs_06cm_landing",
+        "stairs_06cm_down_1",
+        "stairs_06cm_down_2",
+        "stairs_06cm_down_3",
+        "stairs_06cm_down_4",
+        "stairs_06cm_down_5",
+        "stairs_06cm_down_6"
+      ],
+      "field_bbox": [
+        [
+          10.5,
+          2.3,
+          0.0
+        ],
+        [
+          14.9,
+          3.7,
+          0.36
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 1.013,
+        "max_x": 7.413,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.009,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "stairs_08cm",
+      "level": "field_stairs_08cm",
+      "category": "stairs",
+      "frames": 657,
+      "window": [
+        194.16,
+        207.28
+      ],
+      "observation_end": 207.28,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "stairs_08cm_up_1",
+        "stairs_08cm_up_2",
+        "stairs_08cm_up_3",
+        "stairs_08cm_up_4",
+        "stairs_08cm_up_5",
+        "stairs_08cm_up_6",
+        "stairs_08cm_landing",
+        "stairs_08cm_down_1",
+        "stairs_08cm_down_2",
+        "stairs_08cm_down_3",
+        "stairs_08cm_down_4",
+        "stairs_08cm_down_5",
+        "stairs_08cm_down_6"
+      ],
+      "field_bbox": [
+        [
+          18.0,
+          2.3,
+          0.0
+        ],
+        [
+          22.4,
+          3.7,
+          0.48
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 1.148,
+        "max_x": 6.673,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.009,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "stairs_10cm",
+      "level": "stairs_10cm",
+      "category": "stairs",
+      "frames": 666,
+      "window": [
+        207.28,
+        220.58
+      ],
+      "observation_end": 220.58,
+      "tail_s": 0.0,
+      "score": 10,
+      "judge_scope": "official_profile_projection",
+      "closed": true,
+      "target_geoms": [
+        "stairs_10cm_up_1",
+        "stairs_10cm_up_2",
+        "stairs_10cm_up_3",
+        "stairs_10cm_up_4",
+        "stairs_10cm_up_5",
+        "stairs_10cm_up_6",
+        "stairs_10cm_landing",
+        "stairs_10cm_down_1",
+        "stairs_10cm_down_2",
+        "stairs_10cm_down_3",
+        "stairs_10cm_down_4",
+        "stairs_10cm_down_5",
+        "stairs_10cm_down_6"
+      ],
+      "field_bbox": [
+        [
+          25.5,
+          2.3,
+          0.0
+        ],
+        [
+          29.9,
+          3.7,
+          0.6
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 1.256,
+        "max_x": 7.411,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.011,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "stairs_12cm",
+      "level": "field_stairs_12cm",
+      "category": "stairs",
+      "frames": 637,
+      "window": [
+        220.58,
+        233.3
+      ],
+      "observation_end": 233.3,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "stairs_12cm_up_1",
+        "stairs_12cm_up_2",
+        "stairs_12cm_up_3",
+        "stairs_12cm_up_4",
+        "stairs_12cm_up_5",
+        "stairs_12cm_up_6",
+        "stairs_12cm_landing",
+        "stairs_12cm_down_1",
+        "stairs_12cm_down_2",
+        "stairs_12cm_down_3",
+        "stairs_12cm_down_4",
+        "stairs_12cm_down_5",
+        "stairs_12cm_down_6"
+      ],
+      "field_bbox": [
+        [
+          33.0,
+          2.3,
+          0.0
+        ],
+        [
+          37.4,
+          3.7,
+          0.72
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 1.436,
+        "max_x": 6.635,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.011,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "stairs_15cm",
+      "level": "stairs_15cm",
+      "category": "stairs",
+      "frames": 684,
+      "window": [
+        233.3,
+        246.96
+      ],
+      "observation_end": 246.96,
+      "tail_s": 0.0,
+      "score": 50,
+      "judge_scope": "official_profile_projection",
+      "closed": true,
+      "target_geoms": [
+        "stairs_15cm_up_1",
+        "stairs_15cm_up_2",
+        "stairs_15cm_up_3",
+        "stairs_15cm_up_4",
+        "stairs_15cm_up_5",
+        "stairs_15cm_up_6",
+        "stairs_15cm_landing",
+        "stairs_15cm_down_1",
+        "stairs_15cm_down_2",
+        "stairs_15cm_down_3",
+        "stairs_15cm_down_4",
+        "stairs_15cm_down_5",
+        "stairs_15cm_down_6"
+      ],
+      "field_bbox": [
+        [
+          40.5,
+          2.3,
+          0.0
+        ],
+        [
+          44.9,
+          3.7,
+          0.9
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 1.763,
+        "max_x": 6.601,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.013,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "stairs_20cm",
+      "level": "stairs_20cm",
+      "category": "stairs",
+      "frames": 756,
+      "window": [
+        246.96,
+        262.06
+      ],
+      "observation_end": 262.06,
+      "tail_s": 0.0,
+      "score": 100,
+      "judge_scope": "official_profile_projection",
+      "closed": true,
+      "target_geoms": [
+        "stairs_20cm_up_1",
+        "stairs_20cm_up_2",
+        "stairs_20cm_up_3",
+        "stairs_20cm_up_4",
+        "stairs_20cm_up_5",
+        "stairs_20cm_up_6",
+        "stairs_20cm_landing",
+        "stairs_20cm_down_1",
+        "stairs_20cm_down_2",
+        "stairs_20cm_down_3",
+        "stairs_20cm_down_4",
+        "stairs_20cm_down_5",
+        "stairs_20cm_down_6"
+      ],
+      "field_bbox": [
+        [
+          48.0,
+          2.3,
+          0.0
+        ],
+        [
+          52.4,
+          3.7,
+          1.2
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.703,
+        "max_x": 6.938,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.001,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": true
+      },
+      "leg": "slope_05deg",
+      "level": "field_slope_05deg",
+      "category": "slope",
+      "frames": 391,
+      "window": [
+        594.78,
+        602.58
+      ],
+      "observation_end": 602.58,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "slope_05deg_up",
+        "slope_05deg_landing",
+        "slope_05deg_down"
+      ],
+      "field_bbox": [
+        [
+          2.9999999569131894,
+          5.299999919100516,
+          -1.8831105355610056e-09
+        ],
+        [
+          7.800000075573955,
+          6.7,
+          0.17497733144783065
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.882,
+        "max_x": 5.752,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.002,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": true
+      },
+      "leg": "slope_10deg",
+      "level": "field_slope_10deg",
+      "category": "slope",
+      "frames": 322,
+      "window": [
+        602.58,
+        609.0
+      ],
+      "observation_end": 609.0,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "slope_10deg_up",
+        "slope_10deg_landing",
+        "slope_10deg_down"
+      ],
+      "field_bbox": [
+        [
+          9.000000010387218,
+          5.299999919100516,
+          0.0
+        ],
+        [
+          13.800000022099928,
+          6.7,
+          0.35265396
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 1.067,
+        "max_x": 5.75,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.002,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": true
+      },
+      "leg": "slope_15deg",
+      "level": "field_slope_15deg",
+      "category": "slope",
+      "frames": 333,
+      "window": [
+        609.0,
+        615.64
+      ],
+      "observation_end": 615.64,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "slope_15deg_up",
+        "slope_15deg_landing",
+        "slope_15deg_down"
+      ],
+      "field_bbox": [
+        [
+          14.999999970186002,
+          5.299999919100515,
+          -4.193873331947984e-09
+        ],
+        [
+          19.80000006230114,
+          6.7,
+          0.5358984011857505
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 1.28,
+        "max_x": 6.904,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.005,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": true
+      },
+      "leg": "slope_20deg",
+      "level": "slope_20deg",
+      "category": "slope",
+      "frames": 359,
+      "window": [
+        615.64,
+        622.8
+      ],
+      "observation_end": 622.8,
+      "tail_s": 0.0,
+      "score": 10,
+      "judge_scope": "official_profile_projection",
+      "closed": true,
+      "target_geoms": [
+        "slope_20deg_up",
+        "slope_20deg_landing",
+        "slope_20deg_down"
+      ],
+      "field_bbox": [
+        [
+          20.999999946675462,
+          5.299999919100516,
+          -1.0575035347404338e-08
+        ],
+        [
+          25.800000085811682,
+          6.7,
+          0.7279405087149786
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 1.481,
+        "max_x": 5.691,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.007,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": true
+      },
+      "leg": "slope_25deg",
+      "level": "field_slope_25deg",
+      "category": "slope",
+      "frames": 414,
+      "window": [
+        622.8,
+        631.06
+      ],
+      "observation_end": 631.06,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "slope_25deg_up",
+        "slope_25deg_landing",
+        "slope_25deg_down"
+      ],
+      "field_bbox": [
+        [
+          26.99999996547523,
+          5.299999919100517,
+          -8.75983796611024e-09
+        ],
+        [
+          31.800000067011915,
+          6.7,
+          0.9326153448058051
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 1.71,
+        "max_x": 6.918,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.005,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": true
+      },
+      "leg": "slope_30deg",
+      "level": "slope_30deg",
+      "category": "slope",
+      "frames": 692,
+      "window": [
+        631.06,
+        644.88
+      ],
+      "observation_end": 644.88,
+      "tail_s": 0.0,
+      "score": 50,
+      "judge_scope": "official_profile_projection",
+      "closed": true,
+      "target_geoms": [
+        "slope_30deg_up",
+        "slope_30deg_landing",
+        "slope_30deg_down"
+      ],
+      "field_bbox": [
+        [
+          32.99999999934294,
+          5.299999919100516,
+          -4.1279751838985135e-09
+        ],
+        [
+          37.8000000331442,
+          6.7,
+          1.15470054
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.831,
+        "max_x": 6.389,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.003,
+        "min_wheel_z_slot": 0.285,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": true
+      },
+      "leg": "trench_10cm",
+      "level": "trench_10cm",
+      "category": "trench",
+      "frames": 395,
+      "window": [
+        892.36,
+        900.24
+      ],
+      "observation_end": 900.24,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "official_profile_projection",
+      "closed": true,
+      "target_geoms": [
+        "trench_10cm_entry",
+        "trench_10cm_near",
+        "trench_10cm_far",
+        "trench_10cm_exit"
+      ],
+      "field_bbox": [
+        [
+          2.9999999897023515,
+          8.299999965510722,
+          -4.676478634890735e-09
+        ],
+        [
+          7.100000042784792,
+          9.7,
+          0.3000000088704493
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.882,
+        "max_x": 6.517,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.004,
+        "min_wheel_z_slot": 0.214,
+        "top_seen": true,
+        "exit_platform_seen": false,
+        "exited": true
+      },
+      "leg": "trench_20cm",
+      "level": "trench_20cm",
+      "category": "trench",
+      "frames": 325,
+      "window": [
+        900.24,
+        906.72
+      ],
+      "observation_end": 906.72,
+      "tail_s": 0.0,
+      "score": 150,
+      "judge_scope": "official_profile_projection",
+      "closed": true,
+      "target_geoms": [
+        "trench_20cm_entry",
+        "trench_20cm_near",
+        "trench_20cm_far",
+        "trench_20cm_exit"
+      ],
+      "field_bbox": [
+        [
+          8.999999989702351,
+          8.299999965510722,
+          -4.676478634890735e-09
+        ],
+        [
+          13.200000042784792,
+          9.7,
+          0.3000000088704493
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.733,
+        "max_x": 7.041,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.019,
+        "min_wheel_z_slot": 9.9,
+        "top_seen": true,
+        "exit_platform_seen": true,
+        "exited": true
+      },
+      "leg": "high_plum",
+      "level": "plum_1",
+      "category": "plum",
+      "frames": 331,
+      "window": [
+        1054.76,
+        1061.36
+      ],
+      "observation_end": 1061.36,
+      "tail_s": 0.0,
+      "score": 200,
+      "judge_scope": "official_profile_projection",
+      "closed": true,
+      "target_geoms": [
+        "plum_entry",
+        "plum_r1_01",
+        "plum_r2_01",
+        "plum_r1_02",
+        "plum_r2_02",
+        "plum_r1_03",
+        "plum_r2_03",
+        "plum_exit"
+      ],
+      "field_bbox": [
+        [
+          4.0,
+          11.6,
+          0.0
+        ],
+        [
+          7.5,
+          12.4,
+          0.2
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.545,
+        "max_x": 2.382,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.006,
+        "min_wheel_z_slot": 9.9,
+        "wall_side_bypass": false,
+        "top_seen": false,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "high_wall_04cm",
+      "level": "field_high_wall_04cm",
+      "category": "high_wall",
+      "frames": 215,
+      "window": [
+        1200.36,
+        1204.64
+      ],
+      "observation_end": 1204.64,
+      "tail_s": 0.0,
+      "tail_stop": "no_pending_terminal_hold",
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "cross_bar_1"
+      ],
+      "field_bbox": [
+        [
+          2.94,
+          20.3,
+          0.0
+        ],
+        [
+          3.06,
+          21.7,
+          0.04
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.578,
+        "max_x": 1.155,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.018,
+        "min_wheel_z_slot": 9.9,
+        "wall_side_bypass": false,
+        "top_seen": false,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "high_wall_08cm",
+      "level": "field_high_wall_08cm",
+      "category": "high_wall",
+      "frames": 113,
+      "window": [
+        1204.64,
+        1206.88
+      ],
+      "observation_end": 1206.88,
+      "tail_s": 0.0,
+      "tail_stop": "no_pending_terminal_hold",
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "cross_bar_2"
+      ],
+      "field_bbox": [
+        [
+          4.140000000000001,
+          20.3,
+          0.0
+        ],
+        [
+          4.26,
+          21.7,
+          0.08
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.591,
+        "max_x": 1.147,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.016,
+        "min_wheel_z_slot": 9.9,
+        "wall_side_bypass": false,
+        "top_seen": false,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "high_wall_12cm",
+      "level": "field_high_wall_12cm",
+      "category": "high_wall",
+      "frames": 177,
+      "window": [
+        1206.88,
+        1210.4
+      ],
+      "observation_end": 1210.4,
+      "tail_s": 0.0,
+      "tail_stop": "no_pending_terminal_hold",
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "cross_bar_3"
+      ],
+      "field_bbox": [
+        [
+          5.340000000000001,
+          20.3,
+          0.0
+        ],
+        [
+          5.46,
+          21.7,
+          0.12
+        ]
+      ]
+    },
+    {
+      "status": "success",
+      "reason": "",
+      "detail": {
+        "max_z": 0.592,
+        "max_x": 1.204,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.021,
+        "min_wheel_z_slot": 9.9,
+        "wall_side_bypass": false,
+        "top_seen": false,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "high_wall_16cm",
+      "level": "field_high_wall_16cm",
+      "category": "high_wall",
+      "frames": 159,
+      "window": [
+        1210.4,
+        1213.56
+      ],
+      "observation_end": 1213.56,
+      "tail_s": 0.0,
+      "tail_stop": "no_pending_terminal_hold",
+      "score": 0,
+      "judge_scope": "field_geometry",
+      "closed": true,
+      "target_geoms": [
+        "cross_bar_4"
+      ],
+      "field_bbox": [
+        [
+          6.54,
+          20.3,
+          0.0
+        ],
+        [
+          6.659999999999999,
+          21.7,
+          0.16
+        ]
+      ]
+    },
+    {
+      "status": "fail",
+      "reason": "not_stable_after_crossing",
+      "detail": {
+        "max_z": 0.6,
+        "max_x": 2.523,
+        "min_z_gap": 9.9,
+        "min_wheel_z": -0.025,
+        "min_wheel_z_slot": 9.9,
+        "wall_side_bypass": false,
+        "top_seen": false,
+        "exit_platform_seen": false,
+        "exited": false
+      },
+      "leg": "high_wall_20cm",
+      "level": "high_wall_20cm",
+      "category": "high_wall",
+      "frames": 159,
+      "window": [
+        1213.56,
+        1216.72
+      ],
+      "observation_end": 1216.72,
+      "tail_s": 0.0,
+      "score": 0,
+      "judge_scope": "official_profile_projection",
+      "closed": true,
+      "target_geoms": [
+        "cross_bar_5"
+      ],
+      "field_bbox": [
+        [
+          7.74,
+          20.3,
+          0.0
+        ],
+        [
+          7.859999999999999,
+          21.7,
+          0.2
+        ]
+      ]
+    }
+  ],
+  "total": 550,
+  "best_by_category": {
+    "high_platform": 50,
+    "stairs": 100,
+    "slope": 50,
+    "trench": 150,
+    "plum": 200,
+    "high_wall": 0
+  },
+  "expected_legs": [
+    "high_platform_05cm",
+    "high_platform_10cm",
+    "high_platform_15cm",
+    "high_platform_20cm",
+    "stairs_04cm",
+    "stairs_06cm",
+    "stairs_08cm",
+    "stairs_10cm",
+    "stairs_12cm",
+    "stairs_15cm",
+    "stairs_20cm",
+    "slope_05deg",
+    "slope_10deg",
+    "slope_15deg",
+    "slope_20deg",
+    "slope_25deg",
+    "slope_30deg",
+    "trench_10cm",
+    "trench_20cm",
+    "high_plum",
+    "high_wall_04cm",
+    "high_wall_08cm",
+    "high_wall_12cm",
+    "high_wall_16cm",
+    "high_wall_20cm"
+  ],
+  "incomplete_legs": [
+    "high_wall_20cm"
+  ],
+  "scope": "field_demo_projection",
+  "judge_version": "v9-official-plum6-2026-11-04"
+}

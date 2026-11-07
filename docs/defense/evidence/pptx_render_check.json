@@ -1,0 +1,14 @@
+{
+  "application": "LibreOffice Impress 26.2 (headless)",
+  "method": "43 apt packages downloaded and extracted under /tmp; no system install",
+  "source": "docs/defense/blackW-defense.pptx",
+  "pages": 15,
+  "overview_review": "all 15 rendered pages visually inspected",
+  "full_size_review_pages": [6, 8],
+  "result": "No overflow, clipping, overlap or missing CJK glyphs observed",
+  "font_result": "NotoSansCJKsc Regular/Bold embedded in converted PDF",
+  "differences": "Slight text baseline/spacing differences and subtle card shadows relative to Chromium output; readable",
+  "office_wps_tested": false,
+  "video_decode_in_presentation_app_tested": false,
+  "video_note": "Embedded H.264 media package and browser playback separately validated; headless conversion checks poster/layout only"
+}

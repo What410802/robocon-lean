@@ -34,3 +34,6 @@ assets/store/
 # Editor / OS
 .vscode/
 .DS_Store
+
+# Curated defense clips are versioned for offline presentation reproducibility.
+!docs/defense/media/*.mp4

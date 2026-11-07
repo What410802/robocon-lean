@@ -1,0 +1,35 @@
+{
+  "trace": "/dev/shm/rv_592876_3.jsonl",
+  "video": "/home/bis/RoboCon/artifacts/vtaudit-20261031/videos/part2/vt_mode_v2__adaptive_vx0.5__high_wall_40cm__success.mp4",
+  "level": "high_wall_40cm",
+  "policy": "vt_mode_v2",
+  "command": [
+    0.5,
+    0.0,
+    0.0
+  ],
+  "command_replay": "trace_per_frame",
+  "duration_s": 15.0,
+  "frames": 750,
+  "final_base": [
+    2.737509398,
+    0.203349821,
+    0.534314762
+  ],
+  "judge": {
+    "status": "success",
+    "reason": "",
+    "detail": {
+      "max_z": 0.643,
+      "max_x": 2.738,
+      "min_z_gap": 9.9,
+      "min_wheel_z": -0.022,
+      "min_wheel_z_slot": 9.9,
+      "wall_side_bypass": false,
+      "top_seen": false,
+      "exit_platform_seen": false,
+      "exited": false
+    },
+    "score": 200
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "source": "/home/bis/BiS.d/tmp/队内赛.pdf",
+  "sha256": "c34d163c824263be533f8832c668a219a618c1ca15e264b14f4666455a14da73",
+  "pages": 4,
+  "defense_page": 4,
+  "max_minutes": 7,
+  "defense_weight": 0.3,
+  "note": "Original PDF retained outside repo; exact relevant paragraph quoted in sources.md"
+}

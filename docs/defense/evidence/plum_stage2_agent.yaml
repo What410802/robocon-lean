@@ -1,0 +1,84 @@
+seed: 42
+num_steps_per_env: 32
+max_iterations: 1200
+obs_groups:
+  actor: !!python/tuple
+  - actor
+  - camera
+  critic: !!python/tuple
+  - critic
+save_interval: 50
+experiment_name: blackw_plum_depth
+run_name: depth_ppo_stage2_r0
+logger: tensorboard
+wandb_project: mjlab
+wandb_tags: !!python/tuple []
+resume: false
+load_run: .*_rough$
+load_checkpoint: model_.*.pt
+clip_actions: 100.0
+upload_model: true
+class_name: OnPolicyRunner
+actor:
+  hidden_dims: !!python/tuple
+  - 512
+  - 256
+  - 128
+  activation: elu
+  obs_normalization: false
+  cnn_cfg:
+    output_channels: !!python/tuple
+    - 16
+    - 32
+    - 64
+    kernel_size: !!python/tuple
+    - 5
+    - 3
+    - 3
+    stride: !!python/tuple
+    - 2
+    - 2
+    - 2
+    padding: zeros
+    global_pool: avg
+    flatten: true
+  distribution_cfg:
+    class_name: GaussianDistribution
+    init_std: 0.1
+    std_type: scalar
+    learn_std: true
+  rnn_type: null
+  rnn_hidden_dim: 256
+  rnn_num_layers: 1
+  class_name: CNNModel
+critic:
+  hidden_dims: !!python/tuple
+  - 512
+  - 256
+  - 128
+  activation: elu
+  obs_normalization: true
+  cnn_cfg: null
+  distribution_cfg: null
+  rnn_type: null
+  rnn_hidden_dim: 256
+  rnn_num_layers: 1
+  class_name: MLPModel
+algorithm:
+  num_learning_epochs: 5
+  num_mini_batches: 4
+  learning_rate: 3.0e-05
+  schedule: fixed
+  gamma: 0.99
+  lam: 0.95
+  entropy_coef: 0.01
+  desired_kl: 0.01
+  max_grad_norm: 1.0
+  value_loss_coef: 1.0
+  use_clipped_value_loss: true
+  clip_param: 0.2
+  normalize_advantage_per_mini_batch: false
+  optimizer: adam
+  share_cnn_encoders: false
+  class_name: PPO
+command_curriculum_restore: range

@@ -1,0 +1,243 @@
+{
+ "schema_version": 1,
+ "robot": "blackW",
+ "part": 2,
+ "level": "plum",
+ "policy": "plum_depth_final_v1",
+ "route": "depth CNN (64-D latent) + 324-D proprio history -> MLP (no fine scan)",
+ "weight_file": "policy.pt",
+ "policy_sha256": "35e4fc6b7d63b06cac8d8328bc3c8354942a2cfade6e21134a4221b3a988c91d",
+ "checkpoint": "logs/rsl_rl/blackw_plum_depth/2026-11-07_01-34-48_depth_ppo_stage2_r0/model_1150.pt",
+ "contract": {
+  "num_observations": 54,
+  "history": 6,
+  "num_dofs": 16,
+  "support_kind": "wheel",
+  "obs_terms": [
+   "ang_vel_body",
+   "gravity_vec",
+   "dof_pos",
+   "dof_vel",
+   "actions"
+  ],
+  "policy_call": "policy(obs_1d_324, [depth])",
+  "depth_input": "1x48x64 normalized depth in [0,1], cutoff 3.0 m"
+ },
+ "metrics": {
+  "policy": "plum_depth_s2_1150",
+  "checkpoint": "logs/rsl_rl/blackw_plum_depth/2026-11-07_01-34-48_depth_ppo_stage2_r0/model_1150.pt",
+  "level": "plum_1",
+  "environment": {
+   "eval": "pixi -e eval: torch 2.14.1+cpu (PyPI CPU wheel), MuJoCo 3.11, numpy",
+   "deploy": "pixi -e demo: torch 2.14.1+cpu (same PyPI CPU wheel), MuJoCo 3.11, ROS 2 Humble",
+   "train": "pixi -e train: torch 2.14.1+cu130 (all three envs on the same torch line)",
+   "date": "2026-11-07"
+  },
+  "official_level_run": {
+   "profile": "official",
+   "status": "success",
+   "score": 200,
+   "reason": "",
+   "sim_time_s": 120.0,
+   "command": "pixi run -e eval robocon-eval run --robot blackW --part 2 --level plum_1 --policy plum_depth_final_v1 --profile official --out artifacts/part2_evals/torch214/plum_1.jsonl --result artifacts/part2_evals/torch214/plum_1.json",
+   "trace": "artifacts/part2_evals/torch214/plum_1.jsonl",
+   "result": "artifacts/part2_evals/torch214/plum_1.json",
+   "note": "official spawn (dy=0, yaw=0); this is the scored-attempt configuration"
+  },
+  "spawn_offset_grid": {
+   "note": "dy/dyaw applied after settle, before the policy starts; 20 s runs, same official profile; the policy is deterministic, so the grid measures fragility, not seed noise",
+   "runs": [
+    {
+     "dy": -0.05,
+     "yaw_deg": -3.0,
+     "status": "fail",
+     "reason": "fell:tilt=75.1",
+     "score": 0
+    },
+    {
+     "dy": -0.05,
+     "yaw_deg": -2.0,
+     "status": "fail",
+     "reason": "fell:tilt=79.2",
+     "score": 0
+    },
+    {
+     "dy": -0.05,
+     "yaw_deg": 0.0,
+     "status": "success",
+     "reason": "",
+     "score": 200
+    },
+    {
+     "dy": -0.05,
+     "yaw_deg": 2.0,
+     "status": "fail",
+     "reason": "dropped:z=-0.00@x=4.54",
+     "score": 0
+    },
+    {
+     "dy": -0.05,
+     "yaw_deg": 3.0,
+     "status": "fail",
+     "reason": "dropped:z=-0.00@x=4.55",
+     "score": 0
+    },
+    {
+     "dy": 0.0,
+     "yaw_deg": -3.0,
+     "status": "fail",
+     "reason": "dropped:z=-0.00@x=4.55",
+     "score": 0
+    },
+    {
+     "dy": 0.0,
+     "yaw_deg": -2.0,
+     "status": "fail",
+     "reason": "fell:tilt=75.4",
+     "score": 0
+    },
+    {
+     "dy": 0.0,
+     "yaw_deg": 0.0,
+     "status": "success",
+     "reason": "",
+     "score": 200
+    },
+    {
+     "dy": 0.0,
+     "yaw_deg": 2.0,
+     "status": "fail",
+     "reason": "not_descended_exit_platform",
+     "score": 0
+    },
+    {
+     "dy": 0.0,
+     "yaw_deg": 3.0,
+     "status": "fail",
+     "reason": "fell:tilt=75.4",
+     "score": 0
+    },
+    {
+     "dy": 0.05,
+     "yaw_deg": -3.0,
+     "status": "fail",
+     "reason": "dropped:z=0.00@x=4.54",
+     "score": 0
+    },
+    {
+     "dy": 0.05,
+     "yaw_deg": -2.0,
+     "status": "fail",
+     "reason": "fell:tilt=77.9",
+     "score": 0
+    },
+    {
+     "dy": 0.05,
+     "yaw_deg": 0.0,
+     "status": "fail",
+     "reason": "not_descended_exit_platform",
+     "score": 0
+    },
+    {
+     "dy": 0.05,
+     "yaw_deg": 2.0,
+     "status": "fail",
+     "reason": "fell:tilt=77.5",
+     "score": 0
+    },
+    {
+     "dy": 0.05,
+     "yaw_deg": 3.0,
+     "status": "fail",
+     "reason": "fell:tilt=76.4",
+     "score": 0
+    }
+   ],
+   "successes": 2,
+   "n": 15
+  },
+  "deployment_composed": {
+   "status": "success",
+   "score": 200,
+   "reason": "",
+   "note": "real sim_node+rl_sim route trace (full-field frame, composed attempt): the depth policy crosses entry platform + pile field; on the exit platform (field x=6.80) the route switches to vt_band_v1 via /policy_switch, brakes 0.6 s with reverse velocity, stands 2 s, then walks the 0.2 m exit step at 0.45 m/s. The depth actor's own exit descent is knife-edge in the deployment stack, hence the split. Handing over on the pile field is invalid (the wheeled expert drops a wheel between piles), and switching without braking carries the 2 m/s momentum off the platform; both were measured. Repeats: plum_comp_v5r1/r2 both route-PASS and judge-success.",
+   "trace": "artifacts/part2_route3/plum_comp_v5r1_states.jsonl",
+   "plan": "artifacts/part2_route3/plum_comp_v5r1_plan.jsonl",
+   "replay": "artifacts/part2_route3/plum_comp_v5r1_eval.json"
+  },
+  "cxx_inference_parity": {
+   "tool": "demo/tests/check_depth_inference.py",
+   "max_abs_diff": 0.0,
+   "note": "rl_sim RL_DEPTH_DEBUG=1 dumps policy input (obs history + raw metric depth) and raw action; Python policy() on the same input returns the same action bit-for-bit (6 consecutive inference frames)"
+  },
+  "renderer_parity": {
+   "tool": "sim_node --depth-self-test <scene.xml> vs mujoco.Renderer in eval env",
+   "max_abs_diff": 0.0,
+   "scenes": [
+    "part2_off_plum_1",
+    "part2_off_slope_20deg",
+    "part2_off_stairs_20cm",
+    "part2_full_field",
+    "smoke_flat"
+   ]
+  },
+  "in_sim": {
+   "episodes": 316,
+   "success": 311,
+   "rate": 0.984
+  },
+  "rejected_checkpoints": {
+   "model_1050": "dropped@4.55 x2",
+   "model_1100": "fell:tilt=78.4 x5",
+   "model_1199": "not_descended_exit_platform x3"
+  },
+  "export_parity_max_abs": 4.29e-06,
+  "video": "artifacts/plum/videos/plum_depth_final_v1_pass.mp4",
+  "official_profile": {
+   "profile": "official",
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "statuses": [
+    "success",
+    "success",
+    "success",
+    "success",
+    "success"
+   ]
+  },
+  "success_latch_s": 3.92,
+  "first_frame_past_exit_s": 2.54,
+  "end_pose_note": "success latched ~2.4 m past the exit at ~41 deg tilt; legal under the 75 deg fall rule",
+  "limitations": [
+   "The actor's own exit-platform descent is knife-edge: it passes the official single-level run at the exact spawn, but the spawn grid above is 2/15 and the deployment stack tips off the exit edge; the demo route therefore composes the descent with a wheeled expert.",
+   "Robustness retraining (wider spawn/velocity randomization, exit-descent reward) is the recommended next step; the single-level evidence here is the scored configuration, not a robustness claim."
+  ],
+  "full_field_run": {
+   "tag": "real_v27",
+   "route": "Part2 route finished: 6/6 legs PASS (plum depth crossing, wall bar5)",
+   "judge_projection": {
+    "total": 600,
+    "max_score": 1300,
+    "per_leg": {
+     "high_platform_20cm": 50,
+     "stairs_20cm": 100,
+     "slope_30deg": 50,
+     "trench_20cm": 150,
+     "high_plum": 200,
+     "high_wall_20cm": 50
+    },
+    "note": "per-leg eval-judge projection of the same field trace; the continuous run is a non-scoring demo (official score comes from the single-level runs)"
+   },
+   "trace": "artifacts/part2_route3/real_v27_states.jsonl",
+   "plan": "artifacts/part2_route3/real_v27_plan.jsonl",
+   "eval": "artifacts/part2_route3/real_v27_eval.json",
+   "video": "artifacts/part2_route3/real_v27_route.mp4",
+   "overview": "artifacts/part2_route3/real_v27_overview.png"
+  }
+ }
+}

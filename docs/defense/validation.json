@@ -1,0 +1,57 @@
+{
+  "media": {
+    "files": 5,
+    "hashes_match": true,
+    "full_video_decode": "PASS",
+    "presentation_video_duration_s": 32.2
+  },
+  "pptx": {
+    "slides": 15,
+    "main": 10,
+    "backup": 5,
+    "speaker_notes": 15,
+    "embedded_videos": 2,
+    "editable_text": true,
+    "package_integrity": "PASS",
+    "object_bounds": "PASS",
+    "independent_application_render": {
+      "application": "LibreOffice Impress 26.2 (headless)",
+      "method": "43 apt packages downloaded and extracted under /tmp; no system install",
+      "source": "docs/defense/blackW-defense.pptx",
+      "pages": 15,
+      "overview_review": "all 15 rendered pages visually inspected",
+      "full_size_review_pages": [
+        6,
+        8
+      ],
+      "result": "No overflow, clipping, overlap or missing CJK glyphs observed",
+      "font_result": "NotoSansCJKsc Regular/Bold embedded in converted PDF",
+      "differences": "Slight text baseline/spacing differences and subtle card shadows relative to Chromium output; readable",
+      "office_wps_tested": false,
+      "video_decode_in_presentation_app_tested": false,
+      "video_note": "Embedded H.264 media package and browser playback separately validated; headless conversion checks poster/layout only"
+    }
+  },
+  "html": {
+    "offline_file_open": "PASS",
+    "fonts": "local_subset_loaded",
+    "main_video_playback": "PASS",
+    "keyboard_navigation": "PASS",
+    "javascript_errors": [],
+    "failed_requests": [],
+    "visible_text_overflow": "none"
+  },
+  "pdf": {
+    "pages": 15,
+    "text_extraction": "PASS",
+    "chinese_fonts": "embedded",
+    "poster_on_video_pages": true,
+    "source": "same layout rendered by Chromium"
+  },
+  "scope": {
+    "physics_rerun": false,
+    "training_rerun": false,
+    "oral_rehearsal": "not performed; 405s planned budget",
+    "office_wps_visual_test": "not performed in main build; see README for current verification scope"
+  }
+}
