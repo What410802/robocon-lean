@@ -163,6 +163,31 @@ KNOBS: dict[str, Knob] = {
     "PART2_PLUM_JUDGE_PHYSICS": _k("PART2_PLUM_JUDGE_PHYSICS", "PART2", False, "bool",
                                    "plum: use judge/official MJCF solver options + spawn z=0.55 "
                                    "for training-env parity (P0 2026-10-31; changes dynamics, retrain)"),
+    "PART2_PLUM_WARM_START": _k("PART2_PLUM_WARM_START", "PART2", None, "str",
+                                "plum teacher: path to a blind actor (deployed policy.pt or a "
+                                "training checkpoint) to initialise from; init, not resume"),
+    "PART2_PLUM_ONLY_POSITIVE": _k("PART2_PLUM_ONLY_POSITIVE", "PART2", True, "bool",
+                                   "plum teacher: clip the per-step total reward at >= 0 "
+                                   "(Extreme-Parkour only_positive_rewards)"),
+    "PART2_PLUM_INIT_STD": _k("PART2_PLUM_INIT_STD", "PART2", 0.10, "float",
+                              "plum teacher: Gaussian init std. Must be well below the "
+                              "warm-started policy's own output std (~0.5), or exploration "
+                              "noise dominates and the warm start is invisible "
+                              "(old successful teacher: 0.101)"),
+    "PART2_PLUM_STD_MAX": _k(
+        "PART2_PLUM_STD_MAX", "PART2", 0.0, "float",
+        "plum teacher: clamp the Gaussian action std to at most this value (0 = no "
+        "clamp). The entropy bonus drives std monotonically up at a fixed LR: measured "
+        "0.10 -> 0.47 over 1000 iterations at 3e-5, and the official-field success "
+        "window (3.5% at iter 600, 0% from iter 725 on) tracks it inversely -- the mean "
+        "policy slides out of the narrow basin as sampling noise widens"),
+    "PART2_PLUM_ACTOR_WARMUP_ITERS": _k(
+        "PART2_PLUM_ACTOR_WARMUP_ITERS", "PART2", 0, "int",
+        "plum teacher: freeze the (warm-started) actor for this many iterations while "
+        "the randomly initialised critic learns. Without it the first PPO update uses "
+        "noise advantages and destroys the warm start: measured, one update at lr 1e-3 "
+        "moved every weight by 0.002 (first-layer RMS 0.029, i.e. ~7%/step) and the "
+        "policy's behaviour collapsed from 76/159 successes to 0/384"),
     "PART2_CLEAR_W": _k("PART2_CLEAR_W", "PART2", 25.0, "float", "success bonus weight"),
     "PART2_OUT_OF_COURSE_MARGIN": _k("PART2_OUT_OF_COURSE_MARGIN", "PART2", 0.8, "float",
                                      "out-of-course termination x margin after the goal patch [m]"),

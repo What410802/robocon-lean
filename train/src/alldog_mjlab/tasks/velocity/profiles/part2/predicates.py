@@ -70,6 +70,65 @@ if not _PLUM_SPEC_PATH.is_file():
 _PLUM_SPEC = json.loads(_PLUM_SPEC_PATH.read_text(encoding="utf-8"))["categories"]["plum"]
 PART2_PLUM_TOP_Z_M = float(_PLUM_SPEC["cube_top_m"])
 PART2_PLUM_Z_CROSS_MIN_M = 0.05
+#: The plum teacher trains on a height curriculum (5 -> 20 cm barriers), so the
+#: plum branch reads the row's actual barrier height instead of the constant
+#: above.  Both scales stay proportional to the official values:
+#:   top_z      = h                                  (0.20 at the official row)
+#:   z_cross_min = 0.25 * h                          (0.05 at the official row,
+#:                                                    i.e. exactly the judge rule)
+#: A single-terrain (fixed-difficulty) plum task keeps the official constants
+#: because there is no curriculum among its sub-terrains.
+#: The drop line below a curriculum row's barrier top must sit *between* the
+#: ground and the cube tops at every row, so `min(judge_line, half the top)`:
+#: at the official 0.20 m row it is exactly the judge's 0.05 m; at a 0.05 m row
+#: it is 0.025 m, still above the floor and below the cube tops.
+#:
+#: Both neighbouring rules failed measurably.  ``top * 0.25`` put the line at
+#: 0.0125 m on the easy row, so ordinary ground contact terminated every episode
+#: (512/512, all at x ~ 2.8).  A fixed 0.15 m margin put the line BELOW the floor
+#: once the top dropped under 0.15 m, which legalised a much worse shortcut:
+#: rolled traces at d=0.6 show the robot crossing the cube window on the ground
+#: at z ~ 0.02 with its wheels splayed to |y| = 0.60, outside the cube rows
+#: (|y| <= 0.3) -- a route that is impossible at the official field, so the
+#: curriculum climbed on behaviour that cannot transfer.
+PLUM_Z_CROSS_CAP_M = PART2_PLUM_Z_CROSS_MIN_M
+
+
+def plum_z_cross(top_z):
+    """The judge's absolute drop line, at EVERY curriculum row.
+
+    Scaling it with the row's height looked natural and failed twice, in
+    opposite directions:
+
+    * ``top * 0.25`` -> 0.0125 m at a 0.05 m row: ground contact between the
+      bumps terminated 512/512 episodes at x ~ 2.8.
+    * ``top - 0.15`` -> below the floor under 0.15 m: legalised a ground-level
+      bypass (rolled traces at d=0.6 crossed at wheel z ~ 0.02 with the wheels
+      splayed to |y| = 0.60, outside the cube rows), which cannot transfer.
+    * ``min(0.05, top / 2)`` -> 0.025 m at the easy row: rejected the *correct*
+      crossing too (the wheel dips into the 0.4 m gaps and its bottom reaches
+      the floor), 128/128 failures.
+
+    The fixed line works at every height because a wheel riding a cube top sits
+    AT the row's top: 0.05 m at the easiest row is not ``< 0.05`` (legal), while
+    the floor is (illegal).  So the easy rows still teach wheel placement -- the
+    actual skill -- without letting the robot walk around the cubes.
+    """
+    return torch.full_like(top_z, PLUM_Z_CROSS_CAP_M)
+
+
+def _plum_top_z(env):
+    """Barrier height of the plum field [B]; the official 0.20 m at every row.
+
+    The teacher's curriculum grades the OPEN GAPS (and the end holes), not the
+    barrier height: the judge's drop rule is an absolute 0.05 m, so lowering the
+    cubes changes what counts as a fall and every height-scaled variant was
+    measured to teach the wrong thing (see ``plum_z_cross``).
+    """
+    import torch
+
+    return torch.full((env.num_envs,), PART2_PLUM_TOP_Z_M,
+                      device=env.device, dtype=torch.float32)
 # cube_x_range covering both cube rows, +/-0.15 m tolerance (judge convention).
 PART2_PLUM_CUBE_X_MIN_M = round(float(_PLUM_SPEC["cube_x_range_m"][0]) - 0.15, 4)
 PART2_PLUM_CUBE_X_MAX_M = round(float(_PLUM_SPEC["cube_x_range_m"][1]) + 0.15, 4)
@@ -77,6 +136,12 @@ PART2_PLUM_CUBE_X_MAX_M = round(float(_PLUM_SPEC["cube_x_range_m"][1]) + 0.15, 4
 PART2_PLUM_GOAL_X_M = float(_PLUM_SPEC["exit_platform_x_range_m"][0])
 PART2_PLUM_EXIT_END_X_M = float(_PLUM_SPEC["exit_platform_x_range_m"][1])
 PART2_PLUM_EXIT_GROUND_TOL_M = 0.08
+# Judge v9 tightened the top-surface band to top + 0.05 (WHEEL_TOP_BAND_M in
+# eval/robocon_eval/part2/v5_judge.py).  The generic on_surface() default is
+# top + 0.20, which would accept a wheel floating 0.4 m above the exit platform
+# as "stood on it" and produce a false training success.  Only the plum branch
+# passes this tighter band; the other Part 2 terrains keep their historical 0.20.
+PART2_PLUM_TOP_BAND_M = 0.05
 # Judge-aligned terminal tolerances (audit 2026-10-30):
 #   * stairs judge allows ``min_wheel_z >= -0.10`` (training used -0.06);
 #   * slope judge requires the top landing to be *held* (hold_s + 0.1 s = 15
@@ -395,9 +460,15 @@ def _part2_terrain_state(
         # Judge parity: the `dropped` rule is gated by BASE x in cube_x_range and
         # then checks ANY wheel bottom < z_cross_min (a wheel touching the ground
         # while the base is over the pile field invalidates the attempt).
+        # Barrier height is per env: the teacher's plum field carries a height
+        # curriculum (5 -> 20 cm), and both the "on the pile top" band and the
+        # "dropped" line scale with it.  At the official row they reduce to the
+        # judge constants (0.20 m top, 0.05 m drop line).
+        top_z = _plum_top_z(env)
+        z_cross = plum_z_cross(top_z)
         in_field_root = ((rx >= PART2_PLUM_CUBE_X_MIN_M)
                          & (rx <= PART2_PLUM_CUBE_X_MAX_M))
-        dropped = in_field_root.unsqueeze(1) & (wz < PART2_PLUM_Z_CROSS_MIN_M)
+        dropped = in_field_root.unsqueeze(1) & (wz < z_cross.unsqueeze(1))
         violation |= m & dropped.any(dim=1)
         _part2_state_buffers(env, n, env.device)
         env._part2_top_seen |= in_field_root & (~dropped.any(dim=1))
@@ -405,7 +476,7 @@ def _part2_terrain_state(
         # success requires stepping down from its far edge to normal ground
         # (training termination = get down to the target; mirrors v5_judge.py).
         exit_platform = (lane & (rx >= PART2_PLUM_GOAL_X_M)
-                         & on_surface(torch.full_like(d, PART2_PLUM_TOP_Z_M)))
+                         & on_surface(top_z, band=PART2_PLUM_TOP_BAND_M))
         env._part2_plum_exit_seen |= m & exit_platform
         past_exit = (wx >= (PART2_PLUM_EXIT_END_X_M + 0.02)).all(dim=1)
         wheels_on_ground = ((wz <= PART2_PLUM_EXIT_GROUND_TOL_M).all(dim=1)

@@ -2,9 +2,9 @@
 
 本目录是 `robocon-lean` 的训练子项目：用 **MjLab 1.6.0 + RSL-RL 5.4.2** 训练
 **black**（12 DoF 四足）与 **blackW**（16 DoF 轮足）的速度跟踪 / Part 1、Part 2 越障策略，
-并导出部署用 TorchScript。只保留比赛需要的 **PPO / HIM 主线**；深度相机、BC 蒸馏、
-PUMA foothold、Extreme-Parkour 等研究分支已在迁移时移除（来源与取舍见
-[UPSTREAM.md](UPSTREAM.md)）。
+并导出部署用 TorchScript。保留比赛需要的 **PPO / HIM 主线**，以及本轮补回的
+**plum 深度相机学生**（深度 CNN actor + 特权教师蒸馏链，见 §4.1）；BC/PUMA foothold/
+Extreme-Parkour 等其它研究分支仍在迁移时移除（来源与取舍见 [UPSTREAM.md](UPSTREAM.md)）。
 
 地形尺寸的唯一来源是仓库根的 `terrain/`（Part 2 spec：`terrain/official/part2_terrain_spec.json`，
 plum：`terrain/gen_plum.py`）。本目录**不再**保存地形 spec 副本，也不手写障碍尺寸。
@@ -14,7 +14,10 @@ plum：`terrain/gen_plum.py`）。本目录**不再**保存地形 spec 副本，
 ## 1. 环境
 
 训练环境由仓库根 `pixi.toml` 的 `train` environment 提供（Python 3.12、
-`mjlab==1.6.0`、`rsl-rl-lib==5.4.2`、CUDA torch、`alldog-mjlab` editable 安装）：
+`mjlab==1.6.0`、`rsl-rl-lib==5.4.2`、CUDA torch 2.14.1+cu130、`alldog-mjlab` editable 安装。
+三个 pixi 环境（train/demo/eval）统一在同一 torch 版本线 2.14.1：train 用 CUDA 轮子，
+demo/eval 用 PyPI CPU 轮子（版本相同，策略数值才能跨环境一致——plum 深度策略在 torch
+2.12 与 2.14 之间会改变成功/失败）。
 
 ```bash
 pixi install -e train          # 首次/依赖变更后
@@ -71,6 +74,8 @@ tests/                       # Part 2 wall predicate 单测（CPU）
 | `blackw-vt-locked` | **真 12-DoF 锁轮衔接**：45×6 obs / 12 act，轮关节不属于策略 IO、由轮锁 PD 保持；RecoveryLoco 式接触/步态 + 动态支撑框（见 `docs/training/VT-RECIPE.md` §4.3/§8） |
 | `blackw-official` | Part 1/2 官方难度混合地形（主力任务） |
 | `blackw-plum` | Part 2 plum（按规则 PDF 图的 6 桩两排、无坡道布局） |
+| `blackw-plum-teacher` / `-s1` / `-s2` | plum 特权教师（fine-scan 1764 维 actor；stage 0/1/2 = 桩间缩小课程 → 入口平台 → 地面助跑出生） |
+| `blackw-plum-depth` / `-s1` / `-s2` | plum **深度相机学生**（actor = 324 维 proprio history + 1 帧 48x64 深度，critic 保留 fine-scan；`profiles/plum/`） |
 | `blackw-{stairs,platform,slope,trench,wall}-exact` | 单障碍官方地形专项 |
 | `blackw-platform-easy` | 低难度平台专项（课程起点） |
 | `blackw-flat-him` / `blackw-official-him` / `blackw-platform-{exact,easy}-him` | HIM 变体 |
@@ -92,6 +97,23 @@ pixi run -e train train black-flat --agent.logger tensorboard
 ```bash
 pixi run -e train train blackw-official --agent.logger tensorboard
 ```
+
+### 4.1 plum 深度学生（本轮新增）
+
+训练链（`train/src/alldog_mjlab/tasks/velocity/profiles/plum/`）：
+1. 特权教师（fine-scan 1764 维 actor）→ `blackw-plum-teacher-s2`（stage 2 = 地面助跑出生，
+   桩间课程 0–0.40 m）；
+2. 教师在训练中间歇导出 `teacher_*.pt`，深度学生用 privileged warm-start + 教师动作蒸馏训练
+   （`blackw-plum-depth-s2`，actor 324 维 proprio history + 深度相机分支），
+   checkpoint 在 `logs/rsl_rl/blackw_plum_depth/<run>/`。
+
+脚本都在 `train/scripts/plum/`：
+`bc_depth.py`（深度 actor 初始化/BC）、`collect.py`（教师 rollout 采集）、`distill.py`、
+`make_scene.py`（plum 单关场景）、`export_depth_policy.py`（TorchScript 导出，输出
+`policy.pt + config.yaml + depth.json + manifest.json`）、`gate.py`（判分门禁）、
+`eval_depth_actor.py`、`sweep_checkpoints.py`、`diag_*.py`（诊断）。
+本轮的交付权重来自 `2026-11-07_01-34-48_depth_ppo_stage2_r0/model_1150.pt`，导出目录
+`demo/rl_sar/policy/blackW/plum_depth_final_v1/`。
 
 常用覆盖参数（CLI 显式参数优先于任务默认值）：
 

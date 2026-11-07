@@ -95,3 +95,31 @@ def install_return_clamp(alg, max_abs_return: float = 1000.0, max_abs_advantage:
         "[INFO] return clamp installed: "
         f"returns +/-{max_abs_return:g}, advantages +/-{max_abs_advantage:g}"
     )
+
+
+def install_only_positive_rewards(env, enabled: bool = True) -> None:
+    """Clip the per-step total reward at >= 0 (Extreme-Parkour ``only_positive``).
+
+    EP (arXiv:2309.14341) uses this so a penalty-heavy table cannot make an early
+    death profitable.  It is the MjLab equivalent of
+    ``legged_gym``'s ``only_positive_rewards`` and is applied *after* the weighted
+    sum, so the individual terminals in ``Episode_Reward/*`` stay informative.
+
+    Not equivalent to dropping the negative terms: a step that is mostly penalty
+    still scores 0, so the policy is pushed toward non-penalised behaviour without
+    giving a "die early" gradient.
+    """
+    if not enabled:
+        print("[INFO] only-positive reward clip disabled")
+        return
+    manager = env.reward_manager
+    if getattr(manager, "_black_only_positive_installed", False):
+        return
+    original_compute = manager.compute
+
+    def compute(dt: float) -> torch.Tensor:
+        return torch.clamp(original_compute(dt), min=0.0)
+
+    manager.compute = compute
+    manager._black_only_positive_installed = True
+    print("[INFO] only-positive reward clip installed (per-step total >= 0)")

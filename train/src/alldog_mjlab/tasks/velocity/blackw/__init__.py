@@ -151,3 +151,49 @@ for _task_id, _builder in (
         rl_cfg=blackw_him_runner_cfg(),
         runner_cls=BlackWHimOfficialRunner,
     )
+
+# Plum (梅花桩): privileged teacher -> depth-CNN student.  Only the teacher is
+# registered as a trainable task; the student is produced offline by
+# ``train/scripts/plum/``.  See profiles/plum/ for the recipe.
+from alldog_mjlab.tasks.velocity.profiles.plum.runner import PlumTeacherRunner
+from alldog_mjlab.tasks.velocity.profiles.plum.teacher import (
+    plum_teacher_env_cfg,
+    plum_teacher_runner_cfg,
+)
+
+# Two spawn envelopes on the SAME task: stage 0 narrow (learn the gait at the
+# easy end of the shrinking-cube curriculum), stage 1 full (initial-state
+# robustness).  Terrain difficulty is advanced by the success-gated curriculum
+# inside each stage, so "stage" here means spawn spread only.
+for _stage in (0, 1, 2):
+    _task = {0: "blackw-plum-teacher", 1: "blackw-plum-teacher-s1",
+             2: "blackw-plum-teacher-s2"}[_stage]
+    register_mjlab_task(
+        task_id=_task,
+        env_cfg=plum_teacher_env_cfg(stage=_stage),
+        play_env_cfg=plum_teacher_env_cfg(play=True, stage=_stage),
+        rl_cfg=plum_teacher_runner_cfg(stage=_stage),
+        runner_cls=PlumTeacherRunner,
+    )
+
+# Depth-actor variant: the same plum task, but the actor sees ONE 48x64 depth
+# frame instead of the privileged fine scan (the critic keeps the scan).  The
+# fine-scan branch distils depth into a prediction of a +/-0.10 m patch centred
+# under each wheel -- exactly the region a body-mounted camera cannot see --
+# so this task trains the actor on depth directly instead.
+from alldog_mjlab.tasks.velocity.profiles.plum.depth import (
+    PlumDepthRunner,
+    plum_depth_env_cfg,
+    plum_depth_runner_cfg,
+)
+
+for _stage in (0, 1, 2):
+    _task = {0: "blackw-plum-depth", 1: "blackw-plum-depth-s1",
+             2: "blackw-plum-depth-s2"}[_stage]
+    register_mjlab_task(
+        task_id=_task,
+        env_cfg=plum_depth_env_cfg(stage=_stage),
+        play_env_cfg=plum_depth_env_cfg(play=True, stage=_stage),
+        rl_cfg=plum_depth_runner_cfg(stage=_stage),
+        runner_cls=PlumDepthRunner,
+    )
