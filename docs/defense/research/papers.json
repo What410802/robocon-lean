@@ -1,0 +1,959 @@
+{
+  "checked_date": "2026-11-08",
+  "scope": "29篇论文/预印本/研讨会稿；核心6篇。不是用户实际阅读历史的断言，也不是本项目实现算法的总表。",
+  "pdf_storage": "下载原文只在临时目录；仓库不保存全文PDF。sha256用于追溯本次阅读的版本。",
+  "papers": [
+    {
+      "id": "F1",
+      "key": "hwangbo",
+      "arxiv_id": "1901.08652",
+      "title": "Learning agile and dynamic motor skills for legged robots",
+      "authors": [
+        "Hwangbo, Jemin",
+        "Lee, Joonho",
+        "Dosovitskiy, Alexey",
+        "Bellicoso, Dario",
+        "Tsounis, Vassilios",
+        "Koltun, Vladlen",
+        "Hutter, Marco"
+      ],
+      "first_publication_date": [
+        "2019/01/24"
+      ],
+      "url": "https://arxiv.org/abs/1901.08652",
+      "pdf_url": "https://arxiv.org/pdf/1901.08652",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "c69eda2f422866925c3567ead246be231928af51dcdfa97f849222118d75ae45",
+      "comments": null,
+      "venue_note": "Science Robotics 2019",
+      "research_group": "ETH RSL / Intel",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": null,
+      "project_url": null,
+      "checked_pdf_url": "https://arxiv.org/pdf/1901.08652v1"
+    },
+    {
+      "id": "F2",
+      "key": "challenging",
+      "arxiv_id": "2010.11251",
+      "title": "Learning Quadrupedal Locomotion over Challenging Terrain",
+      "authors": [
+        "Lee, Joonho",
+        "Hwangbo, Jemin",
+        "Wellhausen, Lorenz",
+        "Koltun, Vladlen",
+        "Hutter, Marco"
+      ],
+      "first_publication_date": [
+        "2020/10/21"
+      ],
+      "url": "https://arxiv.org/abs/2010.11251",
+      "pdf_url": "https://arxiv.org/pdf/2010.11251",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "07c5607c708ffe0b33e9c02792c699b7084895bac0e296c6895e31b18da83af3",
+      "comments": null,
+      "venue_note": "Science Robotics 2020",
+      "research_group": "ETH RSL / Intel / KAIST RAILAB",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": null,
+      "project_url": null,
+      "checked_pdf_url": "https://arxiv.org/pdf/2010.11251v1"
+    },
+    {
+      "id": "F3",
+      "key": "walk_minutes",
+      "arxiv_id": "2109.11978",
+      "title": "Learning to Walk in Minutes Using Massively Parallel Deep Reinforcement Learning",
+      "authors": [
+        "Rudin, Nikita",
+        "Hoeller, David",
+        "Reist, Philipp",
+        "Hutter, Marco"
+      ],
+      "first_publication_date": [
+        "2021/09/24"
+      ],
+      "url": "https://arxiv.org/abs/2109.11978",
+      "pdf_url": "https://arxiv.org/pdf/2109.11978",
+      "checked_date": "2026-11-08",
+      "pdf_version": 3,
+      "pdf_sha256": "48014ee8af3e5a7fc26de2a5aac0de9ad593725075627c1a210d9d0f1e4ee62a",
+      "comments": "CoRL 2021 Project website: : this https URL Video: this https URL",
+      "venue_note": "CoRL 2021（论文集出版于2022）",
+      "research_group": "ETH RSL / NVIDIA",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": null,
+      "project_url": null,
+      "checked_pdf_url": "https://arxiv.org/pdf/2109.11978v3"
+    },
+    {
+      "id": "A1",
+      "key": "rma",
+      "arxiv_id": "2107.04034",
+      "title": "RMA: Rapid Motor Adaptation for Legged Robots",
+      "authors": [
+        "Kumar, Ashish",
+        "Fu, Zipeng",
+        "Pathak, Deepak",
+        "Malik, Jitendra"
+      ],
+      "first_publication_date": [
+        "2021/07/08"
+      ],
+      "url": "https://arxiv.org/abs/2107.04034",
+      "pdf_url": "https://arxiv.org/pdf/2107.04034",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "d8660da881851756287efab24d85f5c629ba97878f70297eb429a8e8a9a57846",
+      "comments": "RSS 2021. Webpage at this https URL",
+      "venue_note": "RSS 2021",
+      "research_group": "CMU Pathak / UC Berkeley Malik",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": "https://ashish-kmr.github.io/rma-legged-robots/",
+      "checked_pdf_url": "https://arxiv.org/pdf/2107.04034v1"
+    },
+    {
+      "id": "A2",
+      "key": "concurrent",
+      "arxiv_id": "2202.05481",
+      "title": "Concurrent Training of a Control Policy and a State Estimator for Dynamic and Robust Legged Locomotion",
+      "authors": [
+        "Ji, Gwanghyeon",
+        "Mun, Juhyeok",
+        "Kim, Hyeongjun",
+        "Hwangbo, Jemin"
+      ],
+      "first_publication_date": [
+        "2022/02/11"
+      ],
+      "url": "https://arxiv.org/abs/2202.05481",
+      "pdf_url": "https://arxiv.org/pdf/2202.05481",
+      "checked_date": "2026-11-08",
+      "pdf_version": 2,
+      "pdf_sha256": "fc925c2f4aeced5b6e021b2ca532ee3b22e4c694843a86895a2b684003efe316",
+      "comments": "Accepted for IEEE Robotics and Automation Letters (RA-L) and ICRA 2022",
+      "venue_note": "RA-L 2022 / ICRA 2022",
+      "research_group": "KAIST RAILAB / Jemin Hwangbo",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": null,
+      "checked_pdf_url": "https://arxiv.org/pdf/2202.05481v2"
+    },
+    {
+      "id": "A3",
+      "key": "dreamwaq",
+      "arxiv_id": "2301.10602",
+      "title": "DreamWaQ: Learning Robust Quadrupedal Locomotion With Implicit Terrain Imagination via Deep Reinforcement Learning",
+      "authors": [
+        "Nahrendra, I Made Aswin",
+        "Yu, Byeongho",
+        "Myung, Hyun"
+      ],
+      "first_publication_date": [
+        "2023/01/25"
+      ],
+      "url": "https://arxiv.org/abs/2301.10602",
+      "pdf_url": "https://arxiv.org/pdf/2301.10602",
+      "checked_date": "2026-11-08",
+      "pdf_version": 2,
+      "pdf_sha256": "fb02d20879c38b2ca7d0b52ff58174f2119451dea23e946c3eecfccdfcce1cfd",
+      "comments": "Accepted for ICRA 2023",
+      "venue_note": "ICRA 2023",
+      "research_group": "KAIST Urban Robotics Lab / Hyun Myung",
+      "priority": "核心精读",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.1（总体）/ Fig.2（CENet）",
+      "project_url": "https://sites.google.com/view/dreamwaq",
+      "checked_pdf_url": "https://arxiv.org/pdf/2301.10602v2"
+    },
+    {
+      "id": "A4",
+      "key": "him",
+      "arxiv_id": "2312.11460",
+      "title": "Hybrid Internal Model: Learning Agile Legged Locomotion with Simulated Robot Response",
+      "authors": [
+        "Long, Junfeng",
+        "Wang, Zirui",
+        "Li, Quanyi",
+        "Gao, Jiawei",
+        "Cao, Liu",
+        "Pang, Jiangmiao"
+      ],
+      "first_publication_date": [
+        "2023/12/18"
+      ],
+      "url": "https://arxiv.org/abs/2312.11460",
+      "pdf_url": "https://arxiv.org/pdf/2312.11460",
+      "checked_date": "2026-11-08",
+      "pdf_version": 3,
+      "pdf_sha256": "966785d9bc92f577cc743a5d13fd253c10dbb5e0f3dbb0adbc77fd1f7df2952b",
+      "comments": "Use 1 hour to train a quadruped robot capable of traversing any terrain under any disturbances in the open world, Project Page: this https URL",
+      "venue_note": "ICLR 2024（预印本2023）",
+      "research_group": "Shanghai AI Laboratory OpenRobotLab / Jiangmiao Pang",
+      "priority": "核心精读",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": "https://junfeng-long.github.io/HIMLoco/",
+      "venue_source": "https://raw.githubusercontent.com/InternRobotics/HIMLoco/main/README.md",
+      "title_aliases": [
+        {
+          "title": "Hybrid Internal Model: A Simple and Efficient Learner for Agile Legged Locomotion",
+          "version": "v1",
+          "url": "https://arxiv.org/abs/2312.11460v1"
+        }
+      ],
+      "related_version_note": "同一arXiv编号的标题变更；v1与v3不应分作两篇论文。",
+      "checked_pdf_url": "https://arxiv.org/pdf/2312.11460v3"
+    },
+    {
+      "id": "A5",
+      "key": "dreamwaqpp",
+      "arxiv_id": "2409.19709",
+      "title": "DreamWaQ++: Obstacle-Aware Quadrupedal Locomotion With Resilient Multi-Modal Reinforcement Learning",
+      "authors": [
+        "Nahrendra, I Made Aswin",
+        "Yu, Byeongho",
+        "Oh, Minho",
+        "Lee, Dongkyu",
+        "Lee, Seunghyun",
+        "Lee, Hyeonwoo",
+        "Lim, Hyungtae",
+        "Myung, Hyun"
+      ],
+      "first_publication_date": [
+        "2024/09/29"
+      ],
+      "url": "https://arxiv.org/abs/2409.19709",
+      "pdf_url": "https://arxiv.org/pdf/2409.19709",
+      "checked_date": "2026-11-08",
+      "pdf_version": 2,
+      "pdf_sha256": "fc445acf973a1fc0248f55bac54b7c198306cd1d965037d17a4d1a07c782812a",
+      "comments": "IEEE Transactions on Robotics 2026. Project site is available at this https URL",
+      "venue_note": "T-RO 2026（预印本2024）",
+      "research_group": "KAIST Urban Robotics Lab / Hyun Myung + collaborators",
+      "priority": "拓展备查",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": "https://dreamwaqpp.github.io/",
+      "venue_source": "https://dreamwaqpp.github.io/",
+      "checked_pdf_url": "https://arxiv.org/pdf/2409.19709v2"
+    },
+    {
+      "id": "A6",
+      "key": "dreamriser",
+      "arxiv_id": "2306.12712",
+      "title": "Robust Recovery Motion Control for Quadrupedal Robots via Learned Terrain Imagination",
+      "authors": [
+        "Nahrendra, I Made Aswin",
+        "Oh, Minho",
+        "Yu, Byeongho",
+        "Lim, Hyungtae",
+        "Myung, Hyun"
+      ],
+      "first_publication_date": [
+        "2023/06/22"
+      ],
+      "url": "https://arxiv.org/abs/2306.12712",
+      "pdf_url": "https://arxiv.org/pdf/2306.12712",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "d5ccb03800400acbf27658c1bd57b0f48533723a56ace749e9aefd74cb529a44",
+      "comments": "RSS 2023 Workshop on Experiment-oriented Locomotion and Manipulation Research",
+      "venue_note": "RSS 2023 Workshop on Experiment-oriented Locomotion and Manipulation Research",
+      "research_group": "KAIST Urban Robotics Lab / Hyun Myung",
+      "priority": "拓展备查",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "本轮优先采用项目页恢复示意；论文Fig.2是结果曲线，非网络架构",
+      "project_url": "https://sites.google.com/view/dreamriser",
+      "checked_pdf_url": "https://arxiv.org/pdf/2306.12712v1"
+    },
+    {
+      "id": "A7",
+      "key": "hinf",
+      "arxiv_id": "2404.14405",
+      "title": "Learning H-Infinity Locomotion Control",
+      "authors": [
+        "Long, Junfeng",
+        "Yu, Wenye",
+        "Li, Quanyi",
+        "Wang, Zirui",
+        "Lin, Dahua",
+        "Pang, Jiangmiao"
+      ],
+      "first_publication_date": [
+        "2024/04/22"
+      ],
+      "url": "https://arxiv.org/abs/2404.14405",
+      "pdf_url": "https://arxiv.org/pdf/2404.14405",
+      "checked_date": "2026-11-08",
+      "pdf_version": 2,
+      "pdf_sha256": "c0a77f5a54728cf98cbc39d75bbbcb86c0fc0a6265c7b3a02f63896e27123a48",
+      "comments": "Project Page: this https URL",
+      "venue_note": "CoRL 2024",
+      "research_group": "Shanghai AI Laboratory OpenRobotLab / Jiangmiao Pang",
+      "priority": "拓展备查",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": "https://junfeng-long.github.io/HINF/",
+      "venue_source": "https://junfeng-long.github.io/HINF/",
+      "checked_pdf_url": "https://arxiv.org/pdf/2404.14405v2"
+    },
+    {
+      "id": "B1",
+      "key": "egovision",
+      "arxiv_id": "2211.07638",
+      "title": "Legged Locomotion in Challenging Terrains using Egocentric Vision",
+      "authors": [
+        "Agarwal, Ananye",
+        "Kumar, Ashish",
+        "Malik, Jitendra",
+        "Pathak, Deepak"
+      ],
+      "first_publication_date": [
+        "2022/11/14"
+      ],
+      "url": "https://arxiv.org/abs/2211.07638",
+      "pdf_url": "https://arxiv.org/pdf/2211.07638",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "42f9f9cd4087c85e6aaf6a910726fe7945886b5bf01dfed83b7fc3b603ddc60e",
+      "comments": "Oral presentation at CoRL 2022. Website at this https URL",
+      "venue_note": "CoRL 2022（论文集出版于2023）",
+      "research_group": "CMU Pathak / UC Berkeley Malik",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.3",
+      "project_url": "https://vision-locomotion.github.io/",
+      "checked_pdf_url": "https://arxiv.org/pdf/2211.07638v1"
+    },
+    {
+      "id": "B2",
+      "key": "ep",
+      "arxiv_id": "2309.14341",
+      "title": "Extreme Parkour with Legged Robots",
+      "authors": [
+        "Cheng, Xuxin",
+        "Shi, Kexin",
+        "Agarwal, Ananye",
+        "Pathak, Deepak"
+      ],
+      "first_publication_date": [
+        "2023/09/25"
+      ],
+      "url": "https://arxiv.org/abs/2309.14341",
+      "pdf_url": "https://arxiv.org/pdf/2309.14341",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "50f1cf2b73b9147111100994d1dfffbfd15a9a6c2412aee1921d4d3e58ee2285",
+      "comments": "Website and videos at this https URL",
+      "venue_note": "ICRA 2024（预印本2023）",
+      "research_group": "CMU Pathak",
+      "priority": "核心精读",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": "https://extreme-parkour.github.io/",
+      "checked_pdf_url": "https://arxiv.org/pdf/2309.14341v1"
+    },
+    {
+      "id": "B3",
+      "key": "parkour_learning",
+      "arxiv_id": "2309.05665",
+      "title": "Robot Parkour Learning",
+      "authors": [
+        "Zhuang, Ziwen",
+        "Fu, Zipeng",
+        "Wang, Jianren",
+        "Atkeson, Christopher",
+        "Schwertfeger, Soeren",
+        "Finn, Chelsea",
+        "Zhao, Hang"
+      ],
+      "first_publication_date": [
+        "2023/09/11"
+      ],
+      "url": "https://arxiv.org/abs/2309.05665",
+      "pdf_url": "https://arxiv.org/pdf/2309.05665",
+      "checked_date": "2026-11-08",
+      "pdf_version": 2,
+      "pdf_sha256": "373da1078eaafff39404d6d3533f8718367ad8b1cca55125128e395692f99b69",
+      "comments": "CoRL 2023 (Oral). Project website at this https URL",
+      "venue_note": "CoRL 2023",
+      "research_group": "Shanghai Qi Zhi / Stanford / ShanghaiTech / CMU / Tsinghua collaboration",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": null,
+      "project_url": "https://robot-parkour.github.io/",
+      "venue_source": "https://proceedings.mlr.press/v229/zhuang23a.html",
+      "checked_pdf_url": "https://arxiv.org/pdf/2309.05665v2"
+    },
+    {
+      "id": "B4",
+      "key": "anymal_parkour",
+      "arxiv_id": "2306.14874",
+      "title": "ANYmal Parkour: Learning Agile Navigation for Quadrupedal Robots",
+      "authors": [
+        "Hoeller, David",
+        "Rudin, Nikita",
+        "Sako, Dhionis",
+        "Hutter, Marco"
+      ],
+      "first_publication_date": [
+        "2023/06/26"
+      ],
+      "url": "https://arxiv.org/abs/2306.14874",
+      "pdf_url": "https://arxiv.org/pdf/2306.14874",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "10196a89a951eb8fb700264c5c26725ba7fd3c10ed72cca8c1d608ae8a1e4b48",
+      "comments": null,
+      "venue_note": "Science Robotics 2024（预印本2023）",
+      "research_group": "ETH RSL",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": null,
+      "checked_pdf_url": "https://arxiv.org/pdf/2306.14874v1"
+    },
+    {
+      "id": "B5",
+      "key": "wild",
+      "arxiv_id": "2201.08117",
+      "title": "Learning robust perceptive locomotion for quadrupedal robots in the wild",
+      "authors": [
+        "Miki, Takahiro",
+        "Lee, Joonho",
+        "Hwangbo, Jemin",
+        "Wellhausen, Lorenz",
+        "Koltun, Vladlen",
+        "Hutter, Marco"
+      ],
+      "first_publication_date": [
+        "2022/01/20"
+      ],
+      "url": "https://arxiv.org/abs/2201.08117",
+      "pdf_url": "https://arxiv.org/pdf/2201.08117",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "f54ecada187bd0599dad0452d63f462399d1df64a7713f5d1ad744eada3710c9",
+      "comments": null,
+      "venue_note": "Science Robotics 2022",
+      "research_group": "ETH RSL / Intel / KAIST RAILAB",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.5（训练部署）/ Fig.6（belief encoder）",
+      "project_url": null,
+      "checked_pdf_url": "https://arxiv.org/pdf/2201.08117v1"
+    },
+    {
+      "id": "C1",
+      "key": "key_estimation",
+      "arxiv_id": "2403.05868",
+      "title": "Toward Understanding Key Estimation in Learning Robust Humanoid Locomotion",
+      "authors": [
+        "Wang, Zhicheng",
+        "Wei, Wandi",
+        "Yu, Ruiqi",
+        "Wu, Jun",
+        "Zhu, Qiuguo"
+      ],
+      "first_publication_date": [
+        "2024/03/09"
+      ],
+      "url": "https://arxiv.org/abs/2403.05868",
+      "pdf_url": "https://arxiv.org/pdf/2403.05868",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "5a1a5e0a3c6053961ab5a104e41dd1d662df11e0f16c728c39b08b9f0cb0517d",
+      "comments": null,
+      "venue_note": "IROS 2024",
+      "research_group": "Zhejiang University / Jun Wu / Qiuguo Zhu",
+      "priority": "拓展备查",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": null,
+      "venue_source": "https://doi.org/10.1109/IROS58592.2024.10801648",
+      "checked_pdf_url": "https://arxiv.org/pdf/2403.05868v1"
+    },
+    {
+      "id": "C2",
+      "key": "pie",
+      "arxiv_id": "2408.13740",
+      "title": "PIE: Parkour with Implicit-Explicit Learning Framework for Legged Robots",
+      "authors": [
+        "Luo, Shixin",
+        "Li, Songbo",
+        "Yu, Ruiqi",
+        "Wang, Zhicheng",
+        "Wu, Jun",
+        "Zhu, Qiuguo"
+      ],
+      "first_publication_date": [
+        "2024/08/25"
+      ],
+      "url": "https://arxiv.org/abs/2408.13740",
+      "pdf_url": "https://arxiv.org/pdf/2408.13740",
+      "checked_date": "2026-11-08",
+      "pdf_version": 3,
+      "pdf_sha256": "c5fa1bb37cb3d2d2165fb8302634a1aea44ca6a028421adbc3c83bf5e89dc623",
+      "comments": "Accepted for IEEE Robotics and Automation Letters (RA-L)",
+      "venue_note": "RA-L 2024",
+      "research_group": "Zhejiang University / Jun Wu / Qiuguo Zhu",
+      "priority": "核心精读",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": null,
+      "checked_pdf_url": "https://arxiv.org/pdf/2408.13740v3"
+    },
+    {
+      "id": "C3",
+      "key": "move",
+      "arxiv_id": "2412.03353",
+      "title": "MOVE: Multi-skill Omnidirectional Legged Locomotion with Limited View in 3D Environments",
+      "authors": [
+        "Li, Songbo",
+        "Luo, Shixin",
+        "Wu, Jun",
+        "Zhu, Qiuguo"
+      ],
+      "first_publication_date": [
+        "2024/12/04"
+      ],
+      "url": "https://arxiv.org/abs/2412.03353",
+      "pdf_url": "https://arxiv.org/pdf/2412.03353",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "c2617c810d59bcb436ad0c9366ff1b52bebd3335bca48f2aa6923dcfcf7b5626",
+      "comments": null,
+      "venue_note": "ICRA 2025（预印本2024）",
+      "research_group": "Zhejiang University / Jun Wu / Qiuguo Zhu",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2（总览）/ Fig.3（PS-Net）",
+      "project_url": null,
+      "venue_source": "https://doi.org/10.1109/ICRA55743.2025.11127928",
+      "checked_pdf_url": "https://arxiv.org/pdf/2412.03353v1"
+    },
+    {
+      "id": "C4",
+      "key": "terrain_reconstruction",
+      "arxiv_id": "2409.15692",
+      "title": "Walking with Terrain Reconstruction: Learning to Traverse Risky Sparse Footholds",
+      "authors": [
+        "Yu, Ruiqi",
+        "Wang, Qianshi",
+        "Wang, Yizhen",
+        "Wang, Zhicheng",
+        "Wu, Jun",
+        "Zhu, Qiuguo"
+      ],
+      "first_publication_date": [
+        "2024/09/24"
+      ],
+      "url": "https://arxiv.org/abs/2409.15692",
+      "pdf_url": "https://arxiv.org/pdf/2409.15692",
+      "checked_date": "2026-11-08",
+      "pdf_version": 2,
+      "pdf_sha256": "1454fd36a63620aeabed12bee758edd246038fd01b7b16350f8a16973b93a477",
+      "comments": null,
+      "venue_note": "arXiv 2024，当前v2为2025",
+      "research_group": "Zhejiang University / Jun Wu / Qiuguo Zhu",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2 / Fig.3",
+      "project_url": null,
+      "related_version_note": "同团队、核心方法高度重合；本轮按同一研究支线并排阅读，尚无明确版本声明证据证明是正式改名或扩展版。",
+      "checked_pdf_url": "https://arxiv.org/pdf/2409.15692v2"
+    },
+    {
+      "id": "C5",
+      "key": "start",
+      "arxiv_id": "2512.13153",
+      "title": "START: Traversing Sparse Footholds with Terrain Reconstruction",
+      "authors": [
+        "Yu, Ruiqi",
+        "Wang, Qianshi",
+        "Li, Hongyi",
+        "Jun, Zheng",
+        "Wang, Zhicheng",
+        "Wu, Jun",
+        "Zhu, Qiuguo"
+      ],
+      "first_publication_date": [
+        "2025/12/15"
+      ],
+      "url": "https://arxiv.org/abs/2512.13153",
+      "pdf_url": "https://arxiv.org/pdf/2512.13153",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "7b0808af5088c554c88c834d97861e317822e2fef21c66b81734764897917276",
+      "comments": null,
+      "venue_note": "RA-L：2025年12月接收，2026年2月卷期",
+      "research_group": "Zhejiang University / Jun Wu / Qiuguo Zhu + collaborators",
+      "priority": "核心精读",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2 / Fig.3",
+      "project_url": null,
+      "venue_source": "https://doi.org/10.1109/LRA.2025.3645649",
+      "related_version_note": "同团队、核心方法高度重合；本轮按同一研究支线并排阅读，尚无明确版本声明证据证明是正式改名或扩展版。",
+      "checked_pdf_url": "https://arxiv.org/pdf/2512.13153v1"
+    },
+    {
+      "id": "C6",
+      "key": "puma",
+      "arxiv_id": "2601.15995",
+      "title": "PUMA: Perception-driven Unified Foothold Prior for Mobility Augmented Quadruped Parkour",
+      "authors": [
+        "Wang, Liang",
+        "Yao, Kanzhong",
+        "Liu, Yang",
+        "Qin, Weikai",
+        "Wu, Jun",
+        "Sun, Zhe",
+        "Zhu, Qiuguo"
+      ],
+      "first_publication_date": [
+        "2026/01/22"
+      ],
+      "url": "https://arxiv.org/abs/2601.15995",
+      "pdf_url": "https://arxiv.org/pdf/2601.15995",
+      "checked_date": "2026-11-08",
+      "pdf_version": 2,
+      "pdf_sha256": "53e35a1bd25bdffe89c609bad2384ff7dc6e60f9717cfa0f5cf018f812980fd2",
+      "comments": null,
+      "venue_note": "RA-L：2026年7月接收",
+      "research_group": "Zhejiang University / Jun Wu / Qiuguo Zhu + Zhe Sun collaborators",
+      "priority": "核心精读",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": null,
+      "venue_source": "原论文v2首页：ACCEPTED JULY, 2026",
+      "checked_pdf_url": "https://arxiv.org/pdf/2601.15995v2"
+    },
+    {
+      "id": "C7",
+      "key": "backward",
+      "arxiv_id": "2603.03138",
+      "title": "Look Forward to Walk Backward: Efficient Terrain Memory for Backward Locomotion with Forward Vision",
+      "authors": [
+        "Luo, Shixin",
+        "Li, Songbo",
+        "Hao, Yuan",
+        "Wang, Yaqi",
+        "Zheng, Jun",
+        "Wu, Jun",
+        "Zhu, Qiuguo"
+      ],
+      "first_publication_date": [
+        "2026/03/03"
+      ],
+      "url": "https://arxiv.org/abs/2603.03138",
+      "pdf_url": "https://arxiv.org/pdf/2603.03138",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "c1bc5e8563522243da6d718f0212c5fa7aaaf80d4365bcd324cefa5d976b62ea",
+      "comments": "Accepted for 2026 IEEE International Conference on Robotics and Automation (ICRA)",
+      "venue_note": "ICRA 2026",
+      "research_group": "Zhejiang University / Jun Wu / Qiuguo Zhu + collaborators",
+      "priority": "拓展备查",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": null,
+      "checked_pdf_url": "https://arxiv.org/pdf/2603.03138v1"
+    },
+    {
+      "id": "D1",
+      "key": "risky",
+      "arxiv_id": "2311.10484",
+      "title": "Learning Agile Locomotion on Risky Terrains",
+      "authors": [
+        "Zhang, Chong",
+        "Rudin, Nikita",
+        "Hoeller, David",
+        "Hutter, Marco"
+      ],
+      "first_publication_date": [
+        "2023/11/17"
+      ],
+      "url": "https://arxiv.org/abs/2311.10484",
+      "pdf_url": "https://arxiv.org/pdf/2311.10484",
+      "checked_date": "2026-11-08",
+      "pdf_version": 2,
+      "pdf_sha256": "a305b15386464ad5e2a6349cd7d5badb1d53bdab30c81b6647ba70a14bafc494",
+      "comments": "8 pages, 11 figures. IROS 2024",
+      "venue_note": "IROS 2024（预印本2023）",
+      "research_group": "ETH RSL",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": null,
+      "checked_pdf_url": "https://arxiv.org/pdf/2311.10484v2"
+    },
+    {
+      "id": "D2",
+      "key": "dtc",
+      "arxiv_id": "2309.15462",
+      "title": "DTC: Deep Tracking Control",
+      "authors": [
+        "Jenelten, Fabian",
+        "He, Junzhe",
+        "Farshidian, Farbod",
+        "Hutter, Marco"
+      ],
+      "first_publication_date": [
+        "2023/09/27"
+      ],
+      "url": "https://arxiv.org/abs/2309.15462",
+      "pdf_url": "https://arxiv.org/pdf/2309.15462",
+      "checked_date": "2026-11-08",
+      "pdf_version": 2,
+      "pdf_sha256": "88b3371e776b9a1a53795b934941160738d0def0d115eeb8e778853f5ab3fec7",
+      "comments": null,
+      "venue_note": "Science Robotics 2024（预印本2023）",
+      "research_group": "ETH RSL",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": null,
+      "project_url": null,
+      "checked_pdf_url": "https://arxiv.org/pdf/2309.15462v2"
+    },
+    {
+      "id": "D3",
+      "key": "wheelstairs",
+      "arxiv_id": "2402.06143",
+      "title": "Reinforcement Learning for Blind Stair Climbing with Legged and Wheeled-Legged Robots",
+      "authors": [
+        "Chamorro, Simon",
+        "Klemm, Victor",
+        "Valls, Miguel de la Iglesia",
+        "Pal, Christopher",
+        "Siegwart, Roland"
+      ],
+      "first_publication_date": [
+        "2024/02/09"
+      ],
+      "url": "https://arxiv.org/abs/2402.06143",
+      "pdf_url": "https://arxiv.org/pdf/2402.06143",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "72f0ba9f082265428f5cdd79e9be3748983371e77aa976540e86d19d9c3c61fd",
+      "comments": "Video: this https URL",
+      "venue_note": "ICRA 2024",
+      "research_group": "ETH Autonomous Systems Lab / Mila and collaborators",
+      "priority": "背景对照",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2 / Fig.4",
+      "project_url": null,
+      "venue_source": "https://doi.org/10.1109/ICRA57147.2024.10610069",
+      "checked_pdf_url": "https://arxiv.org/pdf/2402.06143v1"
+    },
+    {
+      "id": "D4",
+      "key": "rapid",
+      "arxiv_id": "2205.02824",
+      "title": "Rapid Locomotion via Reinforcement Learning",
+      "authors": [
+        "Margolis, Gabriel B",
+        "Yang, Ge",
+        "Paigwar, Kartik",
+        "Chen, Tao",
+        "Agrawal, Pulkit"
+      ],
+      "first_publication_date": [
+        "2022/05/05"
+      ],
+      "url": "https://arxiv.org/abs/2205.02824",
+      "pdf_url": "https://arxiv.org/pdf/2205.02824",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "c45358dd69d4eb117487bb17fa5463ab93e0d5ce9203ccceb46ba233d3deb830",
+      "comments": "Accepted for publication at Robotics: Science and Systems (RSS) 2022",
+      "venue_note": "RSS 2022",
+      "research_group": "MIT Improbable AI",
+      "priority": "拓展备查",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": null,
+      "project_url": null,
+      "checked_pdf_url": "https://arxiv.org/pdf/2205.02824v1"
+    },
+    {
+      "id": "E1",
+      "key": "deepwbc",
+      "arxiv_id": "2210.10044",
+      "title": "Deep Whole-Body Control: Learning a Unified Policy for Manipulation and Locomotion",
+      "authors": [
+        "Fu, Zipeng",
+        "Cheng, Xuxin",
+        "Pathak, Deepak"
+      ],
+      "first_publication_date": [
+        "2022/10/18"
+      ],
+      "url": "https://arxiv.org/abs/2210.10044",
+      "pdf_url": "https://arxiv.org/pdf/2210.10044",
+      "checked_date": "2026-11-08",
+      "pdf_version": 1,
+      "pdf_sha256": "836a835e9d8939c6261b3ca597a19bbafa3540dbde722c651c2dbe035f1f1541",
+      "comments": "CoRL 2022 (Oral). Project website at this https URL",
+      "venue_note": "CoRL 2022",
+      "research_group": "CMU Pathak",
+      "priority": "拓展备查",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": "https://manipulation-locomotion.github.io/",
+      "checked_pdf_url": "https://arxiv.org/pdf/2210.10044v1"
+    },
+    {
+      "id": "E2",
+      "key": "legs_manipulator_correct",
+      "arxiv_id": "2303.11330",
+      "title": "Legs as Manipulator: Pushing Quadrupedal Agility Beyond Locomotion",
+      "authors": [
+        "Cheng, Xuxin",
+        "Kumar, Ashish",
+        "Pathak, Deepak"
+      ],
+      "first_publication_date": [
+        "2023/03/20"
+      ],
+      "url": "https://arxiv.org/abs/2303.11330",
+      "pdf_url": "https://arxiv.org/pdf/2303.11330",
+      "checked_date": "2026-11-08",
+      "pdf_version": 2,
+      "pdf_sha256": "8d4461ce9a06a90cdb295c9d92d6f253ff7df9739abda8a509416357868eabc9",
+      "comments": "Accepted at ICRA 2023. Videos at this https URL",
+      "venue_note": "ICRA 2023",
+      "research_group": "CMU Pathak / UC Berkeley",
+      "priority": "拓展备查",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.2",
+      "project_url": "https://chengxuxin.github.io/robot-skills.github.io/",
+      "checked_pdf_url": "https://arxiv.org/pdf/2303.11330v2"
+    },
+    {
+      "id": "E3",
+      "key": "visualwbc",
+      "arxiv_id": "2403.16967",
+      "title": "Visual Whole-Body Control for Legged Loco-Manipulation",
+      "authors": [
+        "Liu, Minghuan",
+        "Chen, Zixuan",
+        "Cheng, Xuxin",
+        "Ji, Yandong",
+        "Qiu, Ri-Zhao",
+        "Yang, Ruihan",
+        "Wang, Xiaolong"
+      ],
+      "first_publication_date": [
+        "2024/03/25"
+      ],
+      "url": "https://arxiv.org/abs/2403.16967",
+      "pdf_url": "https://arxiv.org/pdf/2403.16967",
+      "checked_date": "2026-11-08",
+      "pdf_version": 5,
+      "pdf_sha256": "43338e4a32962c3145b4b6c64baa01d5c4eb6dbb6d987d3ff2931bcf23e5ef8d",
+      "comments": "CoRL 2024 Oral. Project page: this https URL",
+      "venue_note": "CoRL 2024",
+      "research_group": "UC San Diego / Xiaolong Wang",
+      "priority": "拓展备查",
+      "evidence_basis": [
+        "arXiv摘要页元数据",
+        "下载原论文全文，阅读方法与限制"
+      ],
+      "suggested_figure": "Fig.3",
+      "project_url": "https://wholebody-b1.github.io/",
+      "checked_pdf_url": "https://arxiv.org/pdf/2403.16967v5"
+    }
+  ]
+}
