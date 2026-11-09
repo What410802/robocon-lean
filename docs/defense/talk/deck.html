@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>blackW · 从论文到轮足越障：十五分钟组内分享</title>
+<style>
+@font-face{font-family:BlackWTalk;src:url("fonts/blackw-regular.woff2") format("woff2");font-weight:400}
+@font-face{font-family:BlackWTalk;src:url("fonts/blackw-bold.woff2") format("woff2");font-weight:700}
+:root{
+  --bg:#0b1220; --bg2:#0e1728; --panel:#111d31; --line:#22344d; --line2:#31496a;
+  --ink:#eef4ff; --ink2:#b9c9de; --muted:#7f93ab;
+  --cy:#57d9c9; --cy-dim:#2f7f78; --am:#f2b26b; --red:#e8878e; --gr:#7fd6a0;
+  --mono:"DM Mono","Noto Sans Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#05090f;overflow:hidden}
+body{font-family:BlackWTalk,"Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei",sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+#stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:top left}
+
+.slide{position:absolute;inset:0;width:1600px;height:900px;background:var(--bg);display:none;overflow:hidden}
+.slide.on{display:block}
+.slide::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(1200px 620px at 78% -12%,rgba(87,217,201,.07),transparent 62%),
+  radial-gradient(900px 520px at -8% 108%,rgba(242,178,107,.055),transparent 60%);pointer-events:none}
+
+/* ---------- shared chrome ---------- */
+.rail{position:absolute;left:0;top:0;width:14px;height:900px;background:linear-gradient(180deg,var(--cy),var(--cy-dim))}
+.kicker{position:absolute;left:72px;top:44px;font:400 20px/1 var(--mono);letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+.kicker b{color:var(--cy);font-weight:400}
+h1{position:absolute;left:72px;top:96px;width:1456px;font-size:57px;line-height:1.22;font-weight:700;letter-spacing:.005em}
+h1 em{font-style:normal;color:var(--cy)}
+.sub{position:absolute;left:72px;top:186px;width:1456px;font-size:25px;line-height:1.5;color:var(--ink2)}
+.foot{position:absolute;left:72px;bottom:30px;width:1330px;font-size:17px;line-height:1.45;color:var(--muted)}
+.pg{position:absolute;right:64px;bottom:28px;font:400 20px/1 var(--mono);color:var(--cy)}
+.qtag{position:absolute;right:64px;top:44px;font:400 17px/1 var(--mono);letter-spacing:.1em;color:var(--muted)}
+.qtag s{color:var(--cy);text-decoration:none}
+
+/* takeaway strip */
+.take{position:absolute;left:72px;right:72px;bottom:74px;padding:22px 28px;background:linear-gradient(90deg,rgba(87,217,201,.13),rgba(87,217,201,.03));border-left:4px solid var(--cy);border-radius:0 10px 10px 0}
+.take p{font-size:28px;line-height:1.45;color:#dcf7f2}
+.take p b{color:var(--cy);font-weight:700}
+
+/* ---------- cover ---------- */
+.cover .big{position:absolute;left:72px;top:206px;width:900px;font-size:78px;line-height:1.13;font-weight:700;letter-spacing:-.01em}
+.cover .big span{color:var(--cy)}
+.cover .lede{position:absolute;left:72px;top:508px;width:820px;font-size:25px;line-height:1.62;color:var(--ink2)}
+.cover .meta{position:absolute;left:72px;top:690px;display:flex;gap:44px;font:400 17px/1.5 var(--mono);color:var(--muted)}
+.cover .meta b{display:block;color:var(--cy);font-weight:400;font-size:22px}
+.cover .shot{position:absolute;right:0;top:0;width:610px;height:900px;overflow:hidden}
+.cover .shot img{width:100%;height:100%;object-fit:cover;opacity:.92}
+.cover .shot::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 2%,rgba(11,18,32,.35) 34%,transparent 70%)}
+
+/* ---------- question list ---------- */
+.qlist{position:absolute;left:72px;top:236px;width:1456px;display:grid;grid-template-columns:1fr 1fr;gap:0 64px}
+.qrow{display:flex;gap:26px;padding:24px 0;border-bottom:1px solid var(--line)}
+.qrow i{font:400 30px/1 var(--mono);color:var(--cy);font-style:normal;min-width:56px}
+.qrow h3{font-size:31px;font-weight:700;line-height:1.35;margin-bottom:6px}
+.qrow p{font-size:22px;line-height:1.5;color:var(--muted)}
+
+/* ---------- paper plates ---------- */
+.plate{position:absolute;background:#fff;border-radius:12px;padding:14px;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.plate img{display:block;width:100%;height:100%;object-fit:contain}
+.annot{position:absolute}
+.annot .n{display:inline-block;width:34px;height:34px;border-radius:50%;background:var(--cy);color:#06231f;font:700 18px/34px var(--mono);text-align:center;margin-bottom:10px}
+.annot h3{font-size:27px;font-weight:700;line-height:1.3;margin-bottom:8px}
+.annot p{font-size:22px;line-height:1.55;color:var(--ink2)}
+.annot p code{font-family:var(--mono);font-size:.92em;color:var(--am);background:rgba(242,178,107,.1);padding:1px 6px;border-radius:4px}
+.annot + .annot{margin-top:0}
+
+/* ---------- cards / stats ---------- */
+.statrow{position:absolute;left:72px;right:72px;display:flex;gap:20px}
+.statrow .stat{flex:1}
+.stat{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 24px}
+.stat .lb{font-size:18px;letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+.stat .vl{font-size:43px;font-weight:700;line-height:1.1;letter-spacing:-.01em}
+.stat .vl small{font-size:22px;font-weight:400;color:var(--ink2);margin-left:6px}
+.stat .df{font-size:18px;color:var(--muted);margin-top:8px;line-height:1.45}
+.stat.good .vl{color:var(--gr)} .stat.warn .vl{color:var(--am)} .stat.bad .vl{color:var(--red)} .stat.cy .vl{color:var(--cy)}
+
+table.cmp{border-collapse:collapse;font-size:22px}
+table.cmp th{font:400 17px/1.2 var(--mono);letter-spacing:.08em;color:var(--muted);text-align:left;padding:0 20px 12px 0;text-transform:uppercase}
+table.cmp td{padding:13px 20px 13px 0;border-top:1px solid var(--line);color:var(--ink2)}
+table.cmp td.k{color:var(--ink)}
+table.cmp td.v{font-family:var(--mono);font-size:22px}
+table.cmp td.up{color:var(--gr)} table.cmp td.down{color:var(--red)}
+
+.flow{position:absolute;display:flex;align-items:center;gap:14px}
+.node{background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:16px 20px;min-width:0}
+.node .t{font:400 16px/1 var(--mono);letter-spacing:.1em;color:var(--cy);margin-bottom:8px}
+.node .d{font-size:22px;line-height:1.4}
+.arw{font-size:26px;color:var(--line2)}
+
+.tag{display:inline-block;font:400 15px/1 var(--mono);letter-spacing:.1em;padding:7px 11px;border-radius:6px;border:1px solid var(--line2);color:var(--ink2)}
+.tag.cy{color:var(--cy);border-color:rgba(87,217,201,.45);background:rgba(87,217,201,.08)}
+.tag.am{color:var(--am);border-color:rgba(242,178,107,.45);background:rgba(242,178,107,.08)}
+.tag.red{color:var(--red);border-color:rgba(232,135,142,.45);background:rgba(232,135,142,.08)}
+
+video.media{position:absolute;background:#000;border-radius:10px;box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.cap{position:absolute;font-size:18px;line-height:1.5;color:var(--muted)}
+.side{position:absolute}
+
+/* backup slides */
+.backup .kicker b{color:var(--am)}
+.backup .rail{background:linear-gradient(180deg,var(--am),#7a5527)}
+table.dense{width:100%;border-collapse:collapse;font-size:18px;line-height:1.4}
+table.dense th{font:400 14px/1.2 var(--mono);letter-spacing:.08em;color:var(--muted);text-align:left;padding:0 14px 10px 0;text-transform:uppercase}
+table.dense td{padding:8px 14px 8px 0;border-top:1px solid var(--line);color:var(--ink2);vertical-align:top}
+table.dense td.k{color:var(--ink);white-space:nowrap}
+
+#bar{position:fixed;left:0;right:0;bottom:0;height:34px;display:flex;align-items:center;justify-content:center;gap:16px;font:13px/1 var(--mono);color:#7f93ab;background:#05090f;border-top:1px solid #16233a;z-index:10}
+#bar button{font:13px/1 var(--mono);color:#dce8f7;background:#111d31;border:1px solid #2a4060;border-radius:5px;padding:5px 11px;cursor:pointer}
+#bar button:hover{border-color:var(--cy);color:var(--cy)}
+#bar .sep{color:#31496a}
+#hint{position:fixed;right:14px;top:12px;background:#111d31;border:1px solid #2a4060;border-radius:8px;padding:9px 13px;font:13px/1.5 var(--mono);color:#b9c9de;z-index:11;display:none}
+@media print{@page{size:1600px 900px;margin:0}html,body{overflow:visible;background:#0b1220}#stage{position:static;transform:none!important;width:1600px;height:auto}.slide{display:block!important;position:relative;break-after:page;page-break-after:always}#bar,#hint{display:none!important}}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- ══════════════ 01 · 封面 + 四个问题 ══════════════ -->
+<section class="slide cover on" data-time="0:00–0:28 · 28 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>blackW</b> · RoboCon 队内赛 · 备赛分享</div>
+  <div class="big">从论文到轮足越障：<br><span>四个问题</span>与它们<br>背后的取舍</div>
+  <div class="lede">十五分钟，不复述成绩。讲我们在读论文、调奖励、跑对比实验时，<br>真正遇到的那四个问题，以及每个问题被谁回答了。</div>
+  <div class="meta">
+    <div><b>16 DoF</b>轮足 · MuJoCo</div>
+    <div><b>29 篇</b>文献 · 精读 6</div>
+    <div><b>13 页</b>主讲 · 4 页备查</div>
+  </div>
+  <div class="shot"><img src="../media/plum_handover.jpg" alt="blackW 穿越梅花桩"></div>
+  <div class="pg">01</div>
+</section>
+
+<!-- ══════════════ 02 · 四个问题 ══════════════ -->
+<section class="slide" data-time="0:28–1:10 · 42 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>00</b> / 主线</div>
+  <div class="qtag">这条线贯穿全部 13 页</div>
+  <h1>备赛不是四个孤立任务，是<em>四条信息缺口</em></h1>
+  <div class="qlist">
+    <div class="qrow"><i>Q1</i><div><h3>没有相机时，脚下是什么接触？</h3><p>单帧本体观测有歧义。用历史 + 训练信号补出“接触上下文”。<br>对应：平地策略、RecoveryLoco 式鲁棒性</p></div></div>
+    <div class="qrow"><i>Q2</i><div><h3>跳沟、爬台这些动作，怎么才能学出来？</h3><p>逐帧速度跟踪会惩罚必要的减速与抬头。换成任务方向奖励 + 难度课程。<br>对应：通用越障专家、40 cm 高台</p></div></div>
+    <div class="qrow"><i>Q3</i><div><h3>单关专家，怎么串成能跑完的整场？</h3><p>杀手不是障碍，是交接瞬间的动量与姿态。外环导航 + 有界指令 + 热切换。<br>对应：Part 1 路线、Part 2 33 段</p></div></div>
+    <div class="qrow"><i>Q4</i><div><h3>必须看路落脚时，视觉以什么形式进入控制？</h3><p>直接重建脚下扫描，还是直接喂深度？我们两代都做了。<br>对应：梅花桩 v1 → v2</p></div></div>
+  </div>
+  <div class="foot">这几篇论文的网络外形几乎一样：编码器、隐变量、PPO。所以真正的差别不在结构，而在于缺什么信息、用什么训练信号补足、补足之后策略得到了什么能力。</div>
+  <div class="pg">02</div>
+</section>
+
+<!-- ══════════════ 03 · 读论文的三问 ══════════════ -->
+<section class="slide" data-time="1:10–1:55 · 45 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>01</b> / 论文阅读框架</div>
+  <div class="qtag">方法地图 · 29 篇 → 6 篇精读</div>
+  <h1>同一个外形，<em>三种不同的“好上下文”</em></h1>
+  <div class="sub">RMA、DreamWaQ、HIM 部署时都只吃本体历史 + 隐变量。差别全在“隐变量被要求保留什么”。</div>
+
+  <div class="statrow" style="top:300px">
+    <div class="stat">
+      <div class="lb">RMA · 两阶段拟合</div>
+      <div class="vl">环境参数<span style="color:var(--muted);font-size:26px"> → latent</span></div>
+      <div class="df">先训练能读特权编码的策略，冻结后从历史回归这个编码。<br>部署时的“适应”是前向推理，不是改权重。</div>
+    </div>
+    <div class="stat">
+      <div class="lb">DreamWaQ · 重建下一帧</div>
+      <div class="vl" style="color:var(--cy)">速度 <span style="color:var(--muted);font-size:26px">+</span> 重建 <span style="color:var(--muted);font-size:26px">+</span> KL</div>
+      <div class="df">速度用真值 MSE；上下文靠预测下一帧本体观测学习，β-VAE 的 KL 约束隐空间。<br>若某种接触会改变随后的运动响应，重建就逼编码器留下它。</div>
+    </div>
+    <div class="stat">
+      <div class="lb">HIM · 交换预测</div>
+      <div class="vl" style="color:var(--am)">Prototype 簇一致</div>
+      <div class="df">不要求复原传感器细节，只要求“历史”与“后继响应”落入同一簇。<br>Sinkhorn 保证批次内分配平衡，避免塌缩成常量。</div>
+    </div>
+  </div>
+
+  <div class="take" style="bottom:74px"><p>同一句“学了隐变量”，三篇论文的<b>监督信号完全不同</b>——这才是读论文该记下来的东西。</p></div>
+  <div class="foot">原文：Kumar RSS'21 · Nahrendra ICRA'23 · Long ICLR'24。完整清单与分类见 research/literature-review.md。</div>
+  <div class="pg">03</div>
+</section>
+
+<!-- ══════════════ 04 · DreamWaQ vs HIM ══════════════ -->
+<section class="slide" data-time="1:55–3:03 · 68 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>01</b> / Q1 · 论文对照</div>
+  <div class="qtag">DreamWaQ Fig.2 · HIM Fig.2</div>
+  <h1>“想象地形”到底在想象什么？</h1>
+
+  <div class="plate" style="left:72px;top:196px;width:640px;height:300px"><img src="../figures/dreamwaq_fig2.png" alt="DreamWaQ CENet 结构"></div>
+  <div class="annot" style="left:72px;top:512px;width:640px">
+    <span class="n">1</span><h3>DreamWaQ：把上下文压进“能预测未来”的瓶颈</h3>
+    <p>CENet 从历史输出 <code>v̂</code> 与 <code>z</code>。解码器要求 <code>(v̂, z)</code> 重建下一帧本体观测，KL 正则隐空间——预测未来＝保留对接触敏感的信息。</p>
+  </div>
+
+  <div class="plate" style="left:760px;top:196px;width:768px;height:300px"><img src="../figures/him_fig2.png" alt="HIM 混合内部模型结构"></div>
+  <div class="annot" style="left:760px;top:512px;width:768px">
+    <span class="n">2</span><h3>HIM：不重建细节，只对齐“历史 ↔ 后继响应”</h3>
+    <p>两个编码器分别看历史与后继状态，与可学习 prototype 比相似度，用 Sinkhorn 做批次平衡分配后互相预测。<br><span style="color:var(--am)">本仓移植了这一支：32 个 prototype、速度 MSE、估计器与 PPO 分账更新。</span></p>
+  </div>
+
+  <div class="take" style="bottom:70px"><p>落到主力策略上我们只留了<b>共同骨架</b>：六帧本体历史 342 维 + 特权 Critic。隐变量换成了哪门子监督，取决于任务缺什么。</p></div>
+  <div class="foot">Nahrendra et al., ICRA 2023, arXiv:2301.10602 · Long et al., ICLR 2024, arXiv:2312.11460。图为原文架构图裁切。</div>
+  <div class="pg">04</div>
+</section>
+
+<!-- ══════════════ 05 · 平地：指令分布即课程 ══════════════ -->
+<section class="slide" data-time="3:03–4:05 · 62 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>02</b> / Q1 落地 · 平地速度策略</div>
+  <div class="qtag">vt_v5 · 342 → 512/256/128 → 16</div>
+  <h1>平地跑起来不难，<em>难的是低速转向</em></h1>
+
+  <div class="flow" style="left:72px;top:206px">
+    <div class="node"><div class="t">OBS</div><div class="d">57 × 6 = 342<br><span style="color:var(--muted);font-size:18px">IMU · 关节 · 指令 · 上一步动作</span></div></div>
+    <div class="arw">→</div>
+    <div class="node"><div class="t">ACTOR</div><div class="d">MLP 512 / 256 / 128<br><span style="color:var(--muted);font-size:18px">ELU</span></div></div>
+    <div class="arw">→</div>
+    <div class="node"><div class="t">ACTION</div><div class="d">12 腿位置残差<br>+ 4 轮速度</div></div>
+  </div>
+
+  <div class="side" style="left:72px;top:392px;width:700px">
+    <table class="cmp">
+      <tr><th>命令维度</th><th>范围</th><th>采样技巧</th></tr>
+      <tr><td class="k">v<sub>x</sub></td><td class="v">−0.4 … 1.0 m/s</td><td class="v">5 s 重采样，10% 站立</td></tr>
+      <tr><td class="k">ω<sub>z</sub></td><td class="v">±0.65 rad/s</td><td class="v">非站立中 50% 纯偏航</td></tr>
+      <tr><td class="k">低速盒</td><td class="v">|v<sub>x</sub>|≤0.12<br>|ω<sub>z</sub>|≤0.20</td><td class="v">混合样本中再抽 50%</td></tr>
+    </table>
+    <p style="margin-top:16px;font-size:21px;line-height:1.5;color:var(--ink2)">均匀采样时，<code style="font-family:var(--mono);color:var(--am)">0.1 rad/s</code> 的小修正只值很少的奖励，策略不转也不亏。把低速盒写进采样器，等于把课程放进数据分布。</p>
+  </div>
+
+  <div class="side" style="left:824px;top:392px;width:704px">
+    <div class="stat bad" style="padding:20px 24px">
+      <div class="lb">负结果 · vt_v1 / vt_v3</div>
+      <div class="vl">2.70 m</div>
+      <div class="df">无门控的旋转漂移惩罚：原地不转 → 平面速度为零 → 漂移惩罚为零。<br>策略学会了装死，位置环漂移反而飙升。</div>
+    </div>
+    <div class="stat good" style="margin-top:18px;padding:20px 24px">
+      <div class="lb">修复 · vt_v2 起</div>
+      <div class="vl">0.051 m</div>
+      <div class="df">漂移惩罚只在“实际 ω 已跟上指令”时激活；同时把 yaw 高斯核 σ 从 0.25 压到 <code style="font-family:var(--mono)">0.08</code>。</div>
+    </div>
+  </div>
+
+  <div class="take" style="bottom:56px"><p>每一项惩罚都在告诉策略<b>哪条路最省力</b>。设计惩罚时，要先想清楚策略会怎样绕过它，再决定门控加在哪里。</p></div>
+  <div class="foot">配置：evidence/vt_v5_{agent,env}.yaml。漂移数值来自不同检查点上的位置环探针，不是单因素消融。</div>
+  <div class="pg">05</div>
+</section>
+
+<!-- ══════════════ 06 · 平地对比实验 ══════════════ -->
+<section class="slide" data-time="4:05–5:04 · 59 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>03</b> / Q1 落地 · 对比实验</div>
+  <div class="qtag">同一部署探针 · CPU MuJoCo</div>
+  <h1>一个指标变好，另一个一定会说话</h1>
+
+  <div class="side" style="left:72px;top:200px;width:820px">
+    <div style="font:400 16px/1 var(--mono);letter-spacing:.1em;color:var(--cy);margin-bottom:14px">VT v1 → v2　加入四轮共面约束后</div>
+    <table class="cmp">
+      <tr><th>探针指标</th><th>v1</th><th>v2</th><th></th></tr>
+      <tr><td class="k">转弯时四轮高度差</td><td class="v">3.10 cm</td><td class="v up">0.36 cm</td><td class="v up">×8.6</td></tr>
+      <tr><td class="k">90° 转弯足迹半径</td><td class="v">0.572 m</td><td class="v up">0.520 m</td><td></td></tr>
+      <tr><td class="k">平移速度跟随比</td><td class="v">0.781</td><td class="v down">0.631</td><td class="v down">退化</td></tr>
+      <tr><td class="k">原地转位置漂移</td><td class="v">0.051 m</td><td class="v down">0.106 m</td><td class="v down">退化</td></tr>
+      <tr><td class="k">鲁棒性测试</td><td class="v">11 / 11</td><td class="v">11 / 11</td><td></td></tr>
+    </table>
+    <p style="margin-top:18px;font-size:21px;line-height:1.55;color:var(--ink2)">共面与足迹达标，但策略变保守了——位置环需要把速度指令上调 20–30% 才补回来。</p>
+  </div>
+
+  <div class="side" style="left:944px;top:200px;width:584px">
+    <div style="font:400 16px/1 var(--mono);letter-spacing:.1em;color:var(--am);margin-bottom:14px">12 DoF 锁轮专家 · 障碍前精对线</div>
+    <table class="cmp">
+      <tr><th>项目</th><th>取值</th></tr>
+      <tr><td class="k">输入 / 输出</td><td class="v">270 / 12（16DoF 剪枝）</td></tr>
+      <tr><td class="k">微调预算</td><td class="v">1024 envs × 200 it</td></tr>
+      <tr><td class="k">部署检查点</td><td class="v">model_0（剪枝初始化）</td></tr>
+      <tr><td class="k">位置环最大转漂移</td><td class="v up">0.0672 m</td></tr>
+    </table>
+    <div style="margin-top:18px;padding:18px 22px;background:rgba(242,178,107,.08);border-left:3px solid var(--am);border-radius:0 8px 8px 0;font-size:21px;line-height:1.55;color:#f6dcc0">
+      微调 200 轮后低速段反而过冲：Critic 从 243 维随机重建还没收敛。<br><b style="color:var(--am)">保留 model_0</b> 是通过测试的那个。
+    </div>
+  </div>
+
+  <div class="take" style="bottom:56px"><p>共面、速度、漂移是<b>三个不同方向的指标</b>。只看一个数字选模型，很容易挑到“局部更好、整体更差”的那一个。</p></div>
+  <div class="foot">VT-RECIPE.md §6.1 与 §8；locked12_{agent,env,manifest}.yaml。v1→v2 为多项修改的对照，不是单因素消融。</div>
+  <div class="pg">06</div>
+</section>
+
+<!-- ══════════════ 07 · Extreme Parkour ══════════════ -->
+<section class="slide" data-time="5:04–6:15 · 71 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>04</b> / Q2 · 论文对照</div>
+  <div class="qtag">Extreme Parkour Fig.2</div>
+  <h1>先让动作<em>出现</em>，再让相机<em>接管</em></h1>
+
+  <div class="plate" style="left:72px;top:200px;width:540px;height:470px"><img src="../figures/extreme_parkour_fig2.png" alt="Extreme Parkour 两阶段架构"></div>
+
+  <div class="annot" style="left:660px;top:200px;width:868px">
+    <span class="n">1</span><h3>Phase 1 · 换掉奖励，动作才允许出现</h3>
+    <p>越障要先减速、抬头、蓄力。逐帧速度跟踪会把这些都当误差扣掉。EP 用地形路点给出目标方向 <code>d̂</code>，奖励世界系速度的投影并在指令处截断，只要求“朝目标取得净进展”。配合踩边惩罚与难度课程，教师用便宜的 <code>scandot</code> 几何就能学出跑酷。</p>
+  </div>
+  <div class="annot" style="left:660px;top:392px;width:868px">
+    <span class="n">2</span><h3>Phase 2 · 为什么要蒸馏，而不是直接端到端</h3>
+    <p>4000 个并行环境每步渲染深度太贵；而从零联合训练时，早期乱撞的状态让视觉特征根本学不稳。于是在学生自己访问到的状态上要教师标签（DAgger），并用教师航向防止输入分布突变。</p>
+  </div>
+  <div class="annot" style="left:660px;top:596px;width:868px">
+    <span class="n">3</span><h3>本仓迁移了什么，没迁什么</h3>
+    <p style="color:var(--am)">迁移：方向净进展奖励、边缘惩罚、教师—学生分阶段。<br>没迁：论文的视觉 GRU 与航向预测器；我们的学生是 CNN + 本体历史，后期继续 PPO。</p>
+  </div>
+
+  <div class="take" style="bottom:66px"><p>奖励决定<b>动作能不能出现</b>，蒸馏决定<b>信息能不能换成部署传感器</b>。这是两件事，别混成一页流程图。</p></div>
+  <div class="foot">Cheng et al., ICRA 2024, arXiv:2309.14341。原文表 2：去掉内点奖励高台明显受损；去掉边缘惩罚踩边率 0.03 → 0.08。</div>
+  <div class="pg">07</div>
+</section>
+
+<!-- ══════════════ 08 · 三层任务奖励 + 31 级地形 ══════════════ -->
+<section class="slide" data-time="6:15–7:07 · 52 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>05</b> / Q2 落地 · 通用越障</div>
+  <div class="qtag">row2p_p40w40_v1 · 512 × 24</div>
+  <h1>从“跟着速度走”到“<em>完整站上去</em>”</h1>
+
+  <div class="side" style="left:72px;top:200px;width:700px">
+    <div style="font:400 16px/1 var(--mono);letter-spacing:.1em;color:var(--cy);margin-bottom:16px">任务奖励的三层塑形</div>
+    <div style="border-left:2px solid var(--line2);padding-left:24px">
+      <div style="margin-bottom:22px"><div class="tag cy">底座</div><p style="margin-top:8px;font-size:22px;line-height:1.55;color:var(--ink2)">速度跟踪 + 相对<b style="color:var(--ink)">地形表面</b>的机身高度 0.43 m（权重 −4）。<br>用世界 z 锚高，爬上台面反被误罚。</p></div>
+      <div style="margin-bottom:22px"><div class="tag cy">过程</div><p style="margin-top:8px;font-size:22px;line-height:1.55;color:var(--ink2)">沿赛道净进度 <b style="color:var(--ink)">+8</b>、爬升高度 <b style="color:var(--ink)">+10</b>，给质心稠密梯度。</p></div>
+      <div><div class="tag cy">终态</div><p style="margin-top:8px;font-size:22px;line-height:1.55;color:var(--ink2)">有效通过 <b style="color:var(--ink)">+50</b>，配合倾角 1.05 rad / 越界终止：<br>“完整过障并站稳”才是终点。</p></div>
+    </div>
+  </div>
+
+  <div class="side" style="left:836px;top:200px;width:692px">
+    <div style="font:400 16px/1 var(--mono);letter-spacing:.1em;color:var(--am);margin-bottom:16px">31 级难度 · d = k / 30</div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:24px 26px">
+      <table class="cmp" style="width:100%">
+        <tr><td class="k">高台 / 高墙</td><td class="v">0.10 + 0.30 d</td><td class="v" style="color:var(--cy)">row 30 = 40 cm</td></tr>
+        <tr><td class="k">斜坡</td><td class="v">20 + 25 d °</td><td class="v" style="color:var(--cy)">row 18 = 35°</td></tr>
+        <tr><td class="k">楼梯单级</td><td class="v">0.10 + 0.20 d</td><td class="v" style="color:var(--cy)">row 15 = 30 cm</td></tr>
+      </table>
+      <p style="margin-top:18px;font-size:21px;line-height:1.55;color:var(--ink2)">初始出生等级均匀覆盖 0–30 行，高台/墙/坡/楼梯混在同一批 512 个环境里——既保证最高档有接触样本，又保留通用动作库。</p>
+    </div>
+    <div style="margin-top:20px;padding:18px 22px;background:rgba(87,217,201,.08);border-left:3px solid var(--cy);border-radius:0 8px 8px 0;font-size:22px;line-height:1.55;color:#d8f6f1">
+      最高档怎么训都过不去时，先去查<b style="color:var(--cy)">地形生成器有没有真正采到目标几何</b>，再谈算力和结构。
+    </div>
+  </div>
+
+  <div class="take" style="bottom:66px"><p>后来 40 cm 高台在单关评测拿下 200 分，但整场连续路线里仍会 stall——<b>能力档位不等于整场成绩</b>，这两条我们分开记录。</p></div>
+  <div class="foot">evidence/platform40_{agent,env,manifest}.yaml；续训 st30 model_600 → model_750。视频见下页。</div>
+  <div class="pg">08</div>
+</section>
+
+<!-- ══════════════ 09 · 40 cm 视频 ══════════════ -->
+<section class="slide" data-time="7:07–7:22 · 15 秒（含 6.94 s 视频）">
+  <div class="rail"></div>
+  <div class="kicker"><b>05</b> / Q2 落地 · 实测</div>
+  <div class="qtag">adaptive vx 基准 0.5 m/s</div>
+  <h1>40 cm：走过最高一行</h1>
+
+  <video class="media" style="left:72px;top:196px;width:1040px;height:470px;object-fit:contain" controls preload="metadata" playsinline
+         poster="../media/platform40.jpg" src="../media/platform40.mp4"></video>
+  <div class="side" style="left:1152px;top:196px;width:376px">
+    <div class="stat cy" style="margin-bottom:16px"><div class="lb">专家</div><div class="vl" style="font-size:26px">row2p_p40w40_v1</div><div class="df">一套权重覆盖 40 cm 高台、40 cm 高墙、35° 坡与中低档楼梯沟壑</div></div>
+    <div class="stat" style="margin-bottom:16px"><div class="lb">专项保留</div><div class="vl" style="font-size:26px">30 cm 楼梯 / 沟壑</div><div class="df">接触动力学差异大：节拍攀爬、0.8 m/s 高速冲跃，单独微调</div></div>
+    <div class="stat good"><div class="lb">Part 2 官方单关评测</div><div class="vl">1200 <small>/ 1300</small></div><div class="df">仅 45° 极限坡按约定未做</div></div>
+  </div>
+  <div class="take" style="bottom:60px"><p>视频配置：<code style="font-family:var(--mono);font-size:.9em">vt_mode_v2</code> + row2p，adaptive 基准 0.5 m/s。<b>播放时停讲</b>，讲在前后两页。</p></div>
+  <div class="foot">视频与判定 sidecar：media_manifest.json、platform40_sidecar.json。</div>
+  <div class="pg">09</div>
+</section>
+
+<!-- ══════════════ 10 · 系统串联 ══════════════ -->
+<section class="slide" data-time="7:22–8:17 · 55 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>06</b> / Q3 落地 · 系统与衔接</div>
+  <div class="qtag">唯一路线定义 · 33 段</div>
+  <h1>杀手不是障碍，是<em>交接那一刻</em></h1>
+
+  <div class="flow" style="left:72px;top:200px">
+    <div class="node"><div class="t">外环</div><div class="d">路线航点 + 世界位姿<br><span style="color:var(--muted);font-size:18px">只生成指令，不进策略</span></div></div>
+    <div class="arw">→</div>
+    <div class="node"><div class="t">有界指令</div><div class="d">浅角对线 ≤25°<br><span style="color:var(--muted);font-size:18px">距离近则减速</span></div></div>
+    <div class="arw">→</div>
+    <div class="node"><div class="t">执行</div><div class="d">flat 快跑 / 锁轮精对线<br><span style="color:var(--muted);font-size:18px">/policy_switch ≈3 ms 热切</span></div></div>
+  </div>
+
+  <div class="side" style="left:72px;top:376px;width:700px">
+    <div style="font:400 16px/1 var(--mono);letter-spacing:.1em;color:var(--am);margin-bottom:14px">排障案例 · 木桥东平台交接</div>
+    <table class="cmp">
+      <tr><th>方案</th><th>结果</th></tr>
+      <tr><td class="k">先零/负指令刹停再切</td><td class="v down">平台边缘回溜约 0.2 m</td></tr>
+      <tr><td class="k">全速直接切</td><td class="v down">冲过平台，漂移 1.70 m</td></tr>
+      <tr><td class="k">距目标 25 cm 降到 0.12 m/s<br>边前进边热切</td><td class="v up">漂移 0.23 m</td></tr>
+    </table>
+  </div>
+
+  <div class="side" style="left:836px;top:376px;width:692px">
+    <div style="font:400 16px/1 var(--mono);letter-spacing:.1em;color:var(--cy);margin-bottom:14px">排障案例 · 限高杆</div>
+    <p style="font-size:22px;line-height:1.6;color:var(--ink2)">旧版直立对准后直接降姿穿杆，降姿的关节运动带偏航向，过杆偏角 3° 量级、擦碰横杆。<br><br>验收版改成三步：<b style="color:var(--ink)">降到低姿态 → 零指令停稳复核偏角 &lt;1° → 再直行</b>。<br>实测偏角 <b style="color:var(--gr)">0.69°</b>，Part 1 全程 <b style="color:var(--gr)">263.80 s、0 次恢复</b>、返回起点。</p>
+    <p style="margin-top:16px;font-size:20px;line-height:1.5;color:var(--muted)">原则：把“对准”和“穿杆”拆成两个可复核的状态，而不是让一个动作同时负责两件事。</p>
+  </div>
+
+  <div class="take" style="bottom:66px"><p>让<b>擅长低速闭环的那个策略</b>去收尾。交接不是“切过去就行”，而是设计谁在什么速度、什么位置接手。</p></div>
+  <div class="foot">路线唯一来源 part2_route_plan.py；交接数据见 VT-RECIPE.md 路线 handover 表；Part 1 记录 evidence/part1_v104.json。</div>
+  <div class="pg">10</div>
+</section>
+
+<!-- ══════════════ 11 · 梅花桩 v1 ══════════════ -->
+<section class="slide" data-time="8:17–9:41 · 84 秒（含 18 s 视频）">
+  <div class="rail"></div>
+  <div class="kicker"><b>07</b> / Q4 · 第一代视觉学生</div>
+  <div class="qtag">route2_v3 · 早期长桩场地</div>
+  <h1>先把“脚下”预测出来——然后撞墙</h1>
+
+  <video class="media" style="left:72px;top:196px;width:620px;height:466px;object-fit:contain" controls preload="metadata" playsinline
+         poster="../media/plum_gait_early.jpg" src="../media/plum_gait_early.mp4"></video>
+  <div class="cap" style="left:72px;top:674px;width:620px">第一代步态已经学得很漂亮：轮足交替跨越。问题不在步态，在信息。</div>
+
+  <div class="side" style="left:732px;top:196px;width:796px">
+    <div style="font:400 16px/1 var(--mono);letter-spacing:.1em;color:var(--cy);margin-bottom:12px">训练链路 · 两阶段扫描蒸馏</div>
+    <div style="display:flex;gap:12px;align-items:stretch;margin-bottom:16px">
+      <div class="node" style="flex:1"><div class="t">01 特权教师</div><div class="d" style="font-size:20px">1764 维轮边细扫描<br>+ 342 本体 → 16 动作<br><span style="color:var(--muted)">m1600</span></div></div>
+      <div class="arw" style="align-self:center">→</div>
+      <div class="node" style="flex:1"><div class="t">02 深度学生</div><div class="d" style="font-size:20px">1×48×64 深度 → CNN<br>预测 1764 维扫描<br>拼本体 → 冻结教师</div></div>
+    </div>
+    <div class="stat" style="padding:15px 20px;margin-bottom:14px"><div class="lb">DAgger 数据与精度</div><div class="vl" style="font-size:26px">25.92 万 + 9.6 万帧 · RMSE 2.5 cm</div><div class="df">20 epochs，batch 1024；出生 dy ±10 cm / yaw ±5°，深度加 dropout / noise / delay</div></div>
+    <div class="stat bad" style="padding:15px 20px">
+      <div class="lb">诊断 · 加上深度丢包训练之后</div>
+      <div class="vl" style="font-size:23px;line-height:1.35">扫描误差 15.31 cm → <span style="color:var(--gr)">2.13 cm</span>，裁判丢包测试仍 0/4</div>
+      <div class="df">感知修好了，行为没修好——瓶颈不在这条 CNN 上。</div>
+    </div>
+  </div>
+
+  <div class="take" style="bottom:58px"><p>两个根因：<b>冻结教师</b>把 2% 像素丢包放大成 0.084 的动作偏移；<b>视野错配</b>——1764 条射线只覆盖每轮 20×20 cm，而相机看的是前方 3 m。</p></div>
+  <div class="foot">原视频 artifacts/plum-strict/p1/videos/judge_plum_route2_v3_robot.mp4，HUD JUDGE=success；报告 evidence/plum_early_report.md。</div>
+  <div class="pg">11</div>
+</section>
+
+<!-- ══════════════ 12 · 梅花桩 v2 ══════════════ -->
+<section class="slide" data-time="9:41–10:53 · 72 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>08</b> / Q4 · 第二代：直接深度</div>
+  <div class="qtag">plum_depth_final_v1</div>
+  <h1>扔掉扫描头，让深度<em>直接</em>进 Actor</h1>
+
+  <div class="side" style="left:72px;top:196px;width:760px">
+    <div style="font:400 16px/1 var(--mono);letter-spacing:.1em;color:var(--cy);margin-bottom:14px">网络：388 → 512/256/128 → 16</div>
+    <div class="flow" style="position:static">
+      <div class="node"><div class="t">深度</div><div class="d" style="font-size:20px">1×48×64<br>CNN 16/32/64<br>k5/3/3 s2 → GAP<br><span style="color:var(--cy)">64 维</span></div></div>
+      <div class="arw">+</div>
+      <div class="node"><div class="t">本体历史</div><div class="d" style="font-size:20px">54 × 6<br><span style="color:var(--cy)">324 维</span><br><span style="color:var(--muted)">无 command、无扫描</span></div></div>
+      <div class="arw">→</div>
+      <div class="node"><div class="t">Actor MLP</div><div class="d" style="font-size:20px">388 → 512 → 256<br>→ 128 → 16</div></div>
+    </div>
+    <p style="margin-top:18px;font-size:21px;line-height:1.55;color:var(--ink2)">247 维特权地形只进 Critic；深度与动作一起继续 PPO。相机契约：fovy 70°、64×48、0.10–3.0 m——训练和判分渲染同一分布，不做相机域随机化。</p>
+  </div>
+
+  <div class="side" style="left:872px;top:196px;width:656px">
+    <div style="font:400 16px/1 var(--mono);letter-spacing:.1em;color:var(--am);margin-bottom:12px">三类奖励作弊 · 逐个堵</div>
+    <div style="font-size:21px;line-height:1.5;color:var(--ink2)">
+      <p style="padding:12px 0;border-top:1px solid var(--line)"><b class="tag red">飞跃</b>　只看前进步进度的奖励，不检查支撑面 → 从桩阵上方飞过去，机身高冲到 0.88 m。</p>
+      <p style="padding:12px 0;border-top:1px solid var(--line)"><b class="tag red">罚站</b>　入口平台站 21 s 不动，光靠航向项白拿 +11.8，而通关终态只有 +10。<br>→ 航向项加 <code style="font-family:var(--mono);color:var(--am)">v_x &gt; 0.254</code> 门控。</p>
+      <p style="padding:12px 0;border-top:1px solid var(--line)"><b class="tag red">蹭边</b>　非轮接触 &gt;1 N 终止、轮触边缘 &lt;5 cm 惩罚。</p>
+    </div>
+  </div>
+
+  <div class="side" style="left:72px;top:560px;width:1456px;display:flex;gap:18px">
+    <div class="stat" style="flex:1"><div class="lb">BC 预热</div><div class="vl" style="font-size:26px">122.88 万帧 · RMSE 0.125</div><div class="df">BC 只拟合动作均值；RSL-RL 默认 std=1.0，必须显式重置为 0.10，否则第一步采样就冲垮步态</div></div>
+    <div class="stat" style="flex:1"><div class="lb">PPO 微调</div><div class="vl" style="font-size:26px">1024 × 32 · 1200 it · model_1150</div><div class="df">lr 3e−5 fixed，clip 0.2，γ 0.99，λ 0.95</div></div>
+    <div class="stat good" style="flex:1"><div class="lb">交付</div><div class="vl" style="font-size:26px">标准初态 success 200</div><div class="df" style="color:var(--am)">边界如实记录：±5 cm / ±2° 的 15 格初态网格仅 2/15</div></div>
+  </div>
+
+  <div class="take" style="bottom:62px"><p>从“预测脚下扫描”改成“直接喂深度”，本质是承认<b>相机独有的提前量不该被压成一个脚下的小窗口</b>。</p></div>
+  <div class="foot">配置 evidence/plum_stage2_{agent,env}.yaml、training_recipe.json；出口交接 x≥6.85 切轮式专家下降。</div>
+  <div class="pg">12</div>
+</section>
+
+<!-- ══════════════ 13 · START / PIE / PUMA ══════════════ -->
+<section class="slide" data-time="10:53–11:51 · 58 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>09</b> / Q4 · 回头看文献</div>
+  <div class="qtag">浙大系列 · 三条不同路线</div>
+  <h1>我们撞的墙，前沿文献各有<em>一堵正面回答</em></h1>
+
+  <div class="plate" style="left:72px;top:192px;width:448px;height:246px"><img src="../figures/start_fig3.png" alt="START TR-Net 重建与精修"></div>
+  <div class="side" style="left:72px;top:446px;width:448px">
+    <div class="tag cy" style="margin-bottom:10px">START · RA-L 2026</div>
+    <p style="font-size:20px;line-height:1.52;color:var(--ink2)">重建<b style="color:var(--ink)">机身坐标下的完整局部高程图</b>，不是轮边小窗：GRU 记住刚看过的桩，粗图 MSE + U-Net L1 精修边缘，AdaSmpl 把真值图渐换成预测图。<br><span style="color:var(--cy)">回应第一代：覆盖、记忆、容忍误差。</span></p>
+  </div>
+
+  <div class="plate" style="left:560px;top:192px;width:448px;height:246px"><img src="../figures/pie_fig2.png" alt="PIE 隐式-显式框架"></div>
+  <div class="side" style="left:560px;top:446px;width:448px">
+    <div class="tag am" style="margin-bottom:10px">PIE · RA-L 2024</div>
+    <p style="font-size:20px;line-height:1.52;color:var(--ink2)">显式估速度、足高，隐式编码地形与上下文；<b style="color:var(--ink)">重建下一帧本体观测</b>，让身体接触后的反馈回头修正视觉理解。<br><span style="color:var(--am)">训练期就让可部署感知参与控制。</span></p>
+  </div>
+
+  <div class="plate" style="left:1048px;top:192px;width:480px;height:246px"><img src="../figures/puma_fig2.png" alt="PUMA 落足先验框架"></div>
+  <div class="side" style="left:1048px;top:446px;width:480px">
+    <div class="tag am" style="margin-bottom:10px">PUMA · RA-L 2026</div>
+    <p style="font-size:20px;line-height:1.52;color:var(--ink2)">从支撑面候选锚点给出极坐标落足先验，PAS 渐进替换真值，多 Critic 分账——<b style="color:var(--ink)">给“往哪踩”的提示，不写死整条腿的轨迹</b>。</p>
+  </div>
+
+  <div class="side" style="left:72px;top:648px;width:1456px">
+    <div style="display:flex;gap:20px">
+      <div class="stat" style="padding:14px 22px"><div class="lb">START 回应</div><div class="vl" style="font-size:24px">覆盖 · 记忆 · 容忍误差</div></div>
+      <div class="stat" style="padding:14px 22px"><div class="lb">PIE 回应</div><div class="vl" style="font-size:24px">可部署感知参与训练</div></div>
+      <div class="stat" style="padding:14px 22px"><div class="lb">PUMA 回应</div><div class="vl" style="font-size:24px">落脚引导而不锁轨迹</div></div>
+    </div>
+  </div>
+
+  <div class="take" style="bottom:52px"><p>不是三个“更好版本”，而是三个备选中间表示：缺<b>覆盖</b>选 START，缺<b>修正</b>选 PIE，缺<b>引导</b>选 PUMA。</p></div>
+  <div class="foot">Yu et al., RA-L 2026, arXiv:2512.13153 · Luo et al., RA-L 2024, arXiv:2408.13740 · Wang et al., RA-L 2026, arXiv:2601.15995。图注见 figures/manifest.json。</div>
+  <div class="pg">13</div>
+</section>
+
+<!-- ══════════════ 14 · 交付 ══════════════ -->
+<section class="slide" data-time="11:51–12:19 · 28 秒（含 19.48 s 视频）">
+  <div class="rail"></div>
+  <div class="kicker"><b>10</b> / 交付</div>
+  <div class="qtag">Part 1 限高杆 · Part 2 六桩与出口交接</div>
+  <h1>系统跑起来了</h1>
+
+  <video class="media" style="left:72px;top:190px;width:1020px;height:574px;object-fit:contain" controls preload="metadata" playsinline
+         poster="../media/delivery_reel.jpg" src="../media/delivery_reel.mp4"></video>
+  <div class="side" style="left:1132px;top:190px;width:396px">
+    <div class="stat good" style="margin-bottom:14px"><div class="lb">Part 1 · 自动路线</div><div class="vl">263.80 <small>s</small></div><div class="df">0 次摔倒恢复，返回起点；过杆偏角 0.69°</div></div>
+    <div class="stat good" style="margin-bottom:14px"><div class="lb">Part 2 · 单关评测</div><div class="vl">1200 <small>/ 1300</small></div><div class="df">六类官方判据；缺的是约定不做的 45° 坡</div></div>
+    <div class="stat"><div class="lb">演示复现</div><div class="vl" style="font-size:25px">resume_before · timeout_scale:=0</div><div class="df">任意障碍前断点开始；33 段逐档流</div></div>
+  </div>
+  <div class="take" style="bottom:56px"><p>前半段限高杆低姿态精对正，后半段六桩深度策略穿越 + 出口轮式专家接手。<b>播放时停讲。</b></p></div>
+  <div class="foot">片段来源 part1_v104.json、part2_v56_eval.json；片段不代表当前整场连续满分。</div>
+  <div class="pg">14</div>
+</section>
+
+<!-- ══════════════ 15 · 三点收获 ══════════════ -->
+<section class="slide" data-time="12:19–13:08 · 49 秒">
+  <div class="rail"></div>
+  <div class="kicker"><b>11</b> / 收获</div>
+  <div class="qtag">回到开头四个问题</div>
+  <h1>三件我真正记住的事</h1>
+
+  <div class="side" style="left:72px;top:210px;width:1456px">
+    <div style="display:flex;gap:48px;align-items:flex-start;padding:28px 0;border-bottom:1px solid var(--line)">
+      <div style="font:400 44px/1 var(--mono);color:var(--cy);min-width:70px">01</div>
+      <div><h3 style="font-size:31px;margin-bottom:8px">信息结构决定中间表示</h3>
+      <p style="font-size:22px;line-height:1.55;color:var(--ink2)">本体历史回答“脚下正在发生什么接触”，前视深度回答“前方还没接触的几何”。中间表示一旦裁掉传感器独有的维度，再好的网络也补不回来。</p></div>
+    </div>
+    <div style="display:flex;gap:48px;align-items:flex-start;padding:28px 0;border-bottom:1px solid var(--line)">
+      <div style="font:400 44px/1 var(--mono);color:var(--cy);min-width:70px">02</div>
+      <div><h3 style="font-size:31px;margin-bottom:8px">奖励、采样与终止是同一个系统</h3>
+      <p style="font-size:22px;line-height:1.55;color:var(--ink2)">平地“不转就不漂”、梅花桩“飞跃骗进度、罚站骗航向”——策略总会找到最省力那条路。门控、课程和严格终态必须一起设计。</p></div>
+    </div>
+    <div style="display:flex;gap:48px;align-items:flex-start;padding:28px 0">
+      <div style="font:400 44px/1 var(--mono);color:var(--cy);min-width:70px">03</div>
+      <div><h3 style="font-size:31px;margin-bottom:8px">用固定探针代替主观感觉</h3>
+      <p style="font-size:22px;line-height:1.55;color:var(--ink2)">共面 vs 速度、model_0 vs model_199、感知修好但行为没修好——每一个选择背后都是一次可复现的对比，而不是“看起来更稳了”。</p></div>
+    </div>
+  </div>
+
+  <div class="take" style="bottom:56px"><p>下一步：带时序记忆的局部高程表示（START）、更宽的入口出生包络（2/15 → ?），以及 40 cm 平台的整场连续通过。</p></div>
+  <div class="foot">谢谢。备查页：文献全景、平地配方、越障与六桩配方、移植与数值契约。</div>
+  <div class="pg">15</div>
+</section>
+
+<!-- ══════════════ B1 · 文献全景 ══════════════ -->
+<section class="slide backup" data-time="备查 A">
+  <div class="rail"></div>
+  <div class="kicker"><b>备查 A</b> / 29 篇文献怎么读</div>
+  <h1 style="font-size:46px">按研究群落读，不按网络结构背</h1>
+  <div class="side" style="left:72px;top:190px;width:1456px">
+    <table class="dense">
+      <tr><th>群落</th><th>连续演进的问题</th><th>代表工作</th></tr>
+      <tr><td class="k">KAIST · Hyun Myung</td><td>从本体历史理解接触 → 用于恢复 → 补外部感知</td><td>DreamWaQ → DreamRiser → DreamWaQ++</td></tr>
+      <tr><td class="k">上海 AI Lab · 庞江淼</td><td>改进运动响应表示；改进抗扰训练分布</td><td>HIM → H-Infinity（同一 arXiv，注意改题）</td></tr>
+      <tr><td class="k">CMU Pathak 支线</td><td>动力学适应 → 自我中心视觉 → 敏捷跑酷</td><td>RMA → Egocentric Vision → Extreme Parkour</td></tr>
+      <tr><td class="k">浙大 · 吴俊 / 朱秋国</td><td>估什么 → 如何融合 → 如何记忆盲区 → 如何保留稀疏几何 → 落足先验</td><td>Key Estimation → PIE → MOVE → START → PUMA → LF2WB</td></tr>
+      <tr><td class="k">ETH RSL · Hutter</td><td>训练效率、感知可靠性、精确落足、规划+RL</td><td>2019 sim2real → 2020 教师学生 → 2022 鲁棒感知 → DTC / Risky Terrains</td></tr>
+      <tr><td class="k">单列对照</td><td>任务定义与控制接口有时比网络更关键</td><td>Robot Parkour Learning · Blind Stair Climbing · Rapid Locomotion</td></tr>
+    </table>
+    <p style="margin-top:22px;font-size:20px;line-height:1.6;color:var(--muted)">易混点：历史堆叠 ≠ HIM；隐变量 ≠ 摩擦系数标签；下一帧预测 ≠ 多步规划；深度图 / scandot / 局部高程图 / 轮边细扫描的视野不能互相无损替换。完整标题、版本与链接见 research/papers.json。</p>
+  </div>
+  <div class="pg">A1</div>
+</section>
+
+<!-- ══════════════ B2 · 平地配方 ══════════════ -->
+<section class="slide backup" data-time="备查 B">
+  <div class="rail"></div>
+  <div class="kicker"><b>备查 B</b> / 平地与锁轮完整参数</div>
+  <h1 style="font-size:46px">VT v5 与 locked12</h1>
+  <div class="side" style="left:72px;top:190px;width:700px">
+    <table class="dense">
+      <tr><th>VT v5</th><th>取值</th></tr>
+      <tr><td class="k">规模</td><td>4096 envs × 24 步；本阶段预算 400 迭代</td></tr>
+      <tr><td class="k">初始化</td><td>从 v4 model_600 续训，选 model_800</td></tr>
+      <tr><td class="k">优化</td><td>lr 1e−3 adaptive，clip 0.2，γ 0.99，λ 0.95，5×4</td></tr>
+      <tr><td class="k">奖励</td><td>线速度 +2 exp(−e²/0.25)；yaw +2.5 exp(−e²/0.08)；姿态 −1.2；腿姿 −0.8；旋转漂移 −1（带门控）</td></tr>
+      <tr><td class="k">回合</td><td>20 s；每 5 s 重采样，10% 站立</td></tr>
+      <tr><td class="k">历史负结果</td><td>v8 以实际 yaw 为跟随目标 → 学会不转，已回退</td></tr>
+    </table>
+  </div>
+  <div class="side" style="left:820px;top:190px;width:708px">
+    <table class="dense">
+      <tr><th>locked12</th><th>取值</th></tr>
+      <tr><td class="k">结构</td><td>输入 342 → 270，输出 16 → 12，critic 243</td></tr>
+      <tr><td class="k">微调</td><td>1024 envs × 64 步，预算 200 迭代</td></tr>
+      <tr><td class="k">选择</td><td>model_0（剪枝初始化）；微调后低速过冲</td></tr>
+      <tr><td class="k">运行时</td><td>轮 PD 保持切换瞬间角度，dq*=0，kp 80 / kd 3</td></tr>
+      <tr><td class="k">部署</td><td>16 路 adapter 补齐轮动作，C++ 侧忽略零</td></tr>
+      <tr><td class="k">分工</td><td>长直线 flat；障碍前精对线 locked12</td></tr>
+    </table>
+    <p style="margin-top:20px;font-size:20px;line-height:1.6;color:var(--muted)">自研 VT 与锁轮实验不等于官方 flat 权重也是自训；长直线仍保留官方 flat 作为实用基线。</p>
+  </div>
+  <div class="pg">B1</div>
+</section>
+
+<!-- ══════════════ B3 · 越障与六桩配方 ══════════════ -->
+<section class="slide backup" data-time="备查 C">
+  <div class="rail"></div>
+  <div class="kicker"><b>备查 C</b> / 越障与六桩配方</div>
+  <h1 style="font-size:46px">奖励分解与判据口径</h1>
+  <div class="side" style="left:72px;top:190px;width:700px">
+    <table class="dense">
+      <tr><th>六桩最终模型</th><th>取值</th></tr>
+      <tr><td class="k">奖励</td><td>r = max(0, 0.02·Σ wᵢrᵢ)；前进 +1.5；航向 +0.5（vx&gt;0.254 门控）；碰撞 −10（&gt;0.1 N）；边缘 −1（&lt;5 cm）；通过 +500</td></tr>
+      <tr><td class="k">终止</td><td>非轮接触 &gt;1 N；倾角 &gt;1.05 rad；轮底 &lt;5 cm；车道 0.7 m；24 s 超时</td></tr>
+      <tr><td class="k">成功</td><td>完成出口、四轮回地、机身高度正常、保持 20 步 = 0.4 s</td></tr>
+      <tr><td class="k">地形</td><td>早期填隙课程 0 → 0.40 m；最终固定官方六桩，所有行 difficulty_range [1,1]</td></tr>
+      <tr><td class="k">出生</td><td>x −2.3…−2.1 m，y ±0.1 m，yaw ±5°，初速度 0</td></tr>
+    </table>
+  </div>
+  <div class="side" style="left:820px;top:190px;width:708px">
+    <table class="dense">
+      <tr><th>口径提醒</th><th>说明</th></tr>
+      <tr><td class="k">+10 ≠ 总回报</td><td>通关项 500 × dt 0.02 = 单步 +10；其他项求和后总回报未必为 10</td></tr>
+      <tr><td class="k">静止 21 s</td><td>航向项白拿 +11.8 是奖励漏洞诊断，不是受控的成功/失败对照</td></tr>
+      <tr><td class="k">2/15</td><td>±5 cm / ±2° 网格是确定性策略的初态诊断，不是随机成功率</td></tr>
+      <tr><td class="k">311/316</td><td>训练记录成功率；标准初态 success 200；三者分布不同</td></tr>
+      <tr><td class="k">倾角</td><td>训练终止 1.05 rad；judge 阈值 75°，两者不同</td></tr>
+      <tr><td class="k">40 cm 平台</td><td>单关通过；整场 33 段为明确记录的临时跳过，不计为通过</td></tr>
+    </table>
+  </div>
+  <div class="pg">C1</div>
+</section>
+
+<!-- ══════════════ B4 · 移植与数值契约 ══════════════ -->
+<section class="slide backup" data-time="备查 D">
+  <div class="rail"></div>
+  <div class="kicker"><b>备查 D</b> / 移植范围与数值契约</div>
+  <h1 style="font-size:46px">哪些是移植，哪些是参考</h1>
+  <div class="side" style="left:72px;top:190px;width:1456px">
+    <table class="dense">
+      <tr><th>方法</th><th>本仓能支持的关系</th><th>不能说的话</th></tr>
+      <tr><td class="k">HIM</td><td>algorithms/him/ 完整移植并训练过；32 prototypes、Sinkhorn、swap loss、估计器与 PPO 分账</td><td>不能把全部交付策略统称为 HIM</td></tr>
+      <tr><td class="k">DreamWaQ</td><td>阅读 CENet 显式速度 + 隐上下文设计；参考本地轮足衍生仓</td><td>没有复现论文性能的证据</td></tr>
+      <tr><td class="k">Extreme Parkour</td><td>教师—学生、奖励与课程迁移；学生后期继续 PPO</td><td>没有论文同款视觉 GRU 与航向预测器</td></tr>
+      <tr><td class="k">START / PIE / PUMA</td><td>本轮补充的方法对照，用于解释取舍</td><td>不能补写成当时已采用的核心算法</td></tr>
+      <tr><td class="k">torch 2.14.1</td><td>train / demo / eval 统一版本；C++ EGL 深度渲染与 Python mujoco.Renderer 逐位一致</td><td>2.12 下六桩轨迹会在第三根附近分化</td></tr>
+      <tr><td class="k">部署输入</td><td>本体 + 模拟深度；世界位姿只生成导航指令</td><td>策略网络不读位姿、高程图、接触力真值</td></tr>
+    </table>
+    <p style="margin-top:22px;font-size:20px;line-height:1.6;color:var(--muted)">复现入口：train/UPSTREAM.md、demo/UPSTREAM.md、docs/defense/sources.md、media_manifest.json。</p>
+  </div>
+  <div class="pg">D1</div>
+</section>
+
+</div>
+
+<div id="bar">
+  <button onclick="go(n-1)">←</button>
+  <span id="ctr"></span>
+  <button onclick="go(n+1)">→</button>
+  <span class="sep">|</span>
+  <button onclick="vid()">视频 V</button>
+  <button onclick="fs()">全屏 F</button>
+  <span class="sep">|</span>
+  <span>方向键翻页 · 11 页主讲 + 4 页备查</span>
+</div>
+<div id="hint"></div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+let n=0;
+const stage=document.getElementById('stage');
+function fit(){
+  const k=Math.min(innerWidth/1600,(innerHeight-34)/900);
+  stage.style.transform=`scale(${k})`;
+  stage.style.left=((innerWidth-1600*k)/2)+'px';
+  stage.style.top=((innerHeight-34-900*k)/2)+'px';
+}
+function go(i){
+  if(i<0||i>=slides.length)return;
+  slides[n].querySelectorAll('video').forEach(v=>v.pause());
+  n=i;
+  slides.forEach((s,j)=>s.classList.toggle('on',j===n));
+  const t=slides[n].dataset.time||'';
+  document.getElementById('ctr').textContent=`${n+1} / ${slides.length}${t?'　·　'+t:''}`;
+  history.replaceState(null,'','#'+(n+1));
+}
+function vid(){const v=slides[n].querySelector('video');if(v){v.paused?v.play():v.pause();}}
+function fs(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}
+addEventListener('resize',fit);
+addEventListener('keydown',e=>{
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();go(n+1);}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(n-1);}
+  else if(e.key.toLowerCase()==='v')vid();
+  else if(e.key.toLowerCase()==='f')fs();
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(slides.length-1);
+});
+fit();go(Math.max(0,Math.min(slides.length-1,(+location.hash.slice(1)||1)-1)));
+</script>
+</body>
+</html>
