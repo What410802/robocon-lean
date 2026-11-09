@@ -141,7 +141,7 @@ table.dense td.k{color:var(--ink);white-space:nowrap}
   <div class="qtag">这条线贯穿全部 13 页</div>
   <h1>备赛不是四个孤立任务，是<em>四条信息缺口</em></h1>
   <div class="qlist">
-    <div class="qrow"><i>Q1</i><div><h3>没有相机时，脚下是什么接触？</h3><p>单帧本体观测有歧义。用历史 + 训练信号补出“接触上下文”。<br>对应：平地策略、RecoveryLoco 式鲁棒性</p></div></div>
+    <div class="qrow"><i>Q1</i><div><h3>没有相机时，脚下是什么接触？</h3><p>单帧本体观测有歧义。用历史 + 训练信号补出“接触上下文”。<br>对应：平地速度策略、12 DoF 锁轮专家</p></div></div>
     <div class="qrow"><i>Q2</i><div><h3>跳沟、爬台这些动作，怎么才能学出来？</h3><p>逐帧速度跟踪会惩罚必要的减速与抬头。换成任务方向奖励 + 难度课程。<br>对应：通用越障专家、40 cm 高台</p></div></div>
     <div class="qrow"><i>Q3</i><div><h3>单关专家，怎么串成能跑完的整场？</h3><p>杀手不是障碍，是交接瞬间的动量与姿态。外环导航 + 有界指令 + 热切换。<br>对应：Part 1 路线、Part 2 33 段</p></div></div>
     <div class="qrow"><i>Q4</i><div><h3>必须看路落脚时，视觉以什么形式进入控制？</h3><p>直接重建脚下扫描，还是直接喂深度？我们两代都做了。<br>对应：梅花桩 v1 → v2</p></div></div>
@@ -296,20 +296,20 @@ table.dense td.k{color:var(--ink);white-space:nowrap}
 
   <div class="plate" style="left:72px;top:200px;width:540px;height:470px"><img src="../figures/extreme_parkour_fig2.png" alt="Extreme Parkour 两阶段架构"></div>
 
-  <div class="annot" style="left:660px;top:200px;width:868px">
+  <div class="annot" style="left:660px;top:196px;width:868px">
     <span class="n">1</span><h3>Phase 1 · 换掉奖励，动作才允许出现</h3>
     <p>越障要先减速、抬头、蓄力。逐帧速度跟踪会把这些都当误差扣掉。EP 用地形路点给出目标方向 <code>d̂</code>，奖励世界系速度的投影并在指令处截断，只要求“朝目标取得净进展”。配合踩边惩罚与难度课程，教师用便宜的 <code>scandot</code> 几何就能学出跑酷。</p>
   </div>
-  <div class="annot" style="left:660px;top:392px;width:868px">
+  <div class="annot" style="left:660px;top:368px;width:868px">
     <span class="n">2</span><h3>Phase 2 · 为什么要蒸馏，而不是直接端到端</h3>
     <p>4000 个并行环境每步渲染深度太贵；而从零联合训练时，早期乱撞的状态让视觉特征根本学不稳。于是在学生自己访问到的状态上要教师标签（DAgger），并用教师航向防止输入分布突变。</p>
   </div>
-  <div class="annot" style="left:660px;top:596px;width:868px">
+  <div class="annot" style="left:660px;top:540px;width:868px">
     <span class="n">3</span><h3>本仓迁移了什么，没迁什么</h3>
     <p style="color:var(--am)">迁移：方向净进展奖励、边缘惩罚、教师—学生分阶段。<br>没迁：论文的视觉 GRU 与航向预测器；我们的学生是 CNN + 本体历史，后期继续 PPO。</p>
   </div>
 
-  <div class="take" style="bottom:66px"><p>奖励决定<b>动作能不能出现</b>，蒸馏决定<b>信息能不能换成部署传感器</b>。这是两件事，别混成一页流程图。</p></div>
+  <div class="take" style="bottom:56px"><p>奖励设计决定<b>动作能不能出现</b>；蒸馏决定这些动作能不能只靠相机复现。两者解决的是不同的问题，所以论文把它们放在两个阶段里。</p></div>
   <div class="foot">Cheng et al., ICRA 2024, arXiv:2309.14341。原文表 2：去掉内点奖励高台明显受损；去掉边缘惩罚踩边率 0.03 → 0.08。</div>
   <div class="pg">07</div>
 </section>
