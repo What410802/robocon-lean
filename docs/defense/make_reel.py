@@ -16,6 +16,7 @@ subprocess.run(['ffmpeg','-v','error','-y','-ss','3','-i',str(p/'capability_reel
 (p/'concat.txt').unlink()
 for id,*_ in parts: (p/f'{id}_background.png').unlink()
 m=json.loads((p.parent/'media_manifest.json').read_text()); file=p/'capability_reel.mp4'
+m=[x for x in m if x['id']!='capability_reel']
 m.append(dict(id='capability_reel',file='media/capability_reel.mp4',sha256=hashlib.sha256(file.read_bytes()).hexdigest(),duration_s=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',str(file)])),composition=[x[0] for x in parts],scope='三段独立证据的顺序展示；不是一次连续通过三个障碍；只加页外标题和等比例黑边，无加速'))
 (p.parent/'media_manifest.json').write_text(json.dumps(m,ensure_ascii=False,indent=2)+'\n')
 print(m[-1])

@@ -1,0 +1,418 @@
+{
+  "schema_version": 2,
+  "as_of": "2026-11-08",
+  "purpose": "答辩事实索引；不作为可执行训练配置。实际运行参数以随包保存的env/agent.yaml为准。",
+  "sources": [
+    {
+      "path": "train/src/alldog_mjlab/tasks/velocity/profiles/plum/depth.py",
+      "sha256": "d0afd45b08868749e0ebe79f534fc2a41ab1d746812721434c7cc6e9ea55656b"
+    },
+    {
+      "path": "train/src/alldog_mjlab/tasks/velocity/profiles/plum/depth_camera.py",
+      "sha256": "0fa458bae8225fedd69bb1a8ad4ed318f77fa43b8a75a06db52d7c1a9683222d"
+    },
+    {
+      "path": "train/src/alldog_mjlab/tasks/velocity/profiles/plum/teacher.py",
+      "sha256": "9d8d1ca4b148b37d478883d1b05e920fce6b743d896c4315598526aee5e7375b"
+    },
+    {
+      "path": "train/src/alldog_mjlab/tasks/velocity/profiles/plum/terrain.py",
+      "sha256": "c96aca066955022df6308cc51e7fcef8d500ccb0fb5cac80233efa0c299435b1"
+    },
+    {
+      "path": "train/src/alldog_mjlab/tasks/velocity/profiles/plum/curriculum.py",
+      "sha256": "e71b36aa79e035e0112228c0f3c802a16c3dcd0825b67383cbafce7ea01ea00c"
+    },
+    {
+      "path": "train/src/alldog_mjlab/tasks/velocity/profiles/plum/ep_rewards.py",
+      "sha256": "3a69e1faa73e6d087b1cad769b323785d8a50bf4121232002b8f41df589a3906"
+    },
+    {
+      "path": "train/src/alldog_mjlab/tasks/velocity/profiles/plum/runner.py",
+      "sha256": "5d6dc4e0c5836cb9942d7692f44ed32d2f1a4abd7ce7e2b33e3caa68b6de61b2"
+    },
+    {
+      "path": "train/src/alldog_mjlab/tasks/velocity/profiles/part2/predicates.py",
+      "sha256": "b2eb1fb759791b9d791d911ef8725d6de3918f8cfe763d9d4cf181ff1a626000"
+    },
+    {
+      "path": "docs/defense/evidence/plum_stage2_agent.yaml",
+      "sha256": "085fb8d99f9a819a46b1539fd2f9a2cbe8fef201d79cc29fb55c22b0a69e547b"
+    },
+    {
+      "path": "docs/defense/evidence/plum_stage2_env.yaml",
+      "sha256": "580934e85edf4c39e73fed0f72c8618c3cc6c3b2cca8b71eb2cee509684a2e63"
+    },
+    {
+      "path": "docs/defense/evidence/bc_depth_r4.json",
+      "sha256": "411af4aa60e9790b307344a4daa6bd0fdc579c2f2b5e0bd05bfc7971239c02c9"
+    },
+    {
+      "path": "docs/defense/evidence/plum_final_manifest.json",
+      "sha256": "64e84c92aaa00d69602047f8e2d4564cac68ca310a8102c1b5f5edd1d7c4f6fc"
+    },
+    {
+      "path": "docs/defense/evidence/him_historical_agent.yaml",
+      "sha256": "f94ba7d27a73492a44d4d143635a5c8d48dc40d23e620a15455d5651a60d7667"
+    },
+    {
+      "path": "docs/defense/evidence/vt_v5_agent.yaml",
+      "sha256": "650f4c117dccd08cffc16a555d92ceac91ab9888943948ade46f375709007b23"
+    },
+    {
+      "path": "docs/defense/evidence/vt_v5_env.yaml",
+      "sha256": "f451950f860c69cb72c43fedbdfe16c6de5c63e234e33b2365e1670380193a26"
+    },
+    {
+      "path": "docs/defense/evidence/locked12_agent.yaml",
+      "sha256": "0ddd19056a49555276bac78516d7059924062f83622112ad5abacd0269b8e29f"
+    },
+    {
+      "path": "docs/defense/evidence/locked12_env.yaml",
+      "sha256": "301ce79a2f41c9b8ef13c6bbbf3e3b2a32ded30e8d93953b713dcf1ffdad4152"
+    },
+    {
+      "path": "docs/defense/evidence/platform40_agent.yaml",
+      "sha256": "d75be537eb6a529a99c7b2bc3349c8617db9f84ef5affe4f9a7725664de98654"
+    },
+    {
+      "path": "docs/defense/evidence/platform40_env.yaml",
+      "sha256": "83f6cdca51474449b66aded1eb3b2fe311cc6b5a98374ffee75c919c1f740fb7"
+    },
+    {
+      "path": "docs/defense/evidence/platform40_manifest.json",
+      "sha256": "ab9f880dbc3f3397e057162da07be00d8e1994f1c025e4c16673c41d496388d7"
+    },
+    {
+      "path": "docs/defense/evidence/plum_early_manifest.json",
+      "sha256": "2483f576763fbb43693932e7c2b1f14f2a99d2d9496f7dd4fd92a6cfe816b7e4"
+    },
+    {
+      "path": "docs/defense/evidence/plum_early_report.md",
+      "sha256": "d54a53f1dd5a55f06eb407f53f88465ec0737f47c5fcda9c4677b2d060ac5113"
+    },
+    {
+      "path": "docs/defense/evidence/vt_v5_manifest.json",
+      "sha256": "3a7e552158efa4e85c80e1ab1e4c950dcba689f5a5b6303cb90d383959e883e7"
+    },
+    {
+      "path": "docs/defense/evidence/locked12_manifest.json",
+      "sha256": "3eb6f5f6b74e7271a70af8f41587f1031029197b9d9db972ebe73c10d342d20b"
+    }
+  ],
+  "final_model": {
+    "kind": "PPO CNNModel",
+    "depth_chw": [
+      1,
+      48,
+      64
+    ],
+    "cnn_channels": [
+      16,
+      32,
+      64
+    ],
+    "cnn_kernels": [
+      5,
+      3,
+      3
+    ],
+    "cnn_strides": [
+      2,
+      2,
+      2
+    ],
+    "cnn_pool": "global average",
+    "depth_latent": 64,
+    "proprio_per_frame": 54,
+    "history": 6,
+    "proprio_total": 324,
+    "mlp_in": 388,
+    "mlp_hidden": [
+      512,
+      256,
+      128
+    ],
+    "activation": "ELU",
+    "action_dim": 16,
+    "action_semantics": {
+      "leg_position_residual": 12,
+      "wheel_velocity": 4
+    },
+    "critic_obs_dim": 247,
+    "actor_has_command": false,
+    "actor_has_privileged_scan": false,
+    "camera_cutoff_m": 3.0
+  },
+  "curriculum": {
+    "scope": "早期教师/引导地形设计；最终depth stage2固定官方难度",
+    "fixed_geometry": {
+      "cube_height_m": 0.2,
+      "cube_top_m": [
+        0.2,
+        0.2
+      ],
+      "cube_centers": "official six-cube staggered layout"
+    },
+    "open_gaps_m": [
+      0,
+      0.21,
+      0.2575,
+      0.305,
+      0.3525,
+      0.4
+    ],
+    "wheel_diameter_m": 0.206,
+    "current_controller": {
+      "window_episodes": 40,
+      "promote_rate_gte": 0.5,
+      "demote_rate_lte": 0.05,
+      "max_records_per_call": 4,
+      "cooldown_calls": 64
+    },
+    "final_run_difficulty_range": [
+      1.0,
+      1.0
+    ],
+    "final_run_all_rows_official": true,
+    "warning": "不把当前课程控制器、早期变体和最终固定地形训练说成同一次串行课程。"
+  },
+  "final_spawn": {
+    "stage": 2,
+    "location": "ground runway",
+    "root_pose_offset_from_default": {
+      "x_m": [
+        -2.3,
+        -2.1
+      ],
+      "y_m": [
+        -0.1,
+        0.1
+      ],
+      "z_m": [
+        -0.2,
+        -0.2
+      ],
+      "yaw_deg": [
+        -5,
+        5
+      ]
+    },
+    "root_velocity_all_zero": true,
+    "joint_position_offset_rad": [
+      -0.06,
+      0.06
+    ]
+  },
+  "rewards": {
+    "control_dt_s": 0.02,
+    "scale_rewards_by_dt": true,
+    "only_positive_runner_default": true,
+    "formula": "max(0, dt * sum_i(w_i * r_i))",
+    "command_vx_mps": [
+      0.65,
+      0.8
+    ],
+    "command_actor_observation": false,
+    "terms": {
+      "tracking_goal_vel": {
+        "weight": 1.5,
+        "raw": "min(vx_world,c)/(c+1e-5)"
+      },
+      "tracking_yaw": {
+        "weight": 0.5,
+        "raw": "1[vx_world > 0.25375] * exp(-abs(yaw))"
+      },
+      "lin_vel_z": {
+        "weight": -1.0,
+        "raw": "vz^2"
+      },
+      "body_ang_vel": {
+        "weight": -0.05,
+        "raw": "omega_x^2+omega_y^2"
+      },
+      "upright": {
+        "weight": -1.0,
+        "raw": "projected gravity xy squared"
+      },
+      "dof_acc": {
+        "weight": -2.5e-07
+      },
+      "collision": {
+        "weight": -10.0,
+        "force_threshold_n": 0.1,
+        "raw": "number of non-wheel bodies with contact"
+      },
+      "action_rate": {
+        "weight": -0.1
+      },
+      "delta_torques": {
+        "weight": -1e-07
+      },
+      "torques": {
+        "weight": -1e-05
+      },
+      "hip_pos": {
+        "weight": -0.5
+      },
+      "dof_error": {
+        "weight": -0.04,
+        "wheels_excluded": true
+      },
+      "feet_stumble": {
+        "weight": -1.0,
+        "raw": "any |Fxy| > 4|Fz|"
+      },
+      "feet_edge": {
+        "weight": -1.0,
+        "edge_margin_m": 0.05
+      },
+      "part2_clear": {
+        "weight": 500.0,
+        "isolated_success_step_contribution": 10.0
+      }
+    },
+    "caveat": "+10是成功项本身，经其他项求和后总奖励未必恰好为10。only_positive的实现场景以runner默认及原训练记录为依据，env.yaml本身不保存该环境开关。"
+  },
+  "terminations": {
+    "nonwheel_contact_force_n_gt": 1.0,
+    "bad_orientation_angle_rad_gt": 1.05,
+    "wheel_bottom_in_field_m_lt": 0.05,
+    "lane_abs_root_y_m_gt": 0.7,
+    "additional_failures": "strict side-out (wheels/root), judge-mirrored drop",
+    "bad_sim_state": {
+      "joint_vel_radps": 100,
+      "root_ang_vel_radps": 40,
+      "root_lin_vel_mps": 20
+    },
+    "success": {
+      "passed_field": true,
+      "exit_platform_seen": true,
+      "all_wheels_past_exit_m": 0.02,
+      "root_past_exit_m": 0.1,
+      "normal_root_height_m": [
+        0.3,
+        0.8
+      ],
+      "all_wheels_return_to_ground": true,
+      "continuous_hold_steps": 20,
+      "continuous_hold_s": 0.4
+    },
+    "truncations": {
+      "episode_length_s": 24,
+      "out_of_training_terrain": true
+    },
+    "note": "训练倾角阈值不是judge75°；训练接触终止阈值不同于碰撞塑形0.1N。"
+  },
+  "training_scale": {
+    "bc_batches": 5,
+    "bc_frames_per_batch": 245760,
+    "bc_frames_total": 1228800,
+    "bc_validation_action_rmse": 0.125141275,
+    "ppo_envs": 1024,
+    "ppo_steps_per_env": 32,
+    "transitions_per_iteration": 32768,
+    "planned_iterations": 1200,
+    "planned_transitions": 39321600,
+    "selected_checkpoint": "model_1150.pt",
+    "algorithm": {
+      "learning_rate": 3e-05,
+      "schedule": "fixed",
+      "clip": 0.2,
+      "gamma": 0.99,
+      "gae_lambda": 0.95,
+      "epochs": 5,
+      "mini_batches": 4,
+      "entropy_coef": 0.01,
+      "init_std": 0.1
+    },
+    "note": "计划交互预算不是训练实测耗时；选择点不等于最后迭代。"
+  },
+  "paper_scope": {
+    "HIM": "algorithm port and historical training branch",
+    "DreamWaQ": "paper and wheel-legged derivative code study; no blackW paper-performance reproduction claim",
+    "Extreme Parkour": "reward/curriculum/teacher-student ideas adapted; no GRU or paper heading predictor in final actor",
+    "final_main_algorithm": "PPO"
+  },
+  "flat_vt": {
+    "actor_history": 342,
+    "mlp": [
+      512,
+      256,
+      128
+    ],
+    "actions": 16,
+    "num_envs": 4096,
+    "steps_per_env": 24,
+    "stage_budget_iterations": 400,
+    "resumed_from": "v4/model_600.pt",
+    "selected_checkpoint": "model_800.pt",
+    "learning_rate_saved": 0.001,
+    "schedule": "adaptive",
+    "vx_range": [
+      -0.4,
+      1.0
+    ],
+    "wz_range": [
+      -0.65,
+      0.65
+    ],
+    "resample_s": 5,
+    "standing_fraction": 0.1,
+    "pure_yaw_fraction_nonstanding": 0.5,
+    "pure_vx_fraction_nonstanding": 0.1,
+    "low_mixed_fraction": 0.5,
+    "track_vx_weight": 2,
+    "track_wz_weight": 2.5,
+    "track_vx_denominator": 0.25,
+    "track_wz_denominator": 0.08,
+    "rotation_drift_weight": -1,
+    "rotation_drift_gated": true,
+    "episode_s": 20
+  },
+  "locked12": {
+    "actor_history": 270,
+    "action_dim": 12,
+    "critic_dim": 243,
+    "initialization": "prune16DoF",
+    "fine_tune_envs": 1024,
+    "steps_per_env": 64,
+    "fine_tune_budget_iterations": 200,
+    "selected_checkpoint": "model_0.pt",
+    "reason": "fine-tuning worsened low-speed overrun",
+    "runtime_wheel_q_target": "capture switch angle",
+    "runtime_wheel_dq_target": 0,
+    "wheel_kp": 80,
+    "wheel_kd": 3
+  },
+  "platform40": {
+    "policy": "row2p_p40w40_v1",
+    "selected_checkpoint": "model_750.pt",
+    "resume": "st30_native_s100_600/model_600.pt",
+    "num_envs": 512,
+    "steps_per_env": 24,
+    "difficulty_rows": 31,
+    "difficulty": "d=k/30",
+    "initial_levels": "0..30",
+    "platform_wall_height_m": "0.10+0.30*d",
+    "slope_deg": "20+25*d",
+    "stairs_single_step_m": "0.10+0.20*d",
+    "progress_weight": 8,
+    "climb_weight": 10,
+    "clear_weight": 50,
+    "episode_s": 20,
+    "video_cmd": "adaptive, baseline vx0.5"
+  },
+  "plum_early_video": {
+    "policy": "route2_v3",
+    "geometry": "historical long staggered piles; not current six cubes",
+    "network": "depth CNN→predicted1764 fine scan +342 proprio→frozen teacher MLP→16",
+    "teacher": "model_1600.pt",
+    "clean_frames": 259200,
+    "dagger_r1_frames": 96000,
+    "epochs": 20,
+    "batch_size": 1024,
+    "optimizer": "AdamW",
+    "scan_val_rmse_m": 0.02505432441830635
+  }
+}

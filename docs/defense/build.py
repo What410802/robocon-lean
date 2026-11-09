@@ -65,7 +65,7 @@ class Slide:
         text = wrap_text(text, w, size)
         estimated = len(text.split('\n')) * size * 1.33
         if estimated > h + 9:
-            raise ValueError(f'Text exceeds layout on slide {len(SLIDES)+1}: {text!r} needs {estimated:.0f}px, has {h}')
+            raise ValueError(f'Text exceeds layout on slide {len(SLIDES)}: {text!r} needs {estimated:.0f}px, has {h}')
         self.elements.append(dict(kind='text', x=x, y=y, w=w, h=h, text=text, size=size, color=color, bold=bold, align=align))
 
     def image(self, x, y, w, h, file):
@@ -83,125 +83,157 @@ class Slide:
     def card(self, x, y, w, h, label, body, color=CYAN):
         self.rect(x, y, w, h)
         self.label(x+24, y+22, label, color, w-48)
-        self.text(x+24, y+79, w-48, h-95, body, 29)
+        self.text(x+24, y+79, w-48, h-95, body, 27)
 
 
 def make_slides():
-    s = Slide('从单关越障到整场衔接', 'RoboCon 队内赛 · 备赛答辩', '依据：队内赛 PDF 第 4 页答辩要求；验收代码 e2d7818。', '0:00–0:25 · 25 秒')
-    s.text(64, 217, 710, 94, 'blackW 轮足机器人', 57, WHITE, True)
-    s.text(64, 343, 700, 164, '奖励是否对应有效越障\n视觉是否保留前瞻信息\n专家之间能否可靠交接', 37)
-    s.rect(64, 612, 695, 118)
-    s.text(90, 636, 640, 80, 'PPO 训练 · 深度感知 · 路线验证', 31, CYAN, True)
-    s.image(828, 216, 708, 594, 'media/plum_handover.jpg')
+    s = Slide('从论文思路到轮足越障策略', 'RoboCon 队内赛 · 备赛答辩', 'blackW · 论文阅读与复现、平地运动、越障训练、系统集成。', '0:00–0:15 · 15 秒')
+    s.text(64, 225, 750, 92, 'blackW 轮足机器人', 56, WHITE, True)
+    s.text(64, 359, 710, 166, '先做好平地运动\n再建立通用越障能力\n最后用视觉处理稀疏落足', 37)
+    s.rect(64, 649, 710, 130)
+    s.text(90, 674, 658, 83, '论文依据 → 训练实验 → 可演示系统', 30, CYAN, True)
+    s.image(830, 216, 706, 594, 'media/plum_handover.jpg')
 
-    s = Slide('把导航、衔接、越障分开', '01 / 规则与系统', '规则：PDF 第 1、3 页；实现：README.md、demo/rl_sar/policy/WEIGHTS.json。', '0:25–1:00 · 35 秒')
-    for x, title, body in [(64,'导航','世界位姿 → 速度指令\n唯一几何路线'),(576,'衔接','16 DoF：长直线\n12 DoF：锁轮精对线'),(1088,'越障','按地形选择 RL 专家\n梅花桩增加深度输入')]:
-        s.card(x, 236, 448, 242, title, body)
-    s.arrow(514, 316, 60); s.arrow(1026, 316, 60)
-    s.card(64, 531, 710, 252, '规则决定策略边界', 'Part 1：允许 RL 与固定动作结合\nPart 2：越障使用 RL 策略', CYAN)
-    s.card(806, 531, 730, 252, '训练信息与部署输入分离', '部署：IMU、编码器、真实渲染深度\n特权地形只用于训练；真值只算导航', ORANGE)
+    s = Slide('理论起点：历史观测能补足什么？', '01 / 论文阅读与算法复现', '原图：Long et al., HIM, arXiv:2312.11460, Fig.2；Nahrendra et al., DreamWaQ, arXiv:2301.10602, Fig.2。', '0:15–0:50 · 35 秒')
+    s.label(64, 211, 'HIM · 显式速度 + 对比隐表示', w=718)
+    s.rect(64, 264, 718, 367, '#ffffff')
+    s.image(74, 275, 698, 346, 'figures/him_fig2.png')
+    s.label(822, 211, 'DreamWaQ · 速度估计 + β-VAE', w=714)
+    s.rect(822, 264, 714, 207, '#ffffff')
+    s.image(835, 277, 688, 181, 'figures/dreamwaq_fig2.png')
+    s.text(844, 496, 670, 130, '历史编码 → 速度与地形上下文\n下一观测重建 + KL 正则\n从运动响应中理解接触环境', 30)
+    s.card(64, 663, 718, 139, 'HIM 移植与训练', '速度 MSE + prototype 对比学习', CYAN)
+    s.card(822, 663, 714, 139, 'DreamWaQ 论文与源码借鉴', '理解历史状态估计与非对称训练', CYAN)
 
-    s = Slide('奖励为何会鼓励原地不动？', '02 / 奖励诊断', '来源：train/.../profiles/plum/ep_rewards.py、teacher.py；历史诊断，不是受控单项消融。', '1:00–1:50 · 50 秒')
-    s.card(64, 223, 470, 372, '现象', '只奖励向前位移\n跳过桩阵也有收益\n\n早期两轮：\n0 / 178、0 / 4000', ORANGE)
-    s.card(558, 223, 470, 372, '诊断', '每步负总奖励截为 0\n静止也持续领航向奖励\n\n站立21秒累计：+11.8\n当时通关终止奖励：+10', ORANGE)
-    s.card(1052, 223, 484, 372, '修改', '航向奖励加前进门控\n约束轮子边缘接触\n非轮部件触地则终止\n\n成功终态与判据对应', CYAN)
-    s.rect(64, 641, 1472, 139)
-    s.text(94, 662, 1400, 100, '参考 Extreme Parkour 的奖励与教师学生思路\n迁移到轮足和六桩地形，逐项检查奖励实际鼓励的行为。', 31)
+    s = Slide('从参考方法中提炼训练机制', '02 / 视觉越障与鲁棒性', '原图：Cheng et al., Extreme Parkour, arXiv:2309.14341, Fig.2；参考：RecoveryLoco，本地开源阅读笔记。', '0:50–1:10 · 20 秒')
+    s.rect(64, 215, 565, 586, '#ffffff')
+    s.image(78, 228, 537, 560, 'figures/extreme_parkour_fig2.png')
+    s.card(675, 224, 861, 240, 'Extreme Parkour · 分阶段学越障', '特权地形辅助教师学动作\n深度学生学习可部署的感知与决策\n课程、前进奖励和落足约束一起设计')
+    s.card(675, 490, 861, 224, 'RecoveryLoco · 扩大状态覆盖', '借鉴初态、摩擦与外力扰动的思路\n把恢复能力纳入训练分布\n用于思考平地模型的转向与抗扰')
+    s.text(675, 751, 850, 45, '取舍：历史理解“脚下”，视觉观察“前方”。', 31, CYAN, True)
 
-    s = Slide('共面改善了，速度跟随却退化了', '03 / 对比实验', '来源：docs/training/VT-RECIPE.md §6.1；历史轮式 VT，同部署探针；与当前 vt_locked12 不同。', '1:50–2:35 · 45 秒')
-    cols=[64,825,1155]
-    for x,t in zip(cols,['指标 / 同一部署探针','VT v1','VT v2']): s.label(x+22,222,t,w=350)
-    rows=[('四轮高度展布 · 正向纯转弯','3.10 cm','0.36 cm',CYAN),('90° 转弯足迹半径','0.572 m','0.520 m',CYAN),('平移速度 / 指令速度','0.781','0.631',ORANGE),('位置环原地转漂移','0.051 m','0.106 m',ORANGE)]
-    for i,(label,a,b,c) in enumerate(rows):
-        yy=281+i*92;s.rect(64,yy,1472,80)
-        s.text(86,yy+17,700,52,label,30)
-        s.text(847,yy+12,280,56,a,37,MUTED,True)
-        s.text(1177,yy+12,320,56,b,37,c,True)
-    s.text(64,696,1470,104,'取舍：长直线用 16 DoF 轮足；精对线用真 12 DoF 锁轮策略。\n不能只用一个几何指标判断整体性能。',32,CYAN,True)
+    s = Slide('平地模型：先把速度指令学准确', '03 / 本体策略结构与训练', '配置：evidence/vt_v5_{agent,env}.yaml；训练过程与命令采样：docs/training/VT-RECIPE.md。', '1:10–2:00 · 50 秒')
+    s.card(64, 225, 390, 180, '本体观测 · 六帧历史', '57 × 6 = 342 维\nIMU、关节、指令、动作')
+    s.arrow(458, 278, 62)
+    s.card(525, 225, 530, 180, 'PPO actor · MLP', '342 → 512 → 256 → 128\nELU · 历史提供短时运动信息')
+    s.arrow(1060, 278, 62)
+    s.card(1127, 225, 409, 180, '16DoF 动作', '12 腿位置残差\n+ 4 轮速度')
+    s.card(64, 443, 718, 250, '指令采样就是训练课程', 'vₓ ∈ [−0.4, 1.0] m/s\nωz ∈ [−0.65, 0.65] rad/s\n增加纯转向与低速混合样本\n每 5 s 换指令，10% 站立')
+    s.card(822, 443, 714, 250, '关键奖励 · VT v5', '线速度：+2 exp(−eᵥ² / 0.25)\n角速度：+2.5 exp(−eω² / 0.08)\n姿态 −1.2 · 腿姿偏差 −0.8\n旋转漂移 −1，带转向跟踪门控')
+    s.rect(64, 709, 1472, 94)
+    s.text(89, 728, 1420, 66, '4096 环境 × 24 步 / 迭代   ·   从 v4 继续训练，选 model_800   ·   回合 20 s', 30, CYAN, True)
 
-    s = Slide('让深度信息直接服务动作', '04 / 论文借鉴与训练', '参考：Extreme Parkour, arXiv:2309.14341；实现：plum/student.py、depth.py；训练配置见 evidence/。', '2:35–3:30 · 55 秒')
-    s.label(64,210,'早期成功分支 · 冻结教师',ORANGE,w=1300)
-    s.rect(64,261,1472,87)
-    s.text(88,281,1420,52,'深度 → 预测 1764 维局部扫描 → 冻结 RL 教师 → 动作',34,WHITE,True)
-    s.text(64,370,1470,56,'局部扫描覆盖轮心 ±0.10 m；相机可见前方约 0.51–3 m。',30,MUTED)
-    s.label(64,452,'最终部署 · 可继续学习的 CNN + MLP',CYAN,w=1300)
-    s.rect(64,502,1472,100)
-    s.text(88,520,1420,64,'48×64 深度 → 64 维特征  +  324 维本体历史 → 16 动作',34,CYAN,True)
-    s.card(64,647,455,140,'1 / 行为克隆','1,228,800 帧教师数据')
-    s.card(551,647,473,140,'2 / PPO 更新','1024 环境 × 32 步')
-    s.card(1056,647,480,140,'3 / 判分选点','交付 model_1150')
+    s = Slide('平地实验：共面、跟随与精对齐的取舍', '04 / 对比实验与 12DoF 锁轮', '同部署探针对照：VT-RECIPE.md §6.1；锁轮结构与权重选择：locked12 manifest、运行时轮关节 PD。', '2:00–2:45 · 45 秒')
+    s.label(64, 216, 'VT v1 → v2 · 同一部署探针', w=820)
+    for x,txt,w in [(84,'指标',400),(500,'v1',155),(691,'v2',170)]:s.text(x,282,w,45,txt,28,CYAN,True)
+    rows=[('转弯四轮高度展布','3.10 cm','0.36 cm'),('90° 足迹半径','0.572 m','0.520 m'),('平移速度 / 指令','0.781','0.631'),('原地转漂移','0.051 m','0.106 m')]
+    for i,(label,a,b) in enumerate(rows):
+        y=346+i*77;s.rect(64,y,824,66)
+        s.text(84,y+13,405,44,label,27)
+        s.text(500,y+13,180,44,a,27,MUTED)
+        s.text(691,y+13,177,44,b,27,CYAN if i<2 else ORANGE,True)
+    s.text(64, 693, 824, 102, '共面性改善，速度与转向也要复核。\n低速指令覆盖不足，会放大对齐误差。', 30, CYAN, True)
+    s.card(936, 225, 600, 225, '精对齐使用 12DoF 锁轮', '删除轮状态与轮动作通道\n45 × 6 = 270 → MLP → 12\n从 16DoF 权重裁剪初始化')
+    s.card(936, 477, 600, 188, '轮关节 PD · 切换时捕获角度', 'q* = q切换时刻，dq* = 0\nkp = 80，kd = 3')
+    s.rect(936, 695, 600, 108, '#343142')
+    s.text(959, 710, 553, 83, '微调后低速过冲变差，\n最终保留初始化权重用于演示。', 28, ORANGE, True)
 
-    s = Slide('同一个模型，换初态就换了结论', '05 / 鲁棒性诊断', '数据：plum_depth_final_v1/manifest.json 的 15 格网格；不是随机采样成功率，不能与另一个25格汇总混用。', '3:30–4:15 · 45 秒')
-    s.card(64,224,490,155,'训练环境记录','311 / 316 = 98.4%')
-    s.card(64,405,490,155,'标准初态单关','存在 judge success / 200')
-    s.rect(64,587,490,197)
-    s.text(88,605,445,89,'2 / 15',65,ORANGE,True)
-    s.text(88,700,445,60,'初态网格成功格数',29)
-    gx,gy,cw,ch=773,337,139,113
-    for j,t in enumerate(['−3°','−2°','0°','+2°','+3°']):s.text(gx+j*cw,gy-62,cw,46,t,28,MUTED,align='center')
-    s.text(815,220,650,44,'航向偏移 →',25,CYAN,True)
-    for i,t in enumerate(['−5 cm','0 cm','+5 cm']):
-        s.text(580,gy+i*ch+28,173,55,t,28,MUTED,align='right')
-        for j in range(5):
-            ok=j==2 and i<2
-            s.rect(gx+j*cw,gy+i*ch,cw-12,ch-13,'#194c45' if ok else '#342b38')
-            s.text(gx+j*cw,gy+i*ch+22,cw-12,60,'通过' if ok else '失败',31,GREEN if ok else RED,True,'center')
-    s.text(580,739,956,62,'横向偏移与航向组合；入口与出口仍敏感。',29,ORANGE,True)
+    s = Slide('通用越障：从速度跟随走向任务奖励', '05 / 基础专家与专项专家', '通用 row2p 保存配置；楼梯、沟壑采用对应专项权重。图中为已训练出的能力档位。', '2:45–3:35 · 50 秒')
+    s.label(64, 212, '先保留运动能力，再增加“过障”的学习信号', w=1472)
+    s.card(64, 275, 456, 210, '运动底座', '线速度 +1 · 角速度 +0.5\n相对地形机身高 0.43 m\n姿态、功耗与动作平滑约束')
+    s.arrow(523, 326, 58)
+    s.card(585, 275, 450, 210, '任务塑形', '沿赛道净进度 +8\n爬升高度 +10\n有效通过 +50')
+    s.arrow(1040, 326, 58)
+    s.card(1103, 275, 433, 210, '结束一回合', '倾角 >1.05 rad / 越界\n完成障碍 / 数值异常\n20 s 超时截断')
+    s.label(64, 499, '通用策略打底，必要时保留专项能力', w=1472)
+    capabilities=[('高台','40 cm','row2p'),('高墙','40 cm','row2p'),('斜坡','35°','row2p'),('楼梯','30 cm','vt_band'),('沟壑','30 cm','s1d')]
+    for i,(name,value,model) in enumerate(capabilities):
+        x=64+i*298;s.rect(x,559,280,162)
+        s.text(x+18,574,244,42,name,27,MUTED,True)
+        s.text(x+18,620,244,60,value,39,CYAN,True)
+        s.text(x+18,682,244,34,model,21,MUTED)
+    s.text(64, 756, 1460, 45, '共享本体 actor：342 → 512 → 256 → 128 → 16；混合地形训练后保留专项专家。', 29, CYAN, True)
 
-    s = Slide('单关能力与组合交接的实跑证据', '06 / 视频 · 21.16 秒', '来源：历史 vtaudit 单关；旧25段v56的同次梅花桩片段。三段独立展示，不是一次连续通关。', '4:15–4:51 · 36 秒（含视频）')
-    s.video(64,214,1080,607,'media/capability_reel.mp4','media/capability_reel.jpg')
-    s.card(1173,216,363,221,'历史单关','40 cm 高台 / 高墙\nadaptive 基准 0.5\nsidecar 判分成功',ORANGE)
-    s.card(1173,464,363,295,'六桩场地','深度专家穿桩\n→ 出口轮式专家\n→ 制动、站定、下台\n\n本段严格回放成功',CYAN)
+    s = Slide('40 cm 高台：训练地形要覆盖目标高度', '06 / 视频与实际训练配方', '视频：vt_mode_v2 / row2p，adaptive vx基准0.5；训练配置与权重：evidence/platform40_*。', '3:35–4:15 · 40 秒（含 6.94 秒视频）')
+    s.video(64, 242, 958, 314, 'media/platform40.mp4', 'media/platform40.jpg')
+    s.label(64, 585, '31 级地形采样 · d = k / 30', w=958)
+    for y,label,row in [(645,'10 cm',0),(691,'30 cm',20),(737,'40 cm',30)]:
+        s.text(64,y,150,45,label,27,WHITE,True)
+        s.rect(235,y+6,620,27,'#233c4b',radius=0)
+        s.rect(235,y+6,max(12,620*row/30),27,CYAN,radius=0)
+        s.text(877,y,145,45,f'row {row}',25,MUTED)
+    s.card(1062, 225, 474, 242, '混合地形 + 精确难度覆盖', '高台 / 高墙：10–40 cm\n斜坡：20–45°\n六级楼梯：单级 10–30 cm\n初始等级覆盖 0–30')
+    s.card(1062, 485, 474, 170, '实际训练规模', '512 环境 × 24 步 / 迭代\n楼梯权重续训 → model_750')
+    s.card(1062, 664, 474, 139, '训练中的关键取舍', '进度+8 · 爬升+10 · 通过+50', CYAN)
 
-    s = Slide('直立时对准，降姿后仍需复核', '07 / Part 1 · 低杆修复', 'v100 与 v104 是不同运行的前后对照；v104降姿后已在门限内。主动纠偏见v102/v103，非严格消融。', '4:51–5:36 · 45 秒（含11.04秒视频）')
-    s.video(64,215,710,604,'media/lowbar.mp4','media/lowbar.jpg')
-    s.label(821,231,'实际过杆时的航向误差',CYAN,w=680)
-    s.text(821,295,710,100,'3.08°  →  0.69°',62,WHITE,True)
-    s.text(821,400,710,48,'历史 v100                 验收 v104',27,MUTED)
-    s.card(821,493,715,290,'修改后的动作顺序','直立进场 → 降低机身\n→ 低姿态对齐 → 零指令停稳复核\n→ 小于 1° 才前进',CYAN)
+    s = Slide('把已有专家串起来：系统与策略衔接', '07 / 通用能力先保底 · 30 秒', '导航只计算速度指令；执行与接触条件见 demo 路线控制器。Part 1 / Part 2 均已接入实时演示。', '4:15–4:45 · 30 秒')
+    s.card(64, 230, 380, 175, '路线目标与世界位姿', '位置 / 航向误差\n按地形顺序选择目标')
+    s.arrow(448, 281, 62)
+    s.card(515, 230, 462, 175, '位置外环 · adaptive 指令', '距离近则减速，角差大先转向\n输出 vₓ、vᵧ、ωz')
+    s.arrow(981, 281, 62)
+    s.card(1048, 230, 488, 175, '策略调度与底层执行', '平地前进 → 入口对齐 → 过障\n支撑状态触发退出与接管')
+    for x,label,body in [(64,'16DoF 平地','长直线与轮式前进'),(565,'12DoF 锁轮','低速转向与精对齐'),(1066,'地形专家','通用越障 / 专项能力')]:
+        s.card(x,465,470,145,label,body)
+    s.rect(64, 659, 1472, 144, '#173e42')
+    s.text(93, 685, 1414, 100, '先用已有模型完成可运行系统，再补视觉难点。\n交接依据支撑与速度：例如砂砾坑上台即切平地，及时消除残余运动。', 33, CYAN, True)
 
-    s = Slide('交接要由实际状态触发', '08 / 路线与控制', '来源：part1_v104.json；README.md；docs/part2/ROUTE.md；锁轮目标固定不代表实际角速度瞬时为零。', '5:36–6:11 · 35 秒')
-    s.card(64,224,710,222,'砂砾坑：四轮上台就切换','首次支撑条件：137.84 s\n切换意图：同帧；锁轮控制：下一帧',CYAN)
-    s.card(806,224,730,222,'锁轮：捕获并保持实际轮角','固定 q_target；dq_target = 0\n有限力矩下允许实际短暂制动',CYAN)
-    s.label(64,500,'Part 2：一套计划，逐档覆盖，便于复现',ORANGE,w=1400)
-    s.rect(64,557,1472,219)
-    s.text(92,578,1410,95,'恢复到某障碍前的对线点，再继续原路线\n超时可延长或关闭；精度、支撑和倒地检查仍保留',31)
-    s.text(92,697,1400,48,'demo-part2 resume_before:=stairs_30cm timeout_scale:=0',26,CYAN,True)
+    s = Slide('梅花桩：让深度信息引导稀疏落足', '08 / 早期良好步态 · 18 秒视频', '早期长桩场地 · route2_v3；视频及原训练报告已随包保存。', '4:45–5:40 · 55 秒（含 18 秒视频）')
+    s.video(64, 215, 790, 592, 'media/plum_gait_early.mp4', 'media/plum_gait_early.jpg')
+    s.label(901, 215, '对应视频的训练链路', w=635)
+    s.card(901, 271, 635, 168, '1 / 特权 RL 教师', '细扫描 + 本体历史 → 16 维动作\n前进、碰撞和落足边缘共同约束')
+    s.card(901, 439, 635, 168, '2 / 深度扫描蒸馏', '深度 CNN → 1764 维局部扫描\n拼接本体历史，输入冻结教师')
+    s.card(901, 607, 635, 168, '3 / DAgger 补学生访问状态', '25.92 万原始帧 + 9.6 万补充帧\n20 epochs；随机位姿与深度扰动')
 
-    s = Slide('已交付的能力，与明确保留的缺口', '09 / 结果与下一步', '结论截至2026-11-08；独立单关、路线预检、严格支撑回放分别解释，未据视频宣称官方满分。', '6:11–6:45 · 34 秒')
-    s.card(64,225,710,242,'Part 1 · 当前源码整场记录','263.80 s · 0 次恢复 · 返回起点\n路线预检全部通过\n关闭 live judge，未认证官方900分',CYAN)
-    s.card(806,225,730,242,'Part 2 · 当前 33 段路线','尚无完整连续严格通过记录\n40 cm 平台部署仍跳过；45° 坡未解决\n梅花桩初态鲁棒性仍不足',ORANGE)
-    s.rect(64,512,1472,272)
-    s.label(92,538,'下一步：把交接分布纳入训练与验证',CYAN,w=1350)
-    s.text(92,603,1400,148,'扩大入口位置、航向与速度随机化\n把出口下降纳入课程与终态奖励\n用预先定义的网格和真实整场轨迹复测',35,WHITE,True)
+    s = Slide('交付结果：Part 1 与 Part 2 实时演示', '09 / 已通过项目验收', '片段：Part1 v104 低杆；Part2 v56 六桩与出口。对应原始记录与视频来源见 sources.md。', '5:40–6:30 · 50 秒（含 19.48 秒视频）')
+    s.video(64, 215, 1010, 568, 'media/delivery_reel.mp4', 'media/delivery_reel.jpg')
+    s.card(1110, 223, 426, 227, 'Part 1', '263.8 s 返回起点\n0 次恢复\n平地、专家与固定动作协同')
+    s.card(1110, 477, 426, 243, 'Part 2', '逐档障碍与专项模型\n深度策略接入演示\n支持障碍前恢复和不限时运行')
+    s.text(1110, 757, 426, 46, '模型能力 → 可运行的演示流程', 26, CYAN, True)
 
-    s = Slide('规则、观测与控制边界', '备份 A / 问答', '依据：队内赛 PDF；README.md；plum_depth_final_v1/manifest.json；plum/depth.py。', backup=True)
-    s.card(64,226,710,262,'部署网络可见','IMU、关节编码器、动作历史\n允许真实模拟的深度相机\n常规策略接收导航生成的速度指令')
-    s.card(806,226,730,262,'训练期可用','教师局部扫描、critic特权地形\n只用于监督、回报与价值学习\n最终深度 actor 无 fine scan',ORANGE)
-    s.card(64,530,1472,251,'Part 2 的学习策略组合','深度专家不读 command，不能用零摇杆刹停。出口改由另一学习策略完成。\n高层速度指令时序不等于固定关节动作；Part 2 不使用 Part 1 的固定姿态过障。')
+    s = Slide('这次备赛学到的三件事', '10 / 认识与后续方向', '后续：扩大入口状态覆盖、训练稳定下台，并持续用固定探针对照模型变化。', '6:30–6:50 · 20 秒')
+    s.card(64, 232, 1472, 157, '1 / 信息结构决定模型选择', '历史状态帮助理解接触与动力学，前视深度帮助规划尚未接触的落点。')
+    s.card(64, 418, 1472, 157, '2 / 奖励、采样与终止要一起设计', '低速转向靠指令覆盖，越障靠任务信号，课程要覆盖真正的目标难度。')
+    s.card(64, 604, 1472, 183, '3 / 用实验决定保留什么', '共面性、速度和漂移一起比较；通用能力先组成系统，再迭代视觉与泛化。')
 
-    s = Slide('看过什么，迁移了什么', '备份 B / 论文与基座', '仅声明有源码/训练记录支撑的使用范围，不宣称原论文性能复现。', backup=True)
-    s.card(64,218,1472,180,'PPO · Schulman 等，2017','Proximal Policy Optimization Algorithms · arXiv:1707.06347\n当前主力训练算法；非对称 actor / critic，历史观测与 CNN 输入。')
-    s.card(64,410,1472,180,'HIM · Long 等，2023','Hybrid Internal Model: Learning Agile Legged Locomotion with Simulated Robot Response\narXiv:2312.11460 · 历史分支确实训练过；不把最终 depth、VT 统称 HIM。')
-    s.card(64,602,1472,183,'Extreme Parkour · Cheng 等，2024','Extreme Parkour with Legged Robots · arXiv:2309.14341\n迁移奖励、课程和教师学生思路；机器人、仿真器、地形与最终训练方法不同。')
+    s = Slide('平地训练细节与锁轮模型选择', '备份 A / 训练参数', '保存配置：vt_v5_{agent,env}.yaml、locked12_{agent,env}.yaml；VT-RECIPE.md；当前策略 manifest。', backup=True)
+    s.card(64, 226, 718, 327, 'VT v5 · 实际保存参数', '4096 × 24；本阶段预算 400 迭代\n从 v4 model_600 续训，选择 model_800\nlr 0.001 adaptive；clip 0.2\nγ 0.99；λ 0.95；5 epochs × 4 batches\n非站立纯转向 50%；混合中低速 50%')
+    s.card(822, 226, 714, 327, '12DoF · 结构与选择', '342→270 输入裁剪，16→12 输出裁剪\n重建 critic 为 243 维输入\n1024 环境 × 64 步，微调预算 200 迭代\n低速过冲变差，最终部署 model_0\n轮关节保持切换角度：kp 80 / kd 3')
+    s.card(64, 589, 1472, 211, '训练与执行中的经验', '过强漂移惩罚会诱导“少转或不转”，因此转漂惩罚加跟踪门控，并补足低速指令。\n从零训练 / 命令分布调整 / 权重迁移分别记录；演示长直线仍保留官方提供的 flat 作为实用基线。\nVT 的共面改进与锁轮模型是两条实验线，不把 v1→v2 的指标直接归于最终锁轮模型。')
 
-    s = Slide('梅花桩训练细节与失败选点', '备份 C / 复现实验', '来源：evidence/bc_depth_r4.json、plum_stage2_agent.yaml、plum_final_manifest.json；plum/depth.py。', backup=True)
-    s.card(64,221,710,263,'行为克隆 → PPO','5 批数据，共 1,228,800 帧\nBC 验证动作 RMSE = 0.12514\n导入后将探索标准差重设为 0.10')
-    s.card(806,221,730,263,'最终 PPO 运行','1024 环境 × 32 步，计划 1200 迭代\nlr = 3×10⁻⁵，clip = 0.2\nγ = 0.99，GAE λ = 0.95')
-    s.card(64,530,1472,254,'用判分终态选模型，不只看训练曲线','交付 model_1150。1050 掉落，1100 倒地，1199 未下完出口。\ns0 / s1 / s2 是出生分布定义，不能据注册名称宣称完整串行训练过三个阶段。\n行为克隆误差是动作拟合指标，不是闭环越障成功率。',ORANGE)
+    s = Slide('40 cm 高台：完整配方与难度映射', '备份 B / 通用专家', 'evidence/platform40_env.yaml、platform40_agent.yaml、platform40_manifest.json 与 platform40_sidecar.json。', backup=True)
+    s.card(64, 227, 718, 334, '地形与训练', '高台 / 高墙：0.10 + 0.30 × d\n坡度：20 + 25 × d；d = k / 30\n楼梯单级：0.10 + 0.20 × d\n高台40 cm → row30；楼梯20 cm → row15\n512 × 24，续训后选择 model_750')
+    s.card(822, 227, 714, 334, '奖励权重', '线速度 +1 / 角速度 +0.5（σ=0.25）\n净进度 +8 / 爬升 +10 / 通过 +50\n高度 −4（目标相对地形 0.43 m）\n竖直速度 −2 / 水平角速度 −0.05\n姿态 −0.2 / 动作差与平滑各 −0.01')
+    s.card(64, 598, 718, 201, 'PPO 实际取值', 'lr 0.001 adaptive；clip 0.2；γ 0.99\nλ 0.95；5 epochs × 4 batches\nentropy 0.01；MLP 512 / 256 / 128')
+    s.card(822, 598, 714, 201, '终止与视频配置', '倾角 1.05 rad；横向偏移 0.7 m\n越界 margin 0.8 m；20 s 超时\n视频：adaptive 指令，vx 基准 0.5 m/s')
 
-    s = Slide('证据分层：哪些数字可以放在一起', '备份 D / 成绩口径', '来源：docs/part2/EXPERTS.md、ROUTE.md；evidence/part2_v56_eval.json、part1_v104.json。', backup=True)
-    items=[('历史独立单关','平台40 / 墙40 有 success；多模型、多命令，不是当前整场成绩。'),('历史19/20覆盖','含旧版长桩几何；不能当当前六桩比赛地图的覆盖率。'),('旧25段路线 v56','集成门限25/25；严格支撑回放24/25，末墙稳定保持失败。'),('当前33段路线','v82/v83前14段严格成功；v84仅前4段后在25cm台卡住。'),('Part1 v104','完整实体运动与返回成立；live judge关闭，不能认证900分。')]
-    for i,(label,body) in enumerate(items):
-        y=218+i*114;s.rect(64,y,1472,102)
-        s.text(86,y+21,340,57,label,30,CYAN,True)
-        s.text(450,y+20,1058,67,body,28)
+    s = Slide('两代梅花桩模型：扫描蒸馏到直接深度', '备份 C / 本项目网络结构', '早期 route2_v3 manifest/report；最终 plum/depth.py、plum_stage2_agent.yaml 与最终 manifest。', backup=True)
+    s.label(64, 212, '视频对应的早期模型', w=1472)
+    s.card(64, 268, 415, 175, '深度 CNN', '1 × 48 × 64\n→ 1764 维预测 fine scan')
+    s.arrow(482, 310, 63)
+    s.card(550, 268, 506, 175, '拼接扫描与本体', '1764 + 342 = 2106\n输入冻结 RL teacher')
+    s.arrow(1060, 310, 63)
+    s.card(1128, 268, 408, 175, 'MLP → 16 动作', '512 → 256 → 128\nscan 验证 RMSE ≈2.5 cm')
+    s.label(64, 470, '后续六桩场地的直接深度模型', w=1472)
+    s.card(64, 524, 415, 175, '深度与本体两支', 'CNN 16 / 32 / 64 → 64\n本体 54 × 6 → 324')
+    s.arrow(482, 566, 63)
+    s.card(550, 524, 506, 175, '融合特征 → actor', '388 → 512 → 256 → 128\n继续 PPO 优化视觉与动作')
+    s.arrow(1060, 566, 63)
+    s.card(1128, 524, 408, 175, '16 动作', '12 腿位置残差\n4 轮速度')
+    s.rect(64, 722, 1472, 79)
+    s.text(88, 739, 1424, 50, '仅训练：247 维特权观测 → critic；最终 actor 无 command、无特权扫描。', 28, MUTED)
 
-    s = Slide('低杆修复：诊断与证据的边界', '备份 E / 低姿态对齐', '数据：evidence/part1_v104.json；50Hz状态和接触采样，不能证明每个2ms物理步都无碰撞。', backup=True)
-    s.card(64,221,710,256,'控制机制','小幅平滑转向会落入静摩擦死区\n改用短时差速脉冲 → 制动 → 复核\n停稳观察0.3秒；偏角<1°再前进')
-    s.card(806,221,730,256,'主动纠偏与验收记录分别解释','v102 / v103：过杆误差1.28° / 1.12°\nv104：降姿后已对准，主要执行复核\n过杆误差0.69°，采样无杆柱接触',ORANGE)
-    s.card(64,525,1472,258,'轮锁定是有限力矩的伺服目标','捕获切换时的非回绕轮角；q_target固定、dq_target=0，kp=80 / kd=3。\n力矩限幅时降低增益，不移动锁定目标；负载下实际轮角允许弹性误差。\nv104上台后记录的四轮目标角在停稳期间均保持不变。')
+    s = Slide('六桩训练：课程、奖励与训练规模', '备份 D / 最终深度模型', '配置与公式：evidence/training_recipe.json、plum_stage2_{agent,env}.yaml；奖励 dt 缩放后截负。', backup=True)
+    s.card(64, 224, 475, 338, '地形与终止', '早期填隙课程：0 → 40 cm\n固定桩高与桩顶均为 20 cm\n最终 PPO：固定官方间隙\n出生 x/y ±10 cm，yaw ±5°\n接触 >1 N / 倾角 >1.05 rad\n轮底 <5 cm；最长回合 24 s')
+    s.card(563, 224, 475, 338, '关键奖励', 'r = max(0, 0.02 × Σwᵢrᵢ)\n前进 +1.5 / 航向 +0.5\n航向门控：vₓ >0.254 m/s\n非轮碰撞 −10（>0.1 N）\n轮触边缘 −1（<5 cm）\n严格通过 +500；保持 20 步')
+    s.card(1062, 224, 474, 338, '规模与优化', 'BC：1,228,800 帧\n动作验证 RMSE 0.125\nPPO：1024 环境 × 32 步\n1200 迭代预算 ≈3932 万步\n选择 model_1150\nlr 3e−5 固定；初始 std 0.10')
+    s.rect(64, 604, 1472, 194)
+    s.label(89, 624, '为何检查奖励分解与测试初态', w=1420)
+    s.text(89, 679, 1420, 99, '发现静止航向收益后增加前进门控；同时将完整下台纳入终态。\n训练统计 311/316；标准初态可通过，位置×航向 15 格仅 2 格成功，后续重点扩大入口状态覆盖。', 29, MUTED)
 
+    s = Slide('参考方法、观测信息与演示复现', '备份 E / 技术问答', '代码与来源索引：sources.md；原始证据与视频来源：evidence/、media_manifest.json。', backup=True)
+    s.card(64, 227, 718, 320, 'HIM 在本仓的实现', '历史 342 → 编码器 128 / 64\n输出：3 维速度 + 16 维 latent\n当前 57 + 3 + 16 = 76 → actor\n速度 MSE + prototype swap 损失\n32 prototypes；估计器与 PPO 分开更新')
+    s.card(822, 227, 714, 320, '运行与复现入口', 'Part 1：263.80 s，0 恢复，回起点\nPart 2：resume_before:=stairs_30cm\ntimeout_scale:=0 可取消超时\n支持从指定障碍前对齐点继续\n当前演示路线见 docs/part2/ROUTE.md')
+    s.card(64, 587, 1472, 212, '资料口径与传感信息', 'HIM 为算法移植与历史训练；DreamWaQ / RecoveryLoco 为思路与源码参考；EP 为机制迁移。\n训练特权信息用于教师 / critic；部署使用本体与模拟相机，世界位姿仅用于生成导航速度指令。\n长桩旧视频、当前六桩及多模型单关分别保留原记录，具体判据与命令档见 sources.md。')
 
 def rgb(value):
     return RGBColor.from_string(value.lstrip('#'))
@@ -209,7 +241,7 @@ def rgb(value):
 
 def build_pptx(notes):
     prs = Presentation(); prs.slide_width=Inches(W/120); prs.slide_height=Inches(H/120)
-    prs.core_properties.title='blackW：从单关越障到整场衔接'
+    prs.core_properties.title='blackW：从论文思路到轮足越障策略'
     prs.core_properties.subject='RoboCon 队内赛 · 七分钟备赛答辩'
     prs.core_properties.author='blackW 项目'
     prs.core_properties.comments='Editable source: docs/defense/build.py; evidence and conditions included.'
@@ -261,7 +293,7 @@ def build_html():
                 style+=f'font-size:{e["size"]}px;color:{e["color"]};font-weight:{700 if e["bold"] else 400};text-align:{e["align"]};'
                 nodes.append(f'<div class="element text" style="{style}">{html.escape(e["text"])}</div>')
             elif e['kind']=='image':
-                nodes.append(f'<img class="element" style="{style}object-fit:contain" src="{e["file"]}" alt="实跑画面">')
+                nodes.append(f'<img class="element" style="{style}object-fit:contain" src="{e["file"]}" alt="演示图像">')
             elif e['kind']=='video':
                 nodes.append(f'<video class="element" style="{style}object-fit:contain;background:#000" controls preload="metadata" playsinline poster="{e["poster"]}" src="{e["file"]}"></video>')
         pages.append(f'<section class="slide" data-index="{i}" aria-label="{html.escape(s.title)}">'+''.join(nodes)+'</section>')
@@ -272,7 +304,7 @@ def build_html():
 *{box-sizing:border-box}body{margin:0;background:#050a12;color:#eef5ff;font-family:BlackWDefense,"Noto Sans CJK SC","Microsoft YaHei",sans-serif;overflow:hidden}
 #stage{width:1600px;height:900px;position:absolute;transform-origin:top left}.slide{width:1600px;height:900px;position:relative;display:none;overflow:hidden}.slide.active{display:block}.element{position:absolute}.text{white-space:pre;line-height:1.23;overflow:visible}#toolbar{position:fixed;bottom:0;left:0;right:0;height:32px;background:#050a12;display:flex;align-items:center;justify-content:center;gap:18px;font:13px sans-serif;color:#a6bbd3}button{color:#eef5ff;background:#142236;border:1px solid #29405b;border-radius:4px;padding:3px 10px;cursor:pointer}a{color:#58dfd1}#hint{position:fixed;right:16px;top:12px;background:#142236;padding:8px 12px;border-radius:8px;font-size:14px;display:none}
 @media print{@page{size:1600px 900px;margin:0}body{overflow:visible;background:#0b1423}#stage{position:static;transform:none!important;width:1600px;height:auto}.slide{display:block!important;break-after:page;page-break-after:always}#toolbar,#hint{display:none!important}video{visibility:hidden}img.pdf-poster{visibility:visible}}
-</style><div id="stage">PAGES</div><div id="toolbar"><button onclick="go(n-1)">← 上一页</button><span id="counter"></span><button onclick="go(n+1)">下一页 →</button><button onclick="playVideo()">播放 / 暂停 V</button><button onclick="fullscreen()">全屏 F</button><span>方向键翻页 · 前10页主讲 · 后5页备份</span></div><div id="hint"></div>
+</style><div id="stage">PAGES</div><div id="toolbar"><button onclick="go(n-1)">← 上一页</button><span id="counter"></span><button onclick="go(n+1)">下一页 →</button><button onclick="playVideo()">播放 / 暂停 V</button><button onclick="fullscreen()">全屏 F</button><span>方向键翻页 · 前11页主讲 · 后5页备份</span></div><div id="hint"></div>
 <script>
 const meta=METADATA; let n=0;const slides=[...document.querySelectorAll('.slide')];
 function resize(){const k=Math.min(innerWidth/1600,(innerHeight-32)/900);const st=document.getElementById('stage');st.style.transform=`scale(${k})`;st.style.left=((innerWidth-1600*k)/2)+'px';st.style.top=((innerHeight-32-900*k)/2)+'px'}
@@ -282,7 +314,7 @@ function fullscreen(){if(!document.fullscreenElement)document.documentElement.re
 window.addEventListener('resize',resize);window.addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();go(n+1)}if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(n-1)}if(e.key.toLowerCase()==='v')playVideo();if(e.key.toLowerCase()==='f')fullscreen();if(e.key==='Home')go(0)});resize();go(Math.max(0,Math.min(slides.length-1,(Number(location.hash.slice(1))||1)-1)));
 // For PDF and previews: the static poster is rendered above each video.
 for(const v of document.querySelectorAll('video')){const im=document.createElement('img');im.src=v.poster;im.className='element pdf-poster';im.style.cssText=v.style.cssText+';object-fit:contain;pointer-events:none;display:none';v.after(im)}
-</script></html>'''.replace('PAGES',''.join(pages)).replace('METADATA',json.dumps(data,ensure_ascii=False))
+</script></html>'''.replace('PAGES',''.join(pages)).replace('METADATA',json.dumps(data,ensure_ascii=False)).replace('前11页主讲 · 后5页备份',f'前{sum(not s.backup for s in SLIDES)}页主讲 · 后{sum(s.backup for s in SLIDES)}页备份')
     (HERE/'index.html').write_text(code)
 
 
@@ -304,7 +336,7 @@ def render():
     from PIL import ImageDraw
     for i in range(len(SLIDES)):
         im=Image.open(HERE/'previews'/f'{i+1:02d}.png').convert('RGB');im.thumbnail((400,225));imgs.append(im)
-    sheet=Image.new('RGB',(4*416,4*257),'#253448');dr=ImageDraw.Draw(sheet)
+    sheet=Image.new('RGB',(4*416,((len(SLIDES)+3)//4)*257),'#253448');dr=ImageDraw.Draw(sheet)
     for i,im in enumerate(imgs):
         x=(i%4)*416+8;y=(i//4)*257+8;sheet.paste(im,(x,y));dr.text((x,y+228),f'{i+1:02d}'+(' 备份' if SLIDES[i].backup else ''),font=font,fill='white')
     sheet.save(HERE/'overview.jpg',quality=90)
@@ -317,7 +349,10 @@ def main():
     notes=[c.split('\n',1)[1].strip() for c in chunks]
     build_pptx(notes);build_html()
     if not args.no_render:render()
-    report=dict(main_slides=10,backup_slides=5,time_budget_s=405,video_budget_s=32.20,accepted_code_commit='e2d7818',slides=[dict(number=i+1,title=s.title,time=s.time,backup=s.backup) for i,s in enumerate(SLIDES)])
+    media=json.loads((HERE/'media_manifest.json').read_text())
+    main_videos={e['file'] for s in SLIDES if not s.backup for e in s.elements if e['kind']=='video'}
+    video_budget=round(sum(v['duration_s'] for v in media if v['file'] in main_videos),2)
+    report=dict(main_slides=sum(not s.backup for s in SLIDES),backup_slides=sum(s.backup for s in SLIDES),time_budget_s=410,video_budget_s=video_budget,accepted_code_commit='e2d7818',slides=[dict(number=i+1,title=s.title,time=s.time,backup=s.backup,videos=[e['file'] for e in s.elements if e['kind']=='video']) for i,s in enumerate(SLIDES)])
     (HERE/'presentation.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
     print('Built PPTX, HTML'+(', PDF, previews' if not args.no_render else ''))
 

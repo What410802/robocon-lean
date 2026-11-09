@@ -300,13 +300,13 @@ table.dense td.k{color:var(--ink);white-space:nowrap}
     <span class="n">1</span><h3>Phase 1 · 换掉奖励，动作才允许出现</h3>
     <p>越障要先减速、抬头、蓄力。逐帧速度跟踪会把这些都当误差扣掉。EP 用地形路点给出目标方向 <code>d̂</code>，奖励世界系速度的投影并在指令处截断，只要求“朝目标取得净进展”。配合踩边惩罚与难度课程，教师用便宜的 <code>scandot</code> 几何就能学出跑酷。</p>
   </div>
-  <div class="annot" style="left:660px;top:368px;width:868px">
+  <div class="annot" style="left:660px;top:362px;width:868px">
     <span class="n">2</span><h3>Phase 2 · 为什么要蒸馏，而不是直接端到端</h3>
     <p>4000 个并行环境每步渲染深度太贵；而从零联合训练时，早期乱撞的状态让视觉特征根本学不稳。于是在学生自己访问到的状态上要教师标签（DAgger），并用教师航向防止输入分布突变。</p>
   </div>
-  <div class="annot" style="left:660px;top:540px;width:868px">
+  <div class="annot" style="left:660px;top:528px;width:868px">
     <span class="n">3</span><h3>本仓迁移了什么，没迁什么</h3>
-    <p style="color:var(--am)">迁移：方向净进展奖励、边缘惩罚、教师—学生分阶段。<br>没迁：论文的视觉 GRU 与航向预测器；我们的学生是 CNN + 本体历史，后期继续 PPO。</p>
+    <p style="color:var(--am)">迁移：方向净进展奖励、边缘惩罚、教师—学生分阶段；没迁：论文的视觉 GRU 与航向预测器。<br>差别：论文学生止于 DAgger 蒸馏；我们先做行为克隆预热，再在仿真里继续 PPO。</p>
   </div>
 
   <div class="take" style="bottom:56px"><p>奖励设计决定<b>动作能不能出现</b>；蒸馏决定这些动作能不能只靠相机复现。两者解决的是不同的问题，所以论文把它们放在两个阶段里。</p></div>
@@ -364,7 +364,7 @@ table.dense td.k{color:var(--ink);white-space:nowrap}
     <div class="stat" style="margin-bottom:16px"><div class="lb">专项保留</div><div class="vl" style="font-size:26px">30 cm 楼梯 / 沟壑</div><div class="df">接触动力学差异大：节拍攀爬、0.8 m/s 高速冲跃，单独微调</div></div>
     <div class="stat good"><div class="lb">Part 2 官方单关评测</div><div class="vl">1200 <small>/ 1300</small></div><div class="df">仅 45° 极限坡按约定未做</div></div>
   </div>
-  <div class="take" style="bottom:60px"><p>视频配置：<code style="font-family:var(--mono);font-size:.9em">vt_mode_v2</code> + row2p，adaptive 基准 0.5 m/s。<b>播放时停讲</b>，讲在前后两页。</p></div>
+  <div class="take" style="bottom:60px"><p>配置：通用专家 <code style="font-family:var(--mono);font-size:.9em">row2p</code>，adaptive 指令，速度基准 0.5 m/s；单一权重覆盖 40 cm 高台、40 cm 高墙与 35° 坡。</p></div>
   <div class="foot">视频与判定 sidecar：media_manifest.json、platform40_sidecar.json。</div>
   <div class="pg">09</div>
 </section>
@@ -527,7 +527,7 @@ table.dense td.k{color:var(--ink);white-space:nowrap}
     <div class="stat good" style="margin-bottom:14px"><div class="lb">Part 2 · 单关评测</div><div class="vl">1200 <small>/ 1300</small></div><div class="df">六类官方判据；缺的是约定不做的 45° 坡</div></div>
     <div class="stat"><div class="lb">演示复现</div><div class="vl" style="font-size:25px">resume_before · timeout_scale:=0</div><div class="df">任意障碍前断点开始；33 段逐档流</div></div>
   </div>
-  <div class="take" style="bottom:56px"><p>前半段限高杆低姿态精对正，后半段六桩深度策略穿越 + 出口轮式专家接手。<b>播放时停讲。</b></p></div>
+  <div class="take" style="bottom:56px"><p>前半段是限高杆的低姿态精对正穿越，后半段是六桩深度策略穿越与出口轮式专家接手。</p></div>
   <div class="foot">片段来源 part1_v104.json、part2_v56_eval.json；片段不代表当前整场连续满分。</div>
   <div class="pg">14</div>
 </section>
@@ -672,7 +672,7 @@ table.dense td.k{color:var(--ink);white-space:nowrap}
   <button onclick="vid()">视频 V</button>
   <button onclick="fs()">全屏 F</button>
   <span class="sep">|</span>
-  <span>方向键翻页 · 11 页主讲 + 4 页备查</span>
+  <span>方向键翻页 · V 播放视频 · F 全屏</span>
 </div>
 <div id="hint"></div>
 

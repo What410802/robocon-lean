@@ -1,99 +1,127 @@
 {
-  "main_slides": 10,
+  "main_slides": 11,
   "backup_slides": 5,
-  "time_budget_s": 405,
-  "video_budget_s": 32.2,
+  "time_budget_s": 410,
+  "video_budget_s": 44.42,
   "accepted_code_commit": "e2d7818",
   "slides": [
     {
       "number": 1,
-      "title": "从单关越障到整场衔接",
-      "time": "0:00–0:25 · 25 秒",
-      "backup": false
+      "title": "从论文思路到轮足越障策略",
+      "time": "0:00–0:15 · 15 秒",
+      "backup": false,
+      "videos": []
     },
     {
       "number": 2,
-      "title": "把导航、衔接、越障分开",
-      "time": "0:25–1:00 · 35 秒",
-      "backup": false
+      "title": "理论起点：历史观测能补足什么？",
+      "time": "0:15–0:50 · 35 秒",
+      "backup": false,
+      "videos": []
     },
     {
       "number": 3,
-      "title": "奖励为何会鼓励原地不动？",
-      "time": "1:00–1:50 · 50 秒",
-      "backup": false
+      "title": "从参考方法中提炼训练机制",
+      "time": "0:50–1:10 · 20 秒",
+      "backup": false,
+      "videos": []
     },
     {
       "number": 4,
-      "title": "共面改善了，速度跟随却退化了",
-      "time": "1:50–2:35 · 45 秒",
-      "backup": false
+      "title": "平地模型：先把速度指令学准确",
+      "time": "1:10–2:00 · 50 秒",
+      "backup": false,
+      "videos": []
     },
     {
       "number": 5,
-      "title": "让深度信息直接服务动作",
-      "time": "2:35–3:30 · 55 秒",
-      "backup": false
+      "title": "平地实验：共面、跟随与精对齐的取舍",
+      "time": "2:00–2:45 · 45 秒",
+      "backup": false,
+      "videos": []
     },
     {
       "number": 6,
-      "title": "同一个模型，换初态就换了结论",
-      "time": "3:30–4:15 · 45 秒",
-      "backup": false
+      "title": "通用越障：从速度跟随走向任务奖励",
+      "time": "2:45–3:35 · 50 秒",
+      "backup": false,
+      "videos": []
     },
     {
       "number": 7,
-      "title": "单关能力与组合交接的实跑证据",
-      "time": "4:15–4:51 · 36 秒（含视频）",
-      "backup": false
+      "title": "40 cm 高台：训练地形要覆盖目标高度",
+      "time": "3:35–4:15 · 40 秒（含 6.94 秒视频）",
+      "backup": false,
+      "videos": [
+        "media/platform40.mp4"
+      ]
     },
     {
       "number": 8,
-      "title": "直立时对准，降姿后仍需复核",
-      "time": "4:51–5:36 · 45 秒（含11.04秒视频）",
-      "backup": false
+      "title": "把已有专家串起来：系统与策略衔接",
+      "time": "4:15–4:45 · 30 秒",
+      "backup": false,
+      "videos": []
     },
     {
       "number": 9,
-      "title": "交接要由实际状态触发",
-      "time": "5:36–6:11 · 35 秒",
-      "backup": false
+      "title": "梅花桩：让深度信息引导稀疏落足",
+      "time": "4:45–5:40 · 55 秒（含 18 秒视频）",
+      "backup": false,
+      "videos": [
+        "media/plum_gait_early.mp4"
+      ]
     },
     {
       "number": 10,
-      "title": "已交付的能力，与明确保留的缺口",
-      "time": "6:11–6:45 · 34 秒",
-      "backup": false
+      "title": "交付结果：Part 1 与 Part 2 实时演示",
+      "time": "5:40–6:30 · 50 秒（含 19.48 秒视频）",
+      "backup": false,
+      "videos": [
+        "media/delivery_reel.mp4"
+      ]
     },
     {
       "number": 11,
-      "title": "规则、观测与控制边界",
-      "time": "",
-      "backup": true
+      "title": "这次备赛学到的三件事",
+      "time": "6:30–6:50 · 20 秒",
+      "backup": false,
+      "videos": []
     },
     {
       "number": 12,
-      "title": "看过什么，迁移了什么",
+      "title": "平地训练细节与锁轮模型选择",
       "time": "",
-      "backup": true
+      "backup": true,
+      "videos": []
     },
     {
       "number": 13,
-      "title": "梅花桩训练细节与失败选点",
+      "title": "40 cm 高台：完整配方与难度映射",
       "time": "",
-      "backup": true
+      "backup": true,
+      "videos": []
     },
     {
       "number": 14,
-      "title": "证据分层：哪些数字可以放在一起",
+      "title": "两代梅花桩模型：扫描蒸馏到直接深度",
       "time": "",
-      "backup": true
+      "backup": true,
+      "videos": []
     },
     {
       "number": 15,
-      "title": "低杆修复：诊断与证据的边界",
+      "title": "六桩训练：课程、奖励与训练规模",
       "time": "",
-      "backup": true
+      "backup": true,
+      "videos": []
+    },
+    {
+      "number": 16,
+      "title": "参考方法、观测信息与演示复现",
+      "time": "",
+      "backup": true,
+      "videos": []
     }
   ]
 }

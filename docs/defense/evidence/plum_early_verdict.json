@@ -1,0 +1,280 @@
+{
+ "level": "plum_1",
+ "policy": "/home/bis/RoboCon/artifacts/plum-strict/p1/policies/route2_v3",
+ "judge": {
+  "status": "success",
+  "reason": "",
+  "detail": {
+   "max_z": 0.726,
+   "max_x": 13.523,
+   "min_z_gap": 9.9,
+   "min_wheel_z": -0.001,
+   "min_wheel_z_slot": 9.9,
+   "top_seen": true,
+   "exit_platform_seen": true,
+   "exited": true
+  },
+  "score": 200,
+  "trace": {
+   "path": "/home/bis/RoboCon/artifacts/plum-strict/p1/videos/judge_plum_route2_v3_robot.jsonl",
+   "frames": 900,
+   "meta": {
+    "schema": 1,
+    "part": 2,
+    "robot": "blackW",
+    "policy": "/home/bis/RoboCon/artifacts/plum-strict/p1/policies/route2_v3",
+    "scene": "deployment/scenes/blackW/part2_off_plum_1.xml",
+    "scene_sha256": "cfec8074d390822a3ef86e517b8bccc3b1183c01a23e5781be1ce380398fdf74",
+    "policy_sha256": "1a94d07cb902220e5b19027010522debd827592bfa37798df7be1c42e5a33cdd",
+    "config_sha256": "4529edeb158d3b85125e801ca368c39f7b0b233b8a54531baddc2d0795ecb6e2",
+    "robot_sha256": "43aab9c4fc20c0106e1e716fa4d8218c1c22e2fc2ae454fb94180fe2d4f63740",
+    "command": [
+     0.5,
+     0.0,
+     0.0
+    ],
+    "joint_mapping": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     12,
+     13,
+     14,
+     15,
+     8,
+     9,
+     10,
+     11
+    ],
+    "contract_joint_mapping": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     12,
+     13,
+     14,
+     15,
+     8,
+     9,
+     10,
+     11
+    ],
+    "support_frame": "wheel_lowest",
+    "spawn_offset": {
+     "dy": 0.0,
+     "dyaw_deg": 0.0
+    },
+    "physics_dt": 0.002,
+    "control_dt": 0.005,
+    "policy_dt": 0.02,
+    "duration_s": 18.0,
+    "steps": 900,
+    "seed": 0,
+    "profile": "diagnostic",
+    "warnings": [],
+    "versions": {
+     "mujoco": "3.11.0",
+     "numpy": "2.5.4",
+     "torch": "2.12.0",
+     "python": "3.12.16"
+    },
+    "level": {
+     "key": "plum_1",
+     "category": "plum",
+     "level": 1,
+     "unit": "bool",
+     "scene": "part2_off_plum_1.xml",
+     "source": "official terrain.zip map.xml: plum_entry, plum_entry_ramp, plum_r1_01...",
+     "obstacle_bbox": {
+      "min": [
+       1.8,
+       -0.4,
+       0.0
+      ],
+      "max": [
+       13.1,
+       0.4,
+       0.2
+      ]
+     },
+     "spawn": [
+      0.0,
+      0.0,
+      0.675,
+      0.0
+     ],
+     "command": [
+      0.5,
+      0.0,
+      0.0
+     ],
+     "seconds": 18.0,
+     "judge": {
+      "kind": "plum",
+      "top_z": 0.2,
+      "cube_x_range": [
+       3.75,
+       11.15
+      ],
+      "goal_x_min": 11.55,
+      "z_margin": 0.35,
+      "z_cross_min": 0.05,
+      "lane_half_width": 0.7,
+      "hold_s": 0.2,
+      "exit_ramp_end": 13.1,
+      "exit_ground_tol": 0.08
+     },
+     "spawn_raw": [
+      0.0,
+      0.0,
+      0.675,
+      0.0
+     ],
+     "spawn_default_pose": [
+      0.0,
+      0.0,
+      0.55,
+      0.0
+     ]
+    },
+    "level_entry": {
+     "key": "plum_1",
+     "category": "plum",
+     "level": 1,
+     "unit": "bool",
+     "scene": "part2_off_plum_1.xml",
+     "source": "official terrain.zip map.xml: plum_entry, plum_entry_ramp, plum_r1_01...",
+     "obstacle_bbox": {
+      "min": [
+       1.8,
+       -0.4,
+       0.0
+      ],
+      "max": [
+       13.1,
+       0.4,
+       0.2
+      ]
+     },
+     "spawn": [
+      0.0,
+      0.0,
+      0.675,
+      0.0
+     ],
+     "command": [
+      0.5,
+      0.0,
+      0.0
+     ],
+     "seconds": 18.0,
+     "judge": {
+      "kind": "plum",
+      "top_z": 0.2,
+      "cube_x_range": [
+       3.75,
+       11.15
+      ],
+      "goal_x_min": 11.55,
+      "z_margin": 0.35,
+      "z_cross_min": 0.05,
+      "lane_half_width": 0.7,
+      "hold_s": 0.2,
+      "exit_ramp_end": 13.1,
+      "exit_ground_tol": 0.08
+     },
+     "spawn_raw": [
+      0.0,
+      0.0,
+      0.675,
+      0.0
+     ],
+     "spawn_default_pose": [
+      0.0,
+      0.0,
+      0.55,
+      0.0
+     ]
+    },
+    "depth": {
+     "enabled": true,
+     "camera_name": "depth_cam",
+     "camera_id": 0,
+     "parent_body": "d435_link",
+     "pos": [
+      0.01,
+      0.0,
+      0.0
+     ],
+     "quat": [
+      0.561,
+      0.4304,
+      -0.4304,
+      -0.561
+     ],
+     "quat_convention": "wxyz, body<-camera",
+     "fovy": 70.0,
+     "width": 64,
+     "height": 48,
+     "min_depth": 0.1,
+     "cutoff": 3.0,
+     "normalization": "clamp(depth, min_depth, cutoff) / cutoff",
+     "input_layout": "1,1,H,W",
+     "visible_geom_groups": [
+      0
+     ],
+     "hide_robot_geoms": true,
+     "policy_call": "policy(obs_1d, [depth])",
+     "contract": {
+      "camera_name": "depth_cam",
+      "parent_body": "d435_link",
+      "pos": [
+       0.01,
+       0.0,
+       0.0
+      ],
+      "quat": [
+       0.561,
+       0.4304,
+       -0.4304,
+       -0.561
+      ],
+      "fovy": 70.0,
+      "width": 64,
+      "height": 48,
+      "min_depth": 0.1,
+      "cutoff": 3.0,
+      "input_layout": "1,1,H,W",
+      "visible_geom_groups": [
+       0
+      ],
+      "hide_robot_geoms": true,
+      "source": "/home/bis/RoboCon/artifacts/plum-strict/p1/policies/route2_v3/depth.json",
+      "source_sha256": "ad421e4e647634ffe8c9586a4c08248e44474de2b57c4b8755ef4a6492b70453"
+     }
+    }
+   }
+  }
+ },
+ "settle": {
+  "seconds": 1.0,
+  "drift": [
+   -0.021424,
+   -1.7e-05,
+   -0.039514
+  ]
+ },
+ "stopped": "duration",
+ "animation": "/home/bis/RoboCon/artifacts/plum-strict/p1/videos/judge_plum_route2_v3_robot.mp4",
+ "trace": "/home/bis/RoboCon/artifacts/plum-strict/p1/videos/judge_plum_route2_v3_robot.jsonl"
+}

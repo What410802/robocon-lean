@@ -102,5 +102,26 @@
       "plum_handover"
     ],
     "scope": "三段独立证据的顺序展示；不是一次连续通过三个障碍；只加页外标题和等比例黑边，无加速"
+  },
+  {
+    "id": "plum_gait_early",
+    "source": "/home/bis/RoboCon/artifacts/plum-strict/p1/videos/judge_plum_route2_v3_robot.mp4",
+    "source_sha256": "90d5f7633df45428522b3207b1583778902759e4dfaeb53e60747f6b9a8fc9dd",
+    "file": "media/plum_gait_early.mp4",
+    "sha256": "90d5f7633df45428522b3207b1583778902759e4dfaeb53e60747f6b9a8fc9dd",
+    "source_video_start_s": 0,
+    "duration_s": 18.0,
+    "scope": "早期route2_v3；长桩旧几何；depth→1764 fine scan→冻结RL teacher，包含DAgger r1；用于展示已学步态，非当前六桩权重。"
+  },
+  {
+    "id": "delivery_reel",
+    "file": "media/delivery_reel.mp4",
+    "sha256": "ef9a5866c3a0b5f1eacdaed940483ebcfc2e4e24914bee0d8f04ce8481392d2d",
+    "duration_s": 19.48,
+    "composition": [
+      "lowbar",
+      "plum_handover"
+    ],
+    "scope": "Part1 v104低杆与Part2 v56六桩片段依次展示；原速，无连续整场成绩合并；仅页外标题与等比例黑边。"
   }
 ]

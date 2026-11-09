@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "robot": "blackW",
+  "part": 2,
+  "level": "plum_1",
+  "policy": "route2_v3",
+  "route": "route2: depth CNN -> predicted 1764 fine scan -> frozen teacher MLP",
+  "source_teacher": "logs/rsl_rl/blackw_velocity_privileged/2026-10-31_11-36-32_plum_ep_success_bonus500_h15_r002/model_1600.pt",
+  "source_scan_cnn": "artifacts/plum-strict/p1/data/scan_cnn_r1/scan_cnn.pt",
+  "weight_file": "policy.pt",
+  "contract": {
+    "num_observations": 57,
+    "history": 6,
+    "num_dofs": 16,
+    "support_kind": "wheel",
+    "action_contract": "signed",
+    "obs_terms": [
+      "commands",
+      "ang_vel_body",
+      "gravity_vec",
+      "dof_pos",
+      "dof_vel",
+      "actions"
+    ],
+    "history_layout": "frame-major newest->oldest (deployment contract)",
+    "depth_input": "1x48x64 normalized depth in [0,1], cutoff 3.0 m",
+    "policy_call": "policy(obs_1d_342, [depth])"
+  },
+  "teacher": {
+    "checkpoint": "logs/rsl_rl/blackw_velocity_privileged/2026-10-31_11-36-32_plum_ep_success_bonus500_h15_r002/model_1600.pt",
+    "actor_input_dim": 2106,
+    "hidden": [
+      512,
+      256,
+      128
+    ],
+    "activation": "elu",
+    "native_layout": "342 proprio (term-major oldest->newest) + 1764 scan",
+    "first_layer_columns": "deployment permuted (proprio) + scan identity"
+  },
+  "scan_metrics": {
+    "val": {
+      "rmse_all": 0.02505432441830635,
+      "rmse_wheel_FL": 0.023929784074425697,
+      "rmse_wheel_FR": 0.026058465242385864,
+      "rmse_wheel_RL": 0.02202799916267395,
+      "rmse_wheel_RR": 0.02782023884356022,
+      "rmse_patch_center_11x11": 0.0222923681139946,
+      "rmse_obstacle_dev_gt_3cm": 0.05081132426857948,
+      "frac_obstacle_cells_dev_gt_3cm": 0.0959,
+      "residual_bias_m": 0.00013,
+      "residual_std_m": 0.02505,
+      "target_mean_m": 0.1492,
+      "target_std_m": 0.085
+    },
+    "pca": {
+      "n_samples": 40000,
+      "q": 128,
+      "explained_variance_ratio": {
+        "8": 0.8877,
+        "16": 0.9336,
+        "32": 0.9649,
+        "64": 0.9862,
+        "128": 1.0
+      },
+      "reconstruction_rmse_by_k": {
+        "8": 0.02993,
+        "16": 0.02403,
+        "32": 0.01899,
+        "64": 0.01461,
+        "128": 0.01077
+      }
+    }
+  },
+  "verification": {
+    "teacher_permuted_vs_native_max_abs_diff": 1.6689300537109375e-06,
+    "policy_pipeline_vs_native_teacher_max_abs_diff": 2.0265579223632812e-06,
+    "torchscript_dummy_forward": [
+      1,
+      16
+    ]
+  }
+}

@@ -1,57 +1,62 @@
-# 队内赛答辩材料
+# 队内赛答辩材料 · 修订版
 
-主题：**blackW：从单关越障到整场衔接**。依据《队内赛.pdf》第4页：七分钟内说明备赛过程，包括奖励调整、论文借鉴、训练机制和对比实验。比赛运行代码已先提交为 `e2d7818`；本目录只增加答辩材料，不更改策略或路线。
+主题：**blackW：从论文思路到轮足越障策略**。按《队内赛.pdf》第4页要求，讲述论文阅读/复现、训练机制、奖励调整与对比实验。系统已通过项目验收；本次只改答辩材料，**暂不提交**。
 
-- [blackW-defense.pptx](blackW-defense.pptx)：可编辑文本、图形、表格，包含两段内嵌视频和逐页讲稿备注。
-- [blackW-defense.pdf](blackW-defense.pdf)：静态提交/打印版，视频页显示海报画面。
-- [index.html](index.html)：浏览器离线展示版，无 CDN；中文字体和视频随目录提供。
-- [script.md](script.md)：对应10页主讲的中文讲稿及问答提示。
-- [overview.jpg](overview.jpg)：15页整体预览。
-- [sources.md](sources.md)：事实、实验、媒体的来源和引用边界。
-- [media_manifest.json](media_manifest.json)：媒体原路径、SHA-256、截取区间、时长。
-- [validation.json](validation.json)：构建和媒体验证结果。
+- [script.md](script.md)：中文主讲稿，附技术问答。
+- [blackW-defense.pptx](blackW-defense.pptx)：可编辑图文，内嵌视频，主讲页含讲稿备注。
+- [blackW-defense.pdf](blackW-defense.pdf)：静态版，视频显示海报。
+- [index.html](index.html)：本地字体、视频齐备的离线展示版。
+- [overview.jpg](overview.jpg)：16页总览。
+- [sources.md](sources.md)：论文、训练、实验和视频来源。
+- [figures/manifest.json](figures/manifest.json)：3幅论文原图的出处与SHA。
+- [evidence/training_recipe.json](evidence/training_recipe.json)：训练参数索引，随包保存关键运行配置。
+- [validation.json](validation.json)：构建、排版和媒体验证。
 
-主讲预算 **6分45秒**，包含两次视频 **32.20秒**，保留15秒余量。前10页主讲，后5页仅用于问答，不自动继续讲。预算不是口述计时实测；请按自己的语速排练一次，视频播放时停讲。
+主讲 **11页，预算6分50秒**，含三处视频 **44.42秒**，留10秒余量；后5页为问答备份。视频播放时停讲，表格参数供查看，不逐项朗读。时间为排练预算。
+
+## 展示架构与时间
+
+按构建顺序组织：**论文依据 → 平地运动 → 通用越障 → 系统与衔接 → 梅花桩 → 演示与收获**。平地两页、通用专家与高台两页，系统和路线衔接合并为一页；梅花桩一页，以良好步态视频为主体，配简短训练说明。
+
+| 页 | 内容 | 预算 |
+|---|---|---:|
+| 1 | 开场与备赛主线 | 15s |
+| 2 | HIM / DreamWaQ：历史观测与隐状态 | 35s |
+| 3 | Extreme Parkour / RecoveryLoco：训练机制启发 | 20s |
+| 4 | 平地16DoF结构、低速指令采样与奖励 | 50s |
+| 5 | 平地对比实验、12DoF锁轮与模型选择 | 45s |
+| 6 | 通用越障：任务奖励、终止与专家分工 | 50s |
+| 7 | 40cm高台视频与31级地形训练配方 | 40s，含6.94s视频 |
+| 8 | **整体系统与路线衔接合并** | **30s** |
+| 9 | 梅花桩早期良好步态与简要配方 | 55s，含18s视频 |
+| 10 | Part 1 / Part 2 演示交付 | 50s，含19.48s视频 |
+| 11 | 三点收获与后续方向 | 20s |
+
+备份12–16页：平地训练细节；高台完整配方；两代梅花桩架构；六桩课程、奖励和训练规模；HIM、观测信息与演示复现。
+
+主讲用自然语言讲训练思考，来源、版本和验证细节集中放在页脚、问答与来源文档中。
 
 ## 现场展示
 
-直接用浏览器打开 `index.html` 即可。方向键翻页，`F`全屏，`V`播放/暂停当前页视频。视频不会自动播放；按画面上的播放键也可以。复制到其他电脑时保留整个 `docs/defense/` 目录，HTML、`media/` 和 `fonts/` 保持相对位置。
+浏览器打开 `index.html`，方向键翻页，`F`全屏，`V`播放/暂停当前页视频；不自动播放。换机时复制整个 `docs/defense/`，保留 `media/`、`figures/`、`fonts/`。
 
-也可使用 PPTX（视频内嵌，无需连接源仓库），在第7/8页点击视频播放。PPTX字体为 Noto Sans CJK SC，换机如未安装会回退；以PDF或包含本地字体的HTML为版式基准。已验证PPTX包结构、可编辑对象、内嵌视频与备注，以及HTML实际播放和PDF渲染。另用临时解包的LibreOffice Impress实际渲染PPTX，15页总览及第6/8页全尺寸检查均正常；未在Office/WPS中实测视频播放。
+PPTX三处视频均内嵌，在第7、9、10页点击播放。PPTX字体为Noto Sans CJK SC，换机建议安装同字体；PDF已嵌入字体，离线HTML随包提供字体。HTML实际播放与文本边界、PDF和PPTX包结构均有检查，独立应用渲染记录见 `evidence/pptx_render_check.json`。Office/WPS视频播放未实测。
 
-第7页展示的是**三段独立证据**顺序播放，不是一次连续通过三个障碍。前两段为历史高台40cm、墙40cm独立单关；第三段来自旧25段v56中的六桩连续交接。第8页是当前源码Part1 v104全程中的低杆片段。原始短片分别保留在 `media/`，需要时可独立打开。
-
-完整文件都已放在本目录；展示不依赖 `/home/bis/RoboCon/artifacts/` 或本仓本地大trace。`evidence/` 是精选的原始摘要副本，其中保存的绝对路径和旧判据版本属于历史证据，不能当作今天可重跑的入口。
+第9页是**早期长桩场地的route2_v3**，配方对应“深度预测扫描→冻结RL教师＋DAgger”；后续六桩直接深度模型放在备份。第10页为Part1限高杆与Part2六桩片段顺序展示。视频已复制到本目录，不依赖原 `artifacts/`；完整来源见 [media_manifest.json](media_manifest.json)。
 
 ## 修改和重建
 
-在仓库根目录运行，使用独立文稿环境，不改机器人环境：
+在仓库根目录使用独立文稿环境：
 
 ```bash
 uv venv /tmp/blackw-defense-venv
 uv pip install --python /tmp/blackw-defense-venv/bin/python -r docs/defense/requirements.txt
 /tmp/blackw-defense-venv/bin/python -m playwright install chromium
+/tmp/blackw-defense-venv/bin/python docs/defense/subset_fonts.py
 /tmp/blackw-defense-venv/bin/python docs/defense/build.py
 /tmp/blackw-defense-venv/bin/python docs/defense/validate.py
 ```
 
-修改画面：编辑 `build.py` 的 `make_slides()`；修改讲稿：编辑 `script.md`，重建后写入PPTX备注。HTML/PDF/PPTX共享同一布局定义。加入新汉字后，可在安装Noto CJK字体的Linux机器上先运行 `subset_fonts.py`，更新随包字体子集；许可见 `fonts/LICENSE.txt`。
+`build.py::make_slides()`定义布局，`script.md`写入主讲页PPTX备注。PPTX、HTML、PDF共享布局；模型图、表格和采样图在PPTX中可编辑，论文图有署名。新增汉字后更新字体子集；需Linux安装的Noto CJK，许可见 `fonts/LICENSE.txt`。
 
-`prepare_media.py` 仅用于从本机历史归档重新导入视频，路径见脚本；日常展示与重建不需要执行。`make_reel.py` 使用已随包保存的三个源短片重建展示合集（不加速）。PDF生成不执行模型或物理仿真。
-
-主讲计划如下，讲稿中有对应段落：
-
-| 页 | 内容 | 预算 |
-|---|---|---:|
-| 1 | 目标与主线 | 25s |
-| 2 | 规则、导航与策略拆分 | 35s |
-| 3 | 奖励漏洞和诊断 | 50s |
-| 4 | VT共面改进的代价 | 45s |
-| 5 | 视觉路线与训练方法 | 55s |
-| 6 | 初态网格鲁棒性 | 45s |
-| 7 | 能力/交接视频 | 36s（含21.16s） |
-| 8 | 低杆对齐与视频 | 45s（含11.04s） |
-| 9 | 接触触发交接与统一路线 | 35s |
-| 10 | 交付与未解问题 | 34s |
-
-备份页覆盖观测合法性、论文来源、训练参数、判分口径、低杆控制机制。答辩重点是解释技术选择和证据，不宣称Part1官方900分或当前Part2整场成功。
+图源已保存，无需下载论文。`prepare_media.py`仅在重新导入本地历史归档时使用；`make_delivery_reel.py`可从随包短片重建当前演示合集，`make_reel.py`保留旧合集生成入口。`evidence/`的历史绝对路径用于追溯，构建无需访问这些路径，也不运行训练或仿真。

@@ -1,48 +1,56 @@
 {
+  "paper_figures": {
+    "count": 3,
+    "hashes_match": true,
+    "attribution": "figure manifest and slide footers"
+  },
   "media": {
-    "files": 5,
+    "files": 7,
     "hashes_match": true,
     "full_video_decode": "PASS",
-    "presentation_video_duration_s": 32.2
+    "presentation_video_duration_s": 44.42
   },
   "pptx": {
-    "slides": 15,
-    "main": 10,
+    "slides": 16,
+    "main": 11,
     "backup": 5,
-    "speaker_notes": 15,
-    "embedded_videos": 2,
+    "speaker_notes": 16,
+    "embedded_videos": 3,
     "editable_text": true,
     "package_integrity": "PASS",
     "object_bounds": "PASS",
     "independent_application_render": {
-      "application": "LibreOffice Impress 26.2 (headless)",
+      "application": "LibreOffice Impress 26.2.2.2 (headless)",
       "method": "43 apt packages downloaded and extracted under /tmp; no system install",
       "source": "docs/defense/blackW-defense.pptx",
-      "pages": 15,
-      "overview_review": "all 15 rendered pages visually inspected",
-      "full_size_review_pages": [
-        6,
-        8
+      "pptx_sha256": "4a7dd4e90abdad8799f7b5eddc89a44313ba2b949c991ce3ca6e670b24a7b937",
+      "pages": 16,
+      "overview_review": "all 16 pages rendered; final overview visually inspected",
+      "detail_review_pages": [
+        4,
+        7,
+        8,
+        9
       ],
-      "result": "No overflow, clipping, overlap or missing CJK glyphs observed",
+      "result": "After correcting two Impress-specific line wraps, no text overflow, clipping or missing CJK glyphs observed in reviewed rendering",
       "font_result": "NotoSansCJKsc Regular/Bold embedded in converted PDF",
-      "differences": "Slight text baseline/spacing differences and subtle card shadows relative to Chromium output; readable",
+      "differences": "Minor baseline/spacing and card shadows relative to Chromium; legible",
       "office_wps_tested": false,
       "video_decode_in_presentation_app_tested": false,
-      "video_note": "Embedded H.264 media package and browser playback separately validated; headless conversion checks poster/layout only"
+      "video_note": "Embedded H.264 package and browser playback separately verified; headless Impress checks posters and layout."
     }
   },
   "html": {
     "offline_file_open": "PASS",
     "fonts": "local_subset_loaded",
-    "main_video_playback": "PASS",
+    "main_and_backup_video_playback": "PASS",
     "keyboard_navigation": "PASS",
     "javascript_errors": [],
     "failed_requests": [],
     "visible_text_overflow": "none"
   },
   "pdf": {
-    "pages": 15,
+    "pages": 16,
     "text_extraction": "PASS",
     "chinese_fonts": "embedded",
     "poster_on_video_pages": true,
@@ -51,7 +59,7 @@
   "scope": {
     "physics_rerun": false,
     "training_rerun": false,
-    "oral_rehearsal": "not performed; 405s planned budget",
+    "oral_rehearsal": "not performed; 410s planned budget",
     "office_wps_visual_test": "not performed in main build; see README for current verification scope"
   }
 }

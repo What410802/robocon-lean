@@ -5,18 +5,19 @@ import subprocess,json,hashlib,shutil
 r=Path(__file__).resolve().parents[2]; d=r/'docs/defense'; old=Path('/home/bis/RoboCon')
 h=old/'artifacts/vtaudit-20261031/videos/part2'
 clips=[
+ ('plum_gait_early',old/'artifacts/plum-strict/p1/videos/judge_plum_route2_v3_robot.mp4',0,None,'早期长桩route2_v3；depth预测scan→冻结教师；含DAgger r1'),
  ('platform40',h/'vt_mode_v2__adaptive_vx0.5__high_platform_40cm__success.mp4',0,None,'历史独立单关；adaptive vx基准0.5；成功以sidecar/campaign为据'),
  ('wall40',h/'vt_mode_v2__adaptive_vx0.5__high_wall_40cm__success.mp4',0,None,'历史独立单关；adaptive vx基准0.5；视频HUD末帧仍running'),
  ('plum_handover',r/'artifacts/route_fix/part2_full_live_v56_cli.mp4',1054,8.44,'旧25段v56同次连续片段；六桩；深度专家→出口轮式专家；该段严格投影success200'),
  ('lowbar',r/'artifacts/route_fix/part1_lowbar_full_v104_cli.mp4',0,None,'当前源码Part1 v104全程片段；仅路线预检，judge关闭；源仿真123–134s')]
-manifest=[]
+manifest=[x for x in json.loads((d/'media_manifest.json').read_text()) if x['id'] not in {c[0] for c in clips}]
 for name,src,start,duration,scope in clips:
  out=d/'media'/f'{name}.mp4'
  if duration:
   subprocess.run(['ffmpeg','-v','error','-y','-ss',str(start),'-i',str(src),'-t',str(duration),'-an','-c:v','libx264','-crf','20','-pix_fmt','yuv420p','-movflags','+faststart',str(out)],check=True)
  else: shutil.copy2(src,out)
  info=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration:stream=width,height','-of','json',str(out)]))
- poster_time={'platform40':3.5,'wall40':3,'plum_handover':2.5,'lowbar':5.5}[name]
+ poster_time={'plum_gait_early':7.5,'platform40':3.5,'wall40':3,'plum_handover':2.5,'lowbar':5.5}[name]
  subprocess.run(['ffmpeg','-v','error','-y','-ss',str(poster_time),'-i',str(out),'-frames:v','1',str(d/'media'/f'{name}.jpg')],check=True)
  manifest.append(dict(id=name,source=str(src),source_sha256=hashlib.sha256(src.read_bytes()).hexdigest(),file=f'media/{name}.mp4',sha256=hashlib.sha256(out.read_bytes()).hexdigest(),source_video_start_s=start,duration_s=float(info['format']['duration']),scope=scope,probe=info))
 for name,src in [

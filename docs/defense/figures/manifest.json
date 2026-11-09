@@ -1,0 +1,162 @@
+[
+  {
+    "id": "him_fig2",
+    "paper": "Hybrid Internal Model: Learning Agile Legged Locomotion with Simulated Robot Response",
+    "authors": "Junfeng Long et al.",
+    "year": 2024,
+    "url": "https://arxiv.org/abs/2312.11460",
+    "pdf": "him",
+    "page": 4,
+    "figure": 2,
+    "local_reference": "~/Legged_OpenSource/uw-himloco",
+    "scope": "HIM算法有本仓移植与历史训练记录；图中机器人与论文成绩属于原作者。",
+    "file": "figures/him_fig2.png",
+    "sha256": "e3ae6f3e15e6bea1176e07e497353627ae16204496fbfe399887c81f105f6c2e",
+    "source_pdf_sha256": "966785d9bc92f577cc743a5d13fd253c10dbb5e0f3dbb0adbc77fd1f7df2952b",
+    "size": [
+      1326,
+      685
+    ],
+    "modification": "原论文架构图裁切，保留图内原标注；图号与作者在页脚另列。"
+  },
+  {
+    "id": "dreamwaq_fig1",
+    "paper": "DreamWaQ: Learning Robust Quadrupedal Locomotion With Implicit Terrain Imagination via Deep Reinforcement Learning",
+    "authors": "I Made Aswin Nahrendra, Byeongho Yu, Hyun Myung",
+    "year": 2023,
+    "url": "https://arxiv.org/abs/2301.10602",
+    "pdf": "dreamwaq",
+    "page": 1,
+    "figure": 1,
+    "local_reference": "~/Legged_OpenSource/Dreamwaq",
+    "scope": "阅读DreamWaQ非对称训练与CENet总体框架；不宣称blackW复现DreamWaQ论文性能。",
+    "file": "figures/dreamwaq_fig1.png",
+    "sha256": "11a64a5f811002731d56ea3ae4564ab95f3054e5b267e487ad2420c1f86b75ec",
+    "source_pdf_sha256": "fb02d20879c38b2ca7d0b52ff58174f2119451dea23e946c3eecfccdfcce1cfd",
+    "size": [
+      1046,
+      611
+    ],
+    "modification": "原论文架构图裁切，保留图内原标注；图号与作者在页脚另列。"
+  },
+  {
+    "id": "dreamwaq_fig2",
+    "paper": "DreamWaQ: Learning Robust Quadrupedal Locomotion With Implicit Terrain Imagination via Deep Reinforcement Learning",
+    "authors": "I Made Aswin Nahrendra, Byeongho Yu, Hyun Myung",
+    "year": 2023,
+    "url": "https://arxiv.org/abs/2301.10602",
+    "pdf": "dreamwaq",
+    "page": 3,
+    "figure": 2,
+    "local_reference": "~/Legged_OpenSource/Dreamwaq",
+    "scope": "阅读CENet/VAE思路和轮足衍生源码；不宣称blackW复现DreamWaQ论文性能。",
+    "file": "figures/dreamwaq_fig2.png",
+    "sha256": "fbedf81b989199bd0eaa7e59f2cd68559f81526a059c34382d5fe18eebcdd861",
+    "source_pdf_sha256": "fb02d20879c38b2ca7d0b52ff58174f2119451dea23e946c3eecfccdfcce1cfd",
+    "size": [
+      996,
+      248
+    ],
+    "modification": "原论文架构图裁切，保留图内原标注；图号与作者在页脚另列。"
+  },
+  {
+    "id": "extreme_parkour_fig2",
+    "paper": "Extreme Parkour with Legged Robots",
+    "authors": "Xuxin Cheng, Kexin Shi, Ananye Agarwal, Deepak Pathak",
+    "year": 2024,
+    "url": "https://arxiv.org/abs/2309.14341",
+    "pdf": "ep",
+    "page": 5,
+    "figure": 2,
+    "local_reference": "~/Legged_OpenSource/extreme-parkour",
+    "scope": "迁移教师学生、课程与奖励思路；本项目最终学生继续PPO，未使用论文同款GRU或航向预测器。",
+    "file": "figures/extreme_parkour_fig2.png",
+    "sha256": "856886b9c1c45711b1375fa5e75a9864c5e6d12a22bf2352515f4af17922c756",
+    "source_pdf_sha256": "50f1cf2b73b9147111100994d1dfffbfd15a9a6c2412aee1921d4d3e58ee2285",
+    "size": [
+      772,
+      670
+    ],
+    "modification": "原论文架构图裁切，保留图内原标注；图号与作者在页脚另列。"
+  },
+  {
+    "id": "start_fig2",
+    "paper": "START: Traversing Sparse Footholds with Terrain Reconstruction",
+    "authors": "Ruiqi Yu et al.",
+    "year": 2026,
+    "url": "https://arxiv.org/abs/2512.13153",
+    "pdf": "start",
+    "page": 3,
+    "figure": 2,
+    "local_reference": "docs/defense/research/literature-review.md",
+    "scope": "用于对照显式局部高程图重建与本项目两代梅花桩视觉学生的设计取舍；非本项目训练实现。",
+    "file": "figures/start_fig2.png",
+    "sha256": "ce10ee89e01ae620b3d43d52e98248953d04868966ad6bc28fd19bd3023a9822",
+    "source_pdf_sha256": "7b0808af5088c554c88c834d97861e317822e2fef21c66b81734764897917276",
+    "size": [
+      1836,
+      620
+    ],
+    "modification": "原论文架构图裁切，保留图内原标注；图号与作者在页脚另列。"
+  },
+  {
+    "id": "start_fig3",
+    "paper": "START: Traversing Sparse Footholds with Terrain Reconstruction",
+    "authors": "Ruiqi Yu et al.",
+    "year": 2026,
+    "url": "https://arxiv.org/abs/2512.13153",
+    "pdf": "start",
+    "page": 3,
+    "figure": 3,
+    "local_reference": "docs/defense/research/literature-review.md",
+    "scope": "TR-Net粗重建+U-Net精修+GRU时序记忆与AdaSmpl；用于对照轮边fine scan视野局限。",
+    "file": "figures/start_fig3.png",
+    "sha256": "cd56d882080e321810e8151a22926d073c07e43ff7a83da8ffee374520eac0d2",
+    "source_pdf_sha256": "7b0808af5088c554c88c834d97861e317822e2fef21c66b81734764897917276",
+    "size": [
+      1046,
+      571
+    ],
+    "modification": "原论文架构图裁切，保留图内原标注；图号与作者在页脚另列。"
+  },
+  {
+    "id": "pie_fig2",
+    "paper": "PIE: Parkour with Implicit-Explicit Learning Framework for Legged Robots",
+    "authors": "Shixin Luo et al.",
+    "year": 2024,
+    "url": "https://arxiv.org/abs/2408.13740",
+    "pdf": "pie",
+    "page": 3,
+    "figure": 2,
+    "local_reference": "docs/defense/research/literature-review.md",
+    "scope": "用于对照一阶段双层隐式-显式多模态估计与两阶段蒸馏方案；非本项目训练实现。",
+    "file": "figures/pie_fig2.png",
+    "sha256": "a34c306f0e08f0ec40fdc29506c855dc4cb66fd657c0cc1f160dc73d9fe24bd5",
+    "source_pdf_sha256": "c5fa1bb37cb3d2d2165fb8302634a1aea44ca6a028421adbc3c83bf5e89dc623",
+    "size": [
+      1836,
+      759
+    ],
+    "modification": "原论文架构图裁切，保留图内原标注；图号与作者在页脚另列。"
+  },
+  {
+    "id": "puma_fig2",
+    "paper": "PUMA: Perception-driven Unified Foothold Prior for Mobility Augmented Quadruped Parkour",
+    "authors": "Liang Wang et al.",
+    "year": 2026,
+    "url": "https://arxiv.org/abs/2601.15995",
+    "pdf": "puma",
+    "page": 3,
+    "figure": 2,
+    "local_reference": "docs/defense/research/literature-review.md",
+    "scope": "用于对照极坐标软落足先验、PAS与多Critic更新；本仓曾有旧研究分支，当前交付策略非PUMA复现。",
+    "file": "figures/puma_fig2.png",
+    "sha256": "2d948645c52b65a8977fd9114811ac95d8dc560b7244e0e4575182c1c9830583",
+    "source_pdf_sha256": "53e35a1bd25bdffe89c609bad2384ff7dc6e60f9717cfa0f5cf018f812980fd2",
+    "size": [
+      1861,
+      858
+    ],
+    "modification": "原论文架构图裁切，保留图内原标注；图号与作者在页脚另列。"
+  }
+]
